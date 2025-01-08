@@ -483,6 +483,9 @@ lemma RD2_RH_commute: "RD2(\<^bold>R(P)) = \<^bold>R(RD2(P))"
 lemma RD_idem: "RD(RD(P)) = RD(P)"
   by (simp add: RD_alt_def RD1_RH_commute RD2_RH_commute RD1_RD2_commute RD2_idem RD1_idem RH_idem)
 
+lemma RD_Idempotent: "Idempotent RD"
+  using Idempotent_def RD_idem by blast
+
 lemma RD_Monotonic: "Monotonic RD"
   by (simp add: Monotonic_comp RD1_Monotonic RD2_Monotonic RD_comp RP_Monotonic)
 
@@ -521,7 +524,7 @@ lemma SRD_Continuous [closure]: "Continuous SRD"
   by (simp add: Continuous_comp RD1_Continuous RD2_Continuous RHS_Continuous SRD_comp)
 
 lemma SRD_RHS_H1_H2: "SRD(P) = \<^bold>R\<^sub>s(\<^bold>H(P))"
-  by (pred_auto)
+  by (metis (mono_tags, lifting) R1_R2c_commute R1_R3h_commute RD1_R1_commute RD1_RHS_commute RD1_via_R1 RD2_RHS_commute RD2_def RHS_def SRD_def)
 
 lemma SRD_healths [closure]:
   assumes "P is SRD"
@@ -539,15 +542,15 @@ lemma SRD_intro:
   by (metis Healthy_def R1_R2c_is_R2 RHS_def SRD_def assms(2) assms(3) assms(4) assms(5))
 
 lemma SRD_ok_false [usubst]: "P is SRD \<Longrightarrow> P\<lbrakk>False/ok\<^sup><\<rbrakk> = R1(true)"
-  by (metis (no_types, opaque_lifting) H1_H2_eq_design Healthy_def R1_ok_false RD1_R1_commute RD1_via_R1 RD2_def SRD_def SRD_healths(1) design_ok_false)
-
+  by (metis H1_H2_eq_design Healthy_if R1_ok_false RD1_via_R1 RD2_def SRD_healths(1) SRD_healths(4) SRD_healths(5) design_ok_false)
+ 
 lemma SRD_ok_true_wait_true [usubst]:
   assumes "P is SRD"
-  shows "P\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk> = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk>"
+  shows "P\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
 proof -
   have "P = (\<exists> st\<^sup>< \<Zspot> II) \<triangleleft> $ok\<^sup>< \<triangleright> R1 true \<triangleleft> $wait\<^sup>< \<triangleright> P"
     by (metis Healthy_def R3h_cases SRD_healths(3) assms)
-  moreover have "((\<exists> st\<^sup>< \<Zspot> II) \<triangleleft> $ok\<^sup>< \<triangleright> R1 true \<triangleleft> $wait\<^sup>< \<triangleright> P)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk> = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk>"
+  moreover have "((\<exists> st\<^sup>< \<Zspot> II) \<triangleleft> $ok\<^sup>< \<triangleright> R1 true \<triangleleft> $wait\<^sup>< \<triangleright> P)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
     by (simp add: usubst)
   ultimately show ?thesis
     by (simp)
@@ -558,9 +561,9 @@ lemma SRD_left_zero_1: "P is SRD \<Longrightarrow> R1(true) ;; P = R1(true)"
 
 lemma SRD_left_zero_2:
   assumes "P is SRD"
-  shows "(\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk> ;; P = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk>"
+  shows "(\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> ;; P = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
 proof -
-  have "(\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk> ;; R3h(P) = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>true,true/$ok,wait\<^sup><\<rbrakk>"
+  have "(\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> ;; R3h(P) = (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
     by (pred_auto)
   thus ?thesis
     by (simp add: Healthy_if SRD_healths(3) assms)
@@ -578,7 +581,7 @@ interpretation rdes_theory: utp_theory_continuous RD
   and "eq rdes_theory.thy_order = (=)"  
 proof -
   show "utp_theory_continuous RD"
-    by (unfold_locales, simp_all add: RD_idem RD_Continuous)
+    by (unfold_locales, simp_all add: RD_Idempotent RD_Continuous)
 qed (simp_all)
 
 interpretation srdes_theory: utp_theory_continuous SRD
@@ -588,7 +591,7 @@ interpretation srdes_theory: utp_theory_continuous SRD
   and "eq srdes_theory.thy_order = (=)"  
 proof -
   show "utp_theory_continuous SRD"
-    by (unfold_locales, simp_all add: SRD_idem SRD_Continuous)
+    by (unfold_locales, simp_all add: SRD_Idempotent SRD_Continuous)
 qed (simp_all)
 
 interpretation rdes_rea_galois:
@@ -605,7 +608,8 @@ proof (simp add: mk_conn_def, rule galois_connectionI', simp_all add: utp_partia
   fix P :: "('a, 'b) rp_hrel"
   assume "P is RD"
   thus "P \<sqsubseteq> RD1 (RD2 (R3 P))"
-    by (metis Healthy_if R3_RD_RP RD_def RP_idem eq_iff)
+    by (simp add: Healthy_if R3c_via_RD1_R3 RD1_RD2_commute RD_healths)
+    
 next
   fix P :: "('a, 'b) rp_hrel"
   assume a: "P is RP"
@@ -623,8 +627,8 @@ qed
 interpretation rdes_rea_retract:
   retract "(RD \<Leftarrow>\<langle>RD1 \<circ> RD2,R3\<rangle>\<Rightarrow> RP)"
   by (unfold_locales, simp_all add: mk_conn_def utp_partial_order)
-     (metis Healthy_if R3_RD_RP RD_def RP_idem eq_refl)
-
+     (simp add: Healthy_if R3c_via_RD1_R3 RD1_RD2_commute RD_healths)
+     
 abbreviation Chaos :: "('s,'t::trace,'\<alpha>) rsp_hrel" where
 "Chaos \<equiv> srdes_theory.utp_bottom"
 

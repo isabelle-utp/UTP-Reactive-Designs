@@ -319,7 +319,7 @@ qed
 lemma RHS_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q) ;; \<^bold>R\<^sub>s(R \<turnstile> S)) =
-       \<^bold>R\<^sub>s((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> $wait\<^sup>>)) ;; R1 (\<not> R2s R))) \<turnstile>
+       \<^bold>R\<^sub>s((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> $wait\<^sup>>))\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))"
 proof -
   have 1: "R2c (R1 (\<not> R2s P) ;; R1 true) = (R1 (\<not> R2s P) ;; R1 true)"
@@ -338,51 +338,47 @@ proof -
       by (simp add: 1)
   qed
 
-  have 2:"R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R))"
-  proof -
-    have "((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R)) = R1 (R2 (Q \<and> \<not> $wait\<^sup>>) ;; R2 (\<not> R))"
-      by (pred_auto, blast+)
-    hence "R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R)) = (R2 (Q \<and> \<not> $wait\<^sup>>) ;; R2 (\<not> R))"
-      by (metis (no_types, lifting) R1_R2c_commute R1_R2c_is_R2 R2_seqr_distribute)
-    also have "... = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R))"
-      by (pred_auto, blast+)
-    finally show ?thesis .
-  qed
+  have 2:"R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))"
+    apply pred_auto
+    apply (metis diff_add_cancel_left' le_add trace_class.add_diff_cancel_left trace_class.add_left_mono)
+    apply (metis diff_add_cancel_left' minus_cancel_le)
+    done
 
   have 3:"R2c((R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S)))) =
           (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S)))"
   proof -
-    have "R2c(((R1 (R2s Q))\<lbrakk>true/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>true/wait\<^sup><\<rbrakk>))
-          = ((R1 (R2s Q))\<lbrakk>true/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>true/wait\<^sup><\<rbrakk>)"
+    have "R2c(((R1 (R2s Q))\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>True/wait\<^sup><\<rbrakk>))
+          = ((R1 (R2s Q))\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>True/wait\<^sup><\<rbrakk>)"
     proof -
-      have "R2c(((R1 (R2s Q))\<lbrakk>true/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>true/wait\<^sup><\<rbrakk>)) =
-            R2c(R1 (R2s (Q\<lbrakk>true/$wait\<^sup>>\<rbrakk>)) ;; (\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>true/wait\<^sup><\<rbrakk>)"
-        by (simp add: usubst cond_unit_T R1_def R2s_def)
-      also have "... = R2c(R2(Q\<lbrakk>true/$wait\<^sup>>\<rbrakk>) ;; R2((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>true/wait\<^sup><\<rbrakk>))"
-        by (metis (no_types, lifting) R2_def R2_des_lift_skip R2_subst_wait_true R2_st_ex)
-      also have "... = (R2(Q\<lbrakk>true/$wait\<^sup>>\<rbrakk>) ;; R2((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>true/wait\<^sup><\<rbrakk>))"
+      have "R2c(((R1 (R2s Q))\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>True/wait\<^sup><\<rbrakk>)) =
+            R2c(R1 (R2s (Q\<lbrakk>True/wait\<^sup>>\<rbrakk>)) ;; (\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>True/wait\<^sup><\<rbrakk>)"
+        by (pred_auto)
+      also have "... = R2c(R2(Q\<lbrakk>True/wait\<^sup>>\<rbrakk>) ;; R2((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>True/wait\<^sup><\<rbrakk>))"
+        by (metis (no_types) R2_def R2_des_lift_skip R2_st_ex R2_subst_wait_true)
+      also have "... = (R2(Q\<lbrakk>True/wait\<^sup>>\<rbrakk>) ;; R2((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D)\<lbrakk>True/wait\<^sup><\<rbrakk>))"
         using R2c_seq by blast
-      also have "... = ((R1 (R2s Q))\<lbrakk>true/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>true/wait\<^sup><\<rbrakk>)"
+      also have "... = ((R1 (R2s Q))\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>True/wait\<^sup><\<rbrakk>)"
         apply (simp add: usubst R2_des_lift_skip)
         apply (metis (no_types) R2_def R2_des_lift_skip R2_st_ex R2_subst_wait'_true R2_subst_wait_true)
       done
       finally show ?thesis .
     qed
-    moreover have "R2c(((R1 (R2s Q))\<lbrakk>false/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>false/wait\<^sup><\<rbrakk>))
-          = ((R1 (R2s Q))\<lbrakk>false/$wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>false/wait\<^sup><\<rbrakk>)"
+    moreover have "R2c(((R1 (R2s Q))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>False/wait\<^sup><\<rbrakk>))
+          = ((R1 (R2s Q))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>False/wait\<^sup><\<rbrakk>)"
       by (simp add: usubst)
-         (metis (no_types, lifting) R1_wait'_false R1_wait_false R2_R1_form R2_subst_wait'_false R2_subst_wait_false R2c_seq)
+         (metis (no_types) R1_wait'_false R1_wait_false R2_R1_form R2_subst_wait'_false R2_subst_wait_false R2c_seq)
+       
     ultimately show ?thesis
-      by (smt R2_R1_form R2_condr' R2_des_lift_skip R2_st_ex R2c_seq R2s_wait)
+      by (metis (no_types, lifting) R2_R1_form R2_condr' R2_des_lift_skip R2_st_ex R2c_seq R2s_wait SEXP_def aext_var)
   qed
 
   have "(R1(R2s(R3h(P \<turnstile> Q))) ;; R1(R2s(R3h(R \<turnstile> S)))) =
         ((R3h(R1(R2s(P) \<turnstile> R2s(Q)))) ;; R3h(R1(R2s(R) \<turnstile> R2s(S))))"
     by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_R3h_commute R2c_R3h_commute R2s_design)
-  also have "... = R3h (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3h (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S)))))"
     by (simp add: R3h_R1_design_composition assms unrest)
-  also have "... = R3h(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3h(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
                               (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))))"
     by (simp add: R2c_design R2c_and R2c_not 1 2 3)
   finally show ?thesis
@@ -394,7 +390,7 @@ lemma RHS_R2s_design_composition:
     "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
     "P is R2s" "Q is R2s" "R is R2s" "S is R2s"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q) ;; \<^bold>R\<^sub>s(R \<turnstile> S)) =
-       \<^bold>R\<^sub>s((\<not> (R1 (\<not> P) ;; R1 true) \<and> \<not> ((R1 Q \<and> \<not> $wait\<^sup>>) ;; R1 (\<not> R))) \<turnstile>
+       \<^bold>R\<^sub>s((\<not> (R1 (\<not> P) ;; R1 true) \<and> \<not> ((R1 Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R))) \<turnstile>
                        (R1 Q ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 S)))"
 proof -
   have f1: "R2s P = P"
@@ -434,7 +430,7 @@ lemma R1_design_R1_pre:
   "\<^bold>R\<^sub>s(R1(P) \<turnstile> Q) = \<^bold>R\<^sub>s(P \<turnstile> Q)"
   by (pred_auto)
 
-lemma RHS_design_ok_wait: "\<^bold>R\<^sub>s(P\<lbrakk>true,false/$ok,wait\<^sup><\<rbrakk> \<turnstile> Q\<lbrakk>true,false/$ok,wait\<^sup><\<rbrakk>) = \<^bold>R\<^sub>s(P \<turnstile> Q)"
+lemma RHS_design_ok_wait: "\<^bold>R\<^sub>s(P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<turnstile> Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>) = \<^bold>R\<^sub>s(P \<turnstile> Q)"
   by (pred_auto)
 
 lemma RH_design_neg_R1_pre:
@@ -467,18 +463,18 @@ lemma R1_design_refine:
     "P\<^sub>1 is R1" "P\<^sub>2 is R1" "Q\<^sub>1 is R1" "Q\<^sub>2 is R1"
     "$ok\<^sup>< \<sharp> P\<^sub>1" "$ok\<^sup>> \<sharp> P\<^sub>1" "$ok\<^sup>< \<sharp> P\<^sub>2" "$ok\<^sup>> \<sharp> P\<^sub>2"
     "$ok\<^sup>< \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>< \<sharp> Q\<^sub>2" "$ok\<^sup>> \<sharp> Q\<^sub>2"    
-  shows "R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+  shows "R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
 proof -
-  have "R1((\<exists> $ok;$ok\<^sup>> \<bullet> P\<^sub>1) \<turnstile> (\<exists> $ok;$ok\<^sup>> \<bullet> P\<^sub>2)) \<sqsubseteq> R1((\<exists> $ok;$ok\<^sup>> \<bullet> Q\<^sub>1) \<turnstile> (\<exists> $ok;$ok\<^sup>> \<bullet> Q\<^sub>2)) 
-       \<longleftrightarrow> `R1(\<exists> $ok;$ok\<^sup>> \<bullet> P\<^sub>1) \<Rightarrow> R1(\<exists> $ok;$ok\<^sup>> \<bullet> Q\<^sub>1)` \<and> `R1(\<exists> $ok;$ok\<^sup>> \<bullet> P\<^sub>1) \<and> R1(\<exists> $ok;$ok\<^sup>> \<bullet> Q\<^sub>2) \<Rightarrow> R1(\<exists> $ok;$ok\<^sup>> \<bullet> P\<^sub>2)`"
-    by (pred_auto, meson+)
+  have "R1((\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> P\<^sub>1) \<turnstile> (\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> P\<^sub>2)) \<sqsubseteq> R1((\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> Q\<^sub>1) \<turnstile> (\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> Q\<^sub>2)) 
+       \<longleftrightarrow> `R1(\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> P\<^sub>1) \<longrightarrow> R1(\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> Q\<^sub>1)` \<and> `R1(\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> P\<^sub>1) \<and> R1(\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> Q\<^sub>2) \<longrightarrow> R1(\<exists> (ok\<^sup><,ok\<^sup>>) \<Zspot> P\<^sub>2)`"
+    by (pred_auto; meson)
   thus ?thesis
     by (simp_all add: ex_unrest ex_plus Healthy_if assms)
 qed
 
 lemma R1_design_refine_RR:
   assumes "P\<^sub>1 is RR" "P\<^sub>2 is RR" "Q\<^sub>1 is RR" "Q\<^sub>2 is RR"
-  shows "R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+  shows "R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
   by (simp add: R1_design_refine assms unrest closure)
 
 lemma RH_design_refine:
@@ -487,20 +483,20 @@ lemma RH_design_refine:
     "P\<^sub>1 is R2c" "P\<^sub>2 is R2c" "Q\<^sub>1 is R2c" "Q\<^sub>2 is R2c"
     "$ok\<^sup>< \<sharp> P\<^sub>1" "$ok\<^sup>> \<sharp> P\<^sub>1" "$ok\<^sup>< \<sharp> P\<^sub>2" "$ok\<^sup>> \<sharp> P\<^sub>2"
     "$ok\<^sup>< \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>< \<sharp> Q\<^sub>2" "$ok\<^sup>> \<sharp> Q\<^sub>2"    
-    "$wait \<sharp> P\<^sub>1" "$wait \<sharp> P\<^sub>2" "$wait \<sharp> Q\<^sub>1" "$wait \<sharp> Q\<^sub>2"    
-  shows "\<^bold>R(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+    "$wait\<^sup>< \<sharp> P\<^sub>1" "$wait\<^sup>< \<sharp> P\<^sub>2" "$wait\<^sup>< \<sharp> Q\<^sub>1" "$wait\<^sup>< \<sharp> Q\<^sub>2"    
+  shows "\<^bold>R(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
 proof -
   have "\<^bold>R(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> R1(R3c(R2c(P\<^sub>1 \<turnstile> P\<^sub>2))) \<sqsubseteq> R1(R3c(R2c(Q\<^sub>1 \<turnstile> Q\<^sub>2)))"
     by (simp add: R2c_R3c_commute RH_def)
   also have "... \<longleftrightarrow> R1(R3c(P\<^sub>1 \<turnstile> P\<^sub>2)) \<sqsubseteq> R1(R3c(Q\<^sub>1 \<turnstile> Q\<^sub>2))"
     by (simp add: Healthy_if R2c_design assms)
-  also have "... \<longleftrightarrow> R1(R3c(P\<^sub>1 \<turnstile> P\<^sub>2))\<lbrakk>false/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(R3c(Q\<^sub>1 \<turnstile> Q\<^sub>2))\<lbrakk>false/wait\<^sup><\<rbrakk>"
-    by (pred_auto, metis+)
-  also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2)\<lbrakk>false/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)\<lbrakk>false/wait\<^sup><\<rbrakk>"      
+  also have "... \<longleftrightarrow> R1(R3c(P\<^sub>1 \<turnstile> P\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(R3c(Q\<^sub>1 \<turnstile> Q\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk>"
+    by (metis (no_types) R1_R3c_commute R3c_idem R3c_mono R3c_subst_wait pred_ba.le_iff_inf subst_pred(4))
+  also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2)\<lbrakk>False/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)\<lbrakk>False/wait\<^sup><\<rbrakk>"      
     by (pred_auto)
   also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)"      
     by (simp add: usubst assms closure unrest)
-  also have "... \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+  also have "... \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
     by (simp add: R1_design_refine assms)
   finally show ?thesis .
 qed 
@@ -511,31 +507,31 @@ lemma RHS_design_refine:
     "P\<^sub>1 is R2c" "P\<^sub>2 is R2c" "Q\<^sub>1 is R2c" "Q\<^sub>2 is R2c"
     "$ok\<^sup>< \<sharp> P\<^sub>1" "$ok\<^sup>> \<sharp> P\<^sub>1" "$ok\<^sup>< \<sharp> P\<^sub>2" "$ok\<^sup>> \<sharp> P\<^sub>2"
     "$ok\<^sup>< \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>< \<sharp> Q\<^sub>2" "$ok\<^sup>> \<sharp> Q\<^sub>2"    
-    "$wait \<sharp> P\<^sub>1" "$wait \<sharp> P\<^sub>2" "$wait \<sharp> Q\<^sub>1" "$wait \<sharp> Q\<^sub>2"    
-  shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+    "$wait\<^sup>< \<sharp> P\<^sub>1" "$wait\<^sup>< \<sharp> P\<^sub>2" "$wait\<^sup>< \<sharp> Q\<^sub>1" "$wait\<^sup>< \<sharp> Q\<^sub>2"    
+  shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
 proof -
   have "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2) \<longleftrightarrow> R1(R3h(R2c(P\<^sub>1 \<turnstile> P\<^sub>2))) \<sqsubseteq> R1(R3h(R2c(Q\<^sub>1 \<turnstile> Q\<^sub>2)))"
     by (simp add: R2c_R3h_commute RHS_def)
   also have "... \<longleftrightarrow> R1(R3h(P\<^sub>1 \<turnstile> P\<^sub>2)) \<sqsubseteq> R1(R3h(Q\<^sub>1 \<turnstile> Q\<^sub>2))"
     by (simp add: Healthy_if R2c_design assms)
-  also have "... \<longleftrightarrow> R1(R3h(P\<^sub>1 \<turnstile> P\<^sub>2))\<lbrakk>false/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(R3h(Q\<^sub>1 \<turnstile> Q\<^sub>2))\<lbrakk>false/wait\<^sup><\<rbrakk>"
-    by (pred_auto, metis+)
-  also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2)\<lbrakk>false/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)\<lbrakk>false/wait\<^sup><\<rbrakk>"      
+  also have "... \<longleftrightarrow> R1(R3h(P\<^sub>1 \<turnstile> P\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(R3h(Q\<^sub>1 \<turnstile> Q\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk>"
+    by (metis (no_types) R1_R3h_commute R3h_idem R3h_mono R3h_subst_wait pred_ba.le_iff_inf subst_pred(4))
+  also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2)\<lbrakk>False/wait\<^sup><\<rbrakk> \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)\<lbrakk>False/wait\<^sup><\<rbrakk>"      
     by (pred_auto)
   also have "... \<longleftrightarrow> R1(P\<^sub>1 \<turnstile> P\<^sub>2) \<sqsubseteq> R1(Q\<^sub>1 \<turnstile> Q\<^sub>2)"      
     by (simp add: usubst assms closure unrest)
-  also have "... \<longleftrightarrow> `P\<^sub>1 \<Rightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> P\<^sub>2`"
+  also have "... \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> P\<^sub>2`"
     by (simp add: R1_design_refine assms)
   finally show ?thesis .
 qed 
 
 lemma rdes_refine_intro:
-  assumes "`P\<^sub>1 \<Rightarrow> P\<^sub>2`" "`P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> Q\<^sub>1`"
+  assumes "`P\<^sub>1 \<longrightarrow> P\<^sub>2`" "`P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> Q\<^sub>1`"
   shows "\<^bold>R(P\<^sub>1 \<turnstile> Q\<^sub>1) \<sqsubseteq> \<^bold>R(P\<^sub>2 \<turnstile> Q\<^sub>2)"
   by (simp add: RH_mono assms design_refine_intro)
 
 lemma srdes_refine_intro:
-  assumes "`P\<^sub>1 \<Rightarrow> P\<^sub>2`" "`P\<^sub>1 \<and> Q\<^sub>2 \<Rightarrow> Q\<^sub>1`"
+  assumes "`P\<^sub>1 \<longrightarrow> P\<^sub>2`" "`P\<^sub>1 \<and> Q\<^sub>2 \<longrightarrow> Q\<^sub>1`"
   shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> Q\<^sub>1) \<sqsubseteq> \<^bold>R\<^sub>s(P\<^sub>2 \<turnstile> Q\<^sub>2)"
   by (simp add: RHS_mono assms design_refine_intro)
 
@@ -544,12 +540,12 @@ subsection \<open> Distribution laws \<close>
 lemma RHS_design_choice: "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> Q\<^sub>1) \<sqinter> \<^bold>R\<^sub>s(P\<^sub>2 \<turnstile> Q\<^sub>2) = \<^bold>R\<^sub>s((P\<^sub>1 \<and> P\<^sub>2) \<turnstile> (Q\<^sub>1 \<or> Q\<^sub>2))"
   by (metis RHS_inf design_choice)
     
-lemma RHS_design_sup: "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> Q\<^sub>1) \<squnion> \<^bold>R\<^sub>s(P\<^sub>2 \<turnstile> Q\<^sub>2) = \<^bold>R\<^sub>s((P\<^sub>1 \<or> P\<^sub>2) \<turnstile> ((P\<^sub>1 \<Rightarrow> Q\<^sub>1) \<and> (P\<^sub>2 \<Rightarrow> Q\<^sub>2)))"
-  by (metis RHS_sup design_inf)
+lemma RHS_design_sup: "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> Q\<^sub>1) \<squnion> \<^bold>R\<^sub>s(P\<^sub>2 \<turnstile> Q\<^sub>2) = \<^bold>R\<^sub>s((P\<^sub>1 \<or> P\<^sub>2) \<turnstile> ((P\<^sub>1 \<longrightarrow> Q\<^sub>1) \<and> (P\<^sub>2 \<longrightarrow> Q\<^sub>2)))"
+  by (simp add: RHS_sup[THEN sym] design_inf, pred_simp)
 
 lemma RHS_design_USUP:
   assumes "A \<noteq> {}"
-  shows "(\<Sqinter> i \<in> A \<bullet> \<^bold>R\<^sub>s(P(i) \<turnstile> Q(i))) = \<^bold>R\<^sub>s((\<Squnion> i \<in> A \<bullet> P(i)) \<turnstile> (\<Sqinter> i \<in> A \<bullet> Q(i)))"
+  shows "(\<Sqinter> i \<in> A. \<^bold>R\<^sub>s(P(i) \<turnstile> Q(i))) = \<^bold>R\<^sub>s((\<Squnion> i \<in> A. P(i)) \<turnstile> (\<Sqinter> i \<in> A. Q(i)))"
   by (subst RHS_INF[OF assms, THEN sym], simp add: design_UINF_mem assms)
 
 end

@@ -281,9 +281,11 @@ lemma R3_cancels_R3c: "R3(R3c(P)) = R3(P)"
 lemma R3h_cancels_R3c: "R3h(R3c(P)) = R3h(P)"
   by (pred_auto)
 
-lemma out_unrest_get_pre [unrest]: "out\<alpha> \<sharp> get\<^bsub>ns_alpha fst\<^sub>L x\<^esub>"
+lemma in_unrest_get_post [unrest]: "in\<alpha> \<sharp> get\<^bsub>ns_alpha snd\<^sub>L x\<^esub>"
   by (expr_simp)
 
+lemma out_unrest_get_pre [unrest]: "out\<alpha> \<sharp> get\<^bsub>ns_alpha fst\<^sub>L x\<^esub>"
+  by (expr_simp)
 
 lemma R3c_semir_form:
   "(R3c(P) ;; R3c(R1(Q))) = R3c(P ;; R3c(R1(Q)))"

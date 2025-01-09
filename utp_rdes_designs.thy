@@ -6,10 +6,10 @@ begin
 
 subsection \<open> Reactive design forms \<close>
 
-lemma rdes_skip_def: "II\<^sub>C = \<^bold>R(true \<turnstile> (($tr\<^sup>> = $tr\<^sup>< \<and> \<not> $wait\<^sup>>)\<^sub>e \<and> \<lceil>II\<rceil>\<^sub>R))"
+lemma rdes_skip_def: "II\<^sub>C = \<^bold>R(true \<turnstile> (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<not>wait\<^sup>> \<and> \<lceil>II\<rceil>\<^sub>R))"
   apply (pred_auto) using minus_zero_eq by blast+
 
-lemma srdes_skip_def: "II\<^sub>R = \<^bold>R\<^sub>s(true \<turnstile> (($tr\<^sup>> = $tr\<^sup>< \<and> \<not> $wait\<^sup>>)\<^sub>e \<and> \<lceil>II\<rceil>\<^sub>R))"
+lemma srdes_skip_def: "II\<^sub>R = \<^bold>R\<^sub>s(true \<turnstile> (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<not>wait\<^sup>> \<and> \<lceil>II\<rceil>\<^sub>R))"
   apply (pred_auto) using minus_zero_eq by blast+
 
 lemma Chaos_def: "Chaos = \<^bold>R\<^sub>s(false \<turnstile> true)"
@@ -225,12 +225,12 @@ lemma R1_R3h_design:
 lemma R3c_R1_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
   shows "(R3c(R1(P \<turnstile> Q)) ;; R3c(R1(R \<turnstile> S))) =
-       R3c(R1((\<not> (R1(\<not> P) ;; R1(true)) \<and> \<not> ((R1(Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1(\<not> R)))
+       R3c(R1((\<not> (R1(\<not> P) ;; R1(true)) \<and> \<not> ((R1(Q) \<and> \<not> wait\<^sup>>) ;; R1(\<not> R)))
        \<turnstile> (R1(Q) ;; (\<lceil>II\<rceil>\<^sub>D \<triangleleft> $wait\<^sup>< \<triangleright> R1(S)))))"
 proof -
   have 1:"(\<not> (R1 (\<not> R3c_pre P) ;; R1 true)) = (R3c_pre (\<not> (R1 (\<not> P) ;; R1 true)))"
     by (pred_auto; blast)
-  have 2:"(\<not> (R1 (R3c_post Q) ;; R1 (\<not> R3c_pre R))) = R3c_pre(\<not> ((R1 Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R)))"
+  have 2:"(\<not> (R1 (R3c_post Q) ;; R1 (\<not> R3c_pre R))) = R3c_pre(\<not> ((R1 Q \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R)))"
     by (pred_auto, blast, metis (full_types), blast)
   have 3:"(R1 (R3c_post Q) ;; R1 (R3c_post S)) = R3c_post (R1 Q ;; (\<lceil>II\<rceil>\<^sub>D \<triangleleft> $wait\<^sup>< \<triangleright> R1 S))"
     by (pred_auto, blast)
@@ -244,12 +244,12 @@ qed
 lemma R3h_R1_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
   shows "(R3h(R1(P \<turnstile> Q)) ;; R3h(R1(R \<turnstile> S))) =
-       R3h(R1((\<not> (R1(\<not> P) ;; R1(true)) \<and> \<not> ((R1(Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1(\<not> R)))
+       R3h(R1((\<not> (R1(\<not> P) ;; R1(true)) \<and> \<not> ((R1(Q) \<and> \<not> wait\<^sup>>) ;; R1(\<not> R)))
        \<turnstile> (R1(Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1(S)))))"
 proof -
   have 1:"(\<not> (R1 (\<not> R3c_pre P) ;; R1 true)) = (R3c_pre (\<not> (R1 (\<not> P) ;; R1 true)))"
    by (pred_auto; blast)
-  have 2:"(\<not> (R1 (R3h_post Q) ;; R1 (\<not> R3c_pre R))) = R3c_pre(\<not> ((R1 Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R)))"
+  have 2:"(\<not> (R1 (R3h_post Q) ;; R1 (\<not> R3c_pre R))) = R3c_pre(\<not> ((R1 Q \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R)))"
     by (pred_auto, blast, metis (full_types), blast)
   have 3:"(R1 (R3h_post Q) ;; R1 (R3h_post S)) = R3h_post (R1 Q ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 S))"
     by (pred_auto; metis Orderings.order_eq_iff)
@@ -272,7 +272,7 @@ done
 lemma RH_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
   shows "(RH(P \<turnstile> Q) ;; RH(R \<turnstile> S)) =
-       RH((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> $wait\<^sup>>))\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+       RH((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> wait\<^sup>>)) ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; (\<lceil>II\<rceil>\<^sub>D \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))"
 proof -
   have 1: "R2c (R1 (\<not> R2s P) ;; R1 true) = (R1 (\<not> R2s P) ;; R1 true)"
@@ -291,13 +291,13 @@ proof -
       by (simp add: 1)
   qed
 
-  have 2:"R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))"
+  have 2:"R2c ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))"
   proof -
-    have "((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R)) = R1 (R2 (Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R2 (\<not> R))"
+    have "((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R)) = R1 (R2 (Q \<and> \<not> wait\<^sup>>) ;; R2 (\<not> R))"
       by (pred_auto)
-    hence "R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R)) = (R2 (Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R2 (\<not> R))"
+    hence "R2c ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R)) = (R2 (Q \<and> \<not> wait\<^sup>>) ;; R2 (\<not> R))"
       by (metis (no_types) R1_R2c_is_R2 R2_seqr_distribute R2c_seq)
-    also have "... = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))"
+    also have "... = ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))"
       by (pred_auto)
     finally show ?thesis .
   qed
@@ -311,10 +311,10 @@ proof -
   have "(R1(R2s(R3c(P \<turnstile> Q))) ;; R1(R2s(R3c(R \<turnstile> S)))) =
         ((R3c(R1(R2s(P) \<turnstile> R2s(Q)))) ;; R3c(R1(R2s(R) \<turnstile> R2s(S))))"
     by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_R3c_commute R2c_R3c_commute R2s_design)
-  also have "... = R3c (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3c (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; (\<lceil>II\<rceil>\<^sub>D \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S)))))"
     by (simp add: R3c_R1_design_composition assms unrest)
-  also have "... = R3c(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3c(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
                               (R1 (R2s Q) ;; (\<lceil>II\<rceil>\<^sub>D \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))))"
     by (simp add: R2c_design R2c_and R2c_not 1 2 3)
   finally show ?thesis
@@ -324,7 +324,7 @@ qed
 lemma RHS_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q) ;; \<^bold>R\<^sub>s(R \<turnstile> S)) =
-       \<^bold>R\<^sub>s((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> $wait\<^sup>>))\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+       \<^bold>R\<^sub>s((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> (\<not> wait\<^sup>>)) ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))"
 proof -
   have 1: "R2c (R1 (\<not> R2s P) ;; R1 true) = (R1 (\<not> R2s P) ;; R1 true)"
@@ -343,7 +343,7 @@ proof -
       by (simp add: 1)
   qed
 
-  have 2:"R2c ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))"
+  have 2:"R2c ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R)) = ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))"
     apply pred_auto
     apply (metis diff_add_cancel_left' le_add trace_class.add_diff_cancel_left trace_class.add_left_mono)
     apply (metis diff_add_cancel_left' minus_cancel_le)
@@ -380,10 +380,10 @@ proof -
   have "(R1(R2s(R3h(P \<turnstile> Q))) ;; R1(R2s(R3h(R \<turnstile> S)))) =
         ((R3h(R1(R2s(P) \<turnstile> R2s(Q)))) ;; R3h(R1(R2s(R) \<turnstile> R2s(S))))"
     by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_R3h_commute R2c_R3h_commute R2s_design)
-  also have "... = R3h (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3h (R1 ((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
                        (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S)))))"
     by (simp add: R3h_R1_design_composition assms unrest)
-  also have "... = R3h(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R2s R))) \<turnstile>
+  also have "... = R3h(R1(R2c((\<not> (R1 (\<not> R2s P) ;; R1 true) \<and> \<not> ((R1 (R2s Q) \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R2s R))) \<turnstile>
                               (R1 (R2s Q) ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))))))"
     by (simp add: R2c_design R2c_and R2c_not 1 2 3)
   finally show ?thesis
@@ -395,7 +395,7 @@ lemma RHS_R2s_design_composition:
     "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
     "P is R2s" "Q is R2s" "R is R2s" "S is R2s"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q) ;; \<^bold>R\<^sub>s(R \<turnstile> S)) =
-       \<^bold>R\<^sub>s((\<not> (R1 (\<not> P) ;; R1 true) \<and> \<not> ((R1 Q \<and> \<not> $wait\<^sup>>)\<^sub>e ;; R1 (\<not> R))) \<turnstile>
+       \<^bold>R\<^sub>s((\<not> (R1 (\<not> P) ;; R1 true) \<and> \<not> ((R1 Q \<and> \<not> wait\<^sup>>) ;; R1 (\<not> R))) \<turnstile>
                        (R1 Q ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 S)))"
 proof -
   have f1: "R2s P = P"

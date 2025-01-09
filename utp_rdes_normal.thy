@@ -443,9 +443,8 @@ lemma NSRD_intro':
 lemma NSRD_RC_intro:
   assumes "P is SRD" "pre\<^sub>R(P) is RC" "$st\<^sup>> \<sharp> peri\<^sub>R(P)"
   shows "P is NSRD"
-  by (metis Healthy_def NSRD_form SRD_reactive_tri_design assms(1) assms(2) assms(3) 
-      ex_unrest rea_not_false  wp_rea_RC_false wp_rea_def)
-    
+  by (simp add: NSRD_intro RC1_prop RC_implies_RC1 assms(1) assms(2) assms(3))
+  
 lemma NSRD_rdes_intro [closure]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"
   shows "\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R) is NSRD"
@@ -454,7 +453,6 @@ lemma NSRD_rdes_intro [closure]:
 lemma SRD_RD3_implies_NSRD:
   "\<lbrakk> P is SRD; P is RD3 \<rbrakk> \<Longrightarrow> P is NSRD"
   by (metis (no_types, lifting) Healthy_def NSRD_def RHS_idem SRD_healths(4) SRD_reactive_design comp_apply)
-
 
 lemma NSRD_iff:
   "P is NSRD \<longleftrightarrow> ((P is SRD) \<and> (\<not>\<^sub>r pre\<^sub>R(P)) ;; R1(true) = (\<not>\<^sub>r pre\<^sub>R(P)) \<and> ($st\<^sup>> \<sharp> peri\<^sub>R(P)))"
@@ -468,12 +466,12 @@ lemma NSRD_is_RD3 [closure]:
 lemma NSRD_refine_elim:
   assumes
     "P \<sqsubseteq> Q" "P is NSRD" "Q is NSRD"
-    "\<lbrakk> `pre\<^sub>R(P) \<Rightarrow> pre\<^sub>R(Q)`; `pre\<^sub>R(P) \<and> peri\<^sub>R(Q) \<Rightarrow> peri\<^sub>R(P)`; `pre\<^sub>R(P) \<and> post\<^sub>R(Q) \<Rightarrow> post\<^sub>R(P)` \<rbrakk> \<Longrightarrow> R"
+    "\<lbrakk> `pre\<^sub>R(P) \<longrightarrow> pre\<^sub>R(Q)`; `pre\<^sub>R(P) \<and> peri\<^sub>R(Q) \<longrightarrow> peri\<^sub>R(P)`; `pre\<^sub>R(P) \<and> post\<^sub>R(Q) \<longrightarrow> post\<^sub>R(P)` \<rbrakk> \<Longrightarrow> R"
   shows "R"
 proof -
   have "\<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P)) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
     by (simp add: NSRD_is_SRD SRD_reactive_tri_design assms(1) assms(2) assms(3))
-  hence 1:"`pre\<^sub>R P \<Rightarrow> pre\<^sub>R Q`" and 2:"`pre\<^sub>R P \<and> peri\<^sub>R Q \<Rightarrow> peri\<^sub>R P`" and 3:"`pre\<^sub>R P \<and> post\<^sub>R Q \<Rightarrow> post\<^sub>R P`"
+  hence 1:"`pre\<^sub>R P \<longrightarrow> pre\<^sub>R Q`" and 2:"`pre\<^sub>R P \<and> peri\<^sub>R Q \<longrightarrow> peri\<^sub>R P`" and 3:"`pre\<^sub>R P \<and> post\<^sub>R Q \<longrightarrow> post\<^sub>R P`"
     by (simp_all add: RHS_tri_design_refine assms closure)
   with assms(4) show ?thesis
     by simp
@@ -551,8 +549,8 @@ qed
 
 lemma RHS_tri_normal_design_composition:
   assumes
-    "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>2" "$ok \<sharp> R" "$ok \<sharp> S\<^sub>1" "$ok \<sharp> S\<^sub>2"
-    "$wait \<sharp> R" "$wait\<^sup>> \<sharp> Q\<^sub>2" "$wait \<sharp> S\<^sub>1" "$wait \<sharp> S\<^sub>2"
+    "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>2" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S\<^sub>1" "$ok\<^sup>< \<sharp> S\<^sub>2"
+    "$wait\<^sup>< \<sharp> R" "$wait\<^sup>> \<sharp> Q\<^sub>2" "$wait\<^sup>< \<sharp> S\<^sub>1" "$wait\<^sup>< \<sharp> S\<^sub>2"
     "P is R2c" "Q\<^sub>1 is R1" "Q\<^sub>1 is R2c" "Q\<^sub>2 is R1" "Q\<^sub>2 is R2c"
     "R is R2c" "S\<^sub>1 is R1" "S\<^sub>1 is R2c" "S\<^sub>2 is R1" "S\<^sub>2 is R2c"
     "R1 (\<not> P) ;; R1(true) = R1(\<not> P)" "$st\<^sup>> \<sharp> Q\<^sub>1"
@@ -575,7 +573,7 @@ proof -
   have "R1 (\<not> P) ;; R1 true = R1(\<not> P)"
     using RC_implies_RC1[OF assms(1)]
     by (simp add: Healthy_def RC1_def rea_not_def)
-       (metis R1_negate_R1 R1_seqr utp_pred_laws.double_compl)
+       (metis R1_negate_R1 R1_seqr pred_ba.double_compl)
   thus ?thesis
     by (simp add: RHS_tri_normal_design_composition assms closure unrest RR_implies_R2c)
 qed
@@ -606,10 +604,21 @@ lemma NSRD_right_Miracle_tri_lemma:
   shows "P ;; Miracle = \<^bold>R\<^sub>s (pre\<^sub>R P \<turnstile> peri\<^sub>R P \<diamondop> false)"
   by (simp add: NSRD_composition_wp closure assms rdes wp rpred)
 
+lemma ex_st'_RR [closure]: 
+  assumes "P is RR"
+  shows "(\<exists> st\<^sup>> \<Zspot> P) is RR"
+proof -
+  have "(\<exists> st\<^sup>> \<Zspot> RR P) is RR"
+    by pred_auto
+  thus ?thesis
+    by (simp add: Healthy_if assms)
+qed
+
 lemma Miracle_right_anhil_iff:
   assumes "P is NSRD"
   shows "P ;; Miracle = Miracle \<longleftrightarrow> pre\<^sub>R P = true\<^sub>r \<and> (\<exists> st\<^sup>> \<Zspot> peri\<^sub>R P) = false"
-  by (simp add: SRD_right_Miracle_tri_lemma assms closure, simp add: rdes_def srdes_tri_eq_iff closure assms wp rpred, fastforce)
+  by (simp add: SRD_right_Miracle_tri_lemma assms closure) 
+     (simp add: rdes_def srdes_tri_eq_iff closure assms wp rpred, fastforce)
 
 text \<open> The set of non-terminating behaviours is a subset \<close>
 
@@ -620,7 +629,8 @@ proof -
   have "\<^bold>R\<^sub>s (pre\<^sub>R P \<turnstile> peri\<^sub>R P \<diamondop> post\<^sub>R P) \<sqsubseteq> \<^bold>R\<^sub>s (pre\<^sub>R P \<turnstile> peri\<^sub>R P \<diamondop> false)"
     by (rule srdes_tri_refine_intro, pred_auto+)
   thus ?thesis
-    by (simp add: NSRD_elim NSRD_right_Miracle_tri_lemma assms)
+    using assms
+    by (simp add: NSRD_right_Miracle_tri_lemma NSRD_is_SRD SRD_reactive_tri_design)
 qed
 
 text \<open> @{term Chaos} is a right zero of @{term P} precisely when the conjunction of the precondition
@@ -648,7 +658,7 @@ lemma NSRD_power_Suc [closure]:
   "P is NSRD \<Longrightarrow> P ;; P \<^bold>^ n is NSRD"
   by (metis upower_Suc_NSRD_closed upred_semiring.power_Suc)
 
-lemma uplus_NSRD_closed [closure]: "P is NSRD \<Longrightarrow> P\<^sup>+ is NSRD"
+lemma uplus_NSRD_closed [closure]: "P is NSRD \<Longrightarrow> P\<^bold>+ is NSRD"
   by (simp add: uplus_power_def closure)
 
 lemma preR_power:
@@ -663,9 +673,9 @@ next
   have "pre\<^sub>R (P \<^bold>^ (Suc n + 1)) = pre\<^sub>R (P ;; P \<^bold>^ (n+1))"
     by (simp add: upred_semiring.power_Suc)
   also have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P \<^bold>^ (Suc n)))"
-    using NSRD_iff assms preR_NSRD_seq upower_Suc_NSRD_closed by fastforce
+    by (metis NSRD_is_SRD SRD_power_Suc Suc_eq_plus1 assms preR_NSRD_seq)
   also have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r (\<Squnion>i\<in>{0..n}. post\<^sub>R P \<^bold>^ i wp\<^sub>r pre\<^sub>R P))"
-    by (simp add: hyp upred_semiring.power_Suc)
+    by (simp add: hyp upred_semiring.power_Suc, metis (mono_tags, lifting) INF1_E INF1_I)
   also have "... = (pre\<^sub>R P \<and> (\<Squnion>i\<in>{0..n}. post\<^sub>R P wp\<^sub>r (post\<^sub>R P \<^bold>^ i wp\<^sub>r pre\<^sub>R P)))"
     by (simp add: wp)
   also have "... = (pre\<^sub>R P \<and> (\<Squnion>i\<in>{0..n}. (post\<^sub>R P \<^bold>^ (i+1) wp\<^sub>r pre\<^sub>R P)))"
@@ -685,7 +695,7 @@ next
     thus ?thesis by simp
   qed
   also have "... = (\<Squnion>i\<in>insert 0 {1..Suc n}. (post\<^sub>R P \<^bold>^ i wp\<^sub>r pre\<^sub>R P))"
-    by (simp add: conj_upred_def)
+    by (simp add: conj_pred_def)
   also have "... = (\<Squnion>i\<in>{0..Suc n}. post\<^sub>R P \<^bold>^ i wp\<^sub>r pre\<^sub>R P)"
     by (simp add: atLeast0_atMost_Suc_eq_insert_0)
   finally show ?case by (simp add: upred_semiring.power_Suc)
@@ -693,12 +703,12 @@ qed
 
 lemma preR_power' [rdes]:
   assumes "P is NSRD"
-  shows "pre\<^sub>R(P ;; P\<^bold>^n) = (\<Squnion> i\<in>{0..n} \<bullet> (post\<^sub>R(P) \<^bold>^ i) wp\<^sub>r (pre\<^sub>R(P)))"
-  by (simp add: preR_power assms USUP_as_Inf[THEN sym], simp add: USUP_as_Inf_image)
+  shows "pre\<^sub>R(P ;; P\<^bold>^n) = (\<Squnion> i\<in>{0..n}. (post\<^sub>R(P) \<^bold>^ i) wp\<^sub>r (pre\<^sub>R(P)))"
+  by (simp add: preR_power assms)
 
 lemma preR_power_Suc [rdes]:
   assumes "P is NSRD"
-  shows "pre\<^sub>R(P\<^bold>^(Suc n)) = (\<Squnion> i\<in>{0..n} \<bullet> (post\<^sub>R(P) \<^bold>^ i) wp\<^sub>r (pre\<^sub>R(P)))"
+  shows "pre\<^sub>R(P\<^bold>^(Suc n)) = (\<Squnion> i\<in>{0..n}. (post\<^sub>R(P) \<^bold>^ i) wp\<^sub>r (pre\<^sub>R(P)))"
   by (simp add: upred_semiring.power_Suc rdes assms)
 
 declare upred_semiring.power_Suc [simp]
@@ -720,7 +730,8 @@ next
     by (simp only: hyp)
   also
   have "... = (pre\<^sub>R P \<longrightarrow>\<^sub>r peri\<^sub>R P \<or> (post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r post\<^sub>R P ;; (pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r (\<Sqinter>i\<in>{0..n}. post\<^sub>R P \<^bold>^ i) ;; peri\<^sub>R P)))"
-    by (simp add: rdes closure assms, rel_blast)
+    by (simp add: rdes closure assms, pred_auto)
+       (meson atLeastAtMost_iff zero_le)+
   also
   have "... = (pre\<^sub>R P \<longrightarrow>\<^sub>r peri\<^sub>R P \<or> (post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r post\<^sub>R P ;; ((\<Sqinter>i\<in>{0..n}. post\<^sub>R P \<^bold>^ i) ;; peri\<^sub>R P)))"
   proof -
@@ -738,10 +749,10 @@ next
   qed
   also
   have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r peri\<^sub>R P \<or> post\<^sub>R P ;; ((\<Sqinter>i\<in>{0..n}. post\<^sub>R P \<^bold>^ i) ;; peri\<^sub>R P))"
-    by (pred_auto)
+    by (pred_auto, meson+)
   also
   have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r peri\<^sub>R P \<or> ((\<Sqinter>i\<in>{0..n}. post\<^sub>R P \<^bold>^ (Suc i)) ;; peri\<^sub>R P))"
-    by (simp add: seq_Sup_distl seqr_assoc[THEN sym])
+    by (simp add:  seqr_assoc[THEN sym] image_image seq_Sup_distl)
   also
   have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r peri\<^sub>R P \<or> ((\<Sqinter>i\<in>{1..Suc n}. post\<^sub>R P \<^bold>^ i) ;; peri\<^sub>R P))"
   proof -
@@ -754,21 +765,23 @@ next
   qed
   also
   have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P ;; P \<^bold>^ n) \<longrightarrow>\<^sub>r ((\<Sqinter>i\<in>{0..Suc n}. post\<^sub>R P \<^bold>^ i)) ;; peri\<^sub>R P)"
-    by (simp add: SUP_atLeastAtMost_first uinf_or seqr_or_distl seqr_or_distr)
+    by (simp add: SUP_atLeastAtMost_first  seqr_or_distl seqr_or_distr)
+       (simp add: disj_pred_def upred_semiring.distrib_right)
   also
   have "... = (pre\<^sub>R(P\<^bold>^(Suc (Suc n))) \<longrightarrow>\<^sub>r ((\<Sqinter>i\<in>{0..Suc n}. post\<^sub>R P \<^bold>^ i) ;; peri\<^sub>R P))"
     by (simp add: rdes closure assms)
-  finally show ?case by (simp)
+  finally show ?case
+    by (metis Suc_eq_plus1 upred_semiring.power_Suc)
 qed
 
 lemma periR_power' [rdes]:
   assumes "P is NSRD"
-  shows "peri\<^sub>R(P ;; P\<^bold>^n) = (pre\<^sub>R(P\<^bold>^(Suc n)) \<longrightarrow>\<^sub>r (\<Sqinter> i\<in>{0..n} \<bullet> post\<^sub>R(P) \<^bold>^ i) ;; peri\<^sub>R(P))"
-  by (simp add: periR_power assms UINF_as_Sup[THEN sym], simp add: UINF_as_Sup_image)
+  shows "peri\<^sub>R(P ;; P\<^bold>^n) = (pre\<^sub>R(P\<^bold>^(Suc n)) \<longrightarrow>\<^sub>r (\<Sqinter> i\<in>{0..n}. post\<^sub>R(P) \<^bold>^ i) ;; peri\<^sub>R(P))"
+  by (simp add: periR_power assms)
 
 lemma periR_power_Suc [rdes]:
   assumes "P is NSRD"
-  shows "peri\<^sub>R(P\<^bold>^(Suc n)) = (pre\<^sub>R(P\<^bold>^(Suc n)) \<longrightarrow>\<^sub>r (\<Sqinter> i\<in>{0..n} \<bullet> post\<^sub>R(P) \<^bold>^ i) ;; peri\<^sub>R(P))"
+  shows "peri\<^sub>R(P\<^bold>^(Suc n)) = (pre\<^sub>R(P\<^bold>^(Suc n)) \<longrightarrow>\<^sub>r (\<Sqinter> i\<in>{0..n}. post\<^sub>R(P) \<^bold>^ i) ;; peri\<^sub>R(P))"
   by (simp add: rdes assms)
 
 lemma postR_power [rdes]:
@@ -789,12 +802,13 @@ next
   also
   have "... = (pre\<^sub>R P \<longrightarrow>\<^sub>r (post\<^sub>R P wp\<^sub>r pre\<^sub>R (P \<^bold>^ Suc n) \<longrightarrow>\<^sub>r post\<^sub>R P ;; (pre\<^sub>R (P \<^bold>^ Suc n) \<longrightarrow>\<^sub>r post\<^sub>R P \<^bold>^ Suc n)))"
     by (simp add: rdes closure assms, pred_auto)
+       (meson atLeastAtMost_iff least_zero)+
   also
   have "... = (pre\<^sub>R P \<longrightarrow>\<^sub>r (post\<^sub>R P wp\<^sub>r pre\<^sub>R (P \<^bold>^ Suc n) \<longrightarrow>\<^sub>r post\<^sub>R P ;; post\<^sub>R P \<^bold>^ Suc n))"
     by (metis (no_types, lifting) Healthy_if NSRD_is_SRD NSRD_power_Suc R1_power assms hyp postR_SRD_R1 upred_semiring.power_Suc wp_rea_impl_lemma)
   also
   have "... = (pre\<^sub>R P \<and> post\<^sub>R P wp\<^sub>r pre\<^sub>R (P \<^bold>^ Suc n) \<longrightarrow>\<^sub>r post\<^sub>R P \<^bold>^ Suc (Suc n))"
-    by (pred_auto)
+    by (simp add: rea_impl_conj)
   also have "... = (pre\<^sub>R(P\<^bold>^(Suc (Suc n))) \<longrightarrow>\<^sub>r post\<^sub>R P \<^bold>^ Suc (Suc n))"
     by (simp add: rdes closure assms)
   finally show ?case by (simp)
@@ -808,7 +822,7 @@ lemma postR_power_Suc [rdes]:
 lemma power_rdes_def [rdes_def]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^bold>^(Suc n) 
-        = \<^bold>R\<^sub>s((\<Squnion> i\<in>{0..n} \<bullet> (R \<^bold>^ i) wp\<^sub>r P) \<turnstile> ((\<Sqinter> i\<in>{0..n} \<bullet> R \<^bold>^ i) ;; Q) \<diamondop> (R \<^bold>^ Suc n))"
+        = \<^bold>R\<^sub>s((\<Squnion> i\<in>{0..n}. (R \<^bold>^ i) wp\<^sub>r P) \<turnstile> ((\<Sqinter> i\<in>{0..n}. R \<^bold>^ i) ;; Q) \<diamondop> (R \<^bold>^ Suc n))"
 proof (induct n)
   case 0
   then show ?case
@@ -816,71 +830,65 @@ proof (induct n)
 next
   case (Suc n)
 
-  have 1: "(P \<and> (\<Squnion> i \<in> {0..n} \<bullet> R wp\<^sub>r (R \<^bold>^ i wp\<^sub>r P))) = (\<Squnion> i \<in> {0..Suc n} \<bullet> R \<^bold>^ i wp\<^sub>r P)"
+  have 1: "(P \<and> (\<Squnion> i \<in> {0..n}. R wp\<^sub>r (R \<^bold>^ i wp\<^sub>r P))) = (\<Squnion> i \<in> {0..Suc n}. R \<^bold>^ i wp\<^sub>r P)"
     (is "?lhs = ?rhs")
   proof -
-    have "?lhs = (P \<and> (\<Squnion> i \<in> {0..n} \<bullet> (R \<^bold>^ Suc i wp\<^sub>r P)))"
+    have "?lhs = (P \<and> (\<Squnion> i \<in> {0..n}. (R \<^bold>^ Suc i wp\<^sub>r P)))"
       by (simp add: wp closure assms)
-    also have "... = (P \<and> (\<Squnion> i \<in> {0..n}. (R \<^bold>^ Suc i wp\<^sub>r P)))"
-      by (simp only: USUP_as_Inf_collect)
     also have "... = (P \<and> (\<Squnion> i \<in> {1..Suc n}. (R \<^bold>^ i wp\<^sub>r P)))"
       by (metis (no_types, lifting) INF_cong One_nat_def image_Suc_atLeastAtMost image_image)
     also have "... = (\<Squnion> i \<in> insert 0 {1..Suc n}. (R \<^bold>^ i wp\<^sub>r P))"
-      by (simp add: wp assms closure conj_upred_def)
+      by (simp add: wp assms closure conj_pred_def)
     also have "... = (\<Squnion> i \<in> {0..Suc n}. (R \<^bold>^ i wp\<^sub>r P))"        
       by (simp add: atLeastAtMost_insertL)      
-    finally show ?thesis
-      by (simp add: USUP_as_Inf_collect)
+    finally show ?thesis .
   qed
 
-  have 2: "(Q \<or> R ;; (\<Sqinter> i \<in> {0..n} \<bullet> R \<^bold>^ i) ;; Q) = (\<Sqinter> i \<in> {0..Suc n} \<bullet> R \<^bold>^ i) ;; Q"
+  have 2: "(Q \<or> R ;; (\<Sqinter> i \<in> {0..n}. R \<^bold>^ i) ;; Q) = (\<Sqinter> i \<in> {0..Suc n}. R \<^bold>^ i) ;; Q"
     (is "?lhs = ?rhs")
   proof -
-    have "?lhs = (Q \<or> (\<Sqinter> i \<in> {0..n} \<bullet> R \<^bold>^ Suc i) ;; Q)"
-      by (simp add: seqr_assoc[THEN sym] seq_UINF_distl)
-    also have "... = (Q \<or> (\<Sqinter> i \<in> {0..n}. R \<^bold>^ Suc i) ;; Q)"        
-      by (simp only: UINF_as_Sup_collect)
+    have "?lhs = (Q \<or> (\<Sqinter> i \<in> {0..n}. R \<^bold>^ Suc i) ;; Q)"
+      by (simp add: seqr_assoc[THEN sym] seq_SUP_distl)
     also have "... = (Q \<or> (\<Sqinter> i \<in> {1..Suc n}. R \<^bold>^ i) ;; Q)"
       by (metis One_nat_def image_Suc_atLeastAtMost image_image)        
     also have "... = ((\<Sqinter> i \<in> insert 0 {1..Suc n}. R \<^bold>^ i) ;; Q)"      
-      by (simp add: disj_upred_def[THEN sym] seqr_or_distl)
+      by (simp add: disj_pred_def[THEN sym] seqr_or_distl)
     also have "... = ((\<Sqinter> i \<in> {0..Suc n}. R \<^bold>^ i) ;; Q)"    
       by (simp add: atLeastAtMost_insertL)
-    finally show ?thesis
-      by (simp add: UINF_as_Sup_collect)
-  qed
-
-  have 3: "(\<Sqinter> i \<in> {0..n} \<bullet> R \<^bold>^ i) ;; Q is RR"
-  proof -
-    have "(\<Sqinter> i \<in> {0..n} \<bullet> R \<^bold>^ i) ;; Q = (\<Sqinter> i \<in> {0..n}. R \<^bold>^ i) ;; Q"
-      by (simp add: UINF_as_Sup_collect)
-    also have "... = (\<Sqinter> i \<in> insert 0 {1..n}. R \<^bold>^ i) ;; Q"
-      by (simp add: atLeastAtMost_insertL)
-    also have "... = (Q \<or> (\<Sqinter> i \<in> {1..n}. R \<^bold>^ i) ;; Q)"
-      by (metis (no_types, lifting) SUP_insert disj_upred_def seqr_left_unit seqr_or_distl upred_semiring.power_0)
-    also have "... = (Q \<or> (\<Sqinter> i \<in> {0..<n}. R \<^bold>^ Suc i) ;; Q)"
-      by (metis One_nat_def atLeastLessThanSuc_atLeastAtMost image_Suc_atLeastLessThan image_image)
-    also have "... = (Q \<or> (\<Sqinter> i \<in> {0..<n} \<bullet> R \<^bold>^ Suc i) ;; Q)"
-      by (simp add: UINF_as_Sup_collect)
-    also have "... is RR"
-      by (simp_all add: closure assms)
     finally show ?thesis .
   qed
-  from 1 2 3 Suc show ?case
-    by (simp add: Suc RHS_tri_normal_design_composition' closure assms wp)
+
+  have 3: "(\<Sqinter> i \<in> {0..n}. R \<^bold>^ i) ;; Q is RR"
+  proof -
+    have "(\<Sqinter> i \<in> {0..n}. R \<^bold>^ i) ;; Q = (\<Sqinter> i \<in> insert 0 {1..n}. R \<^bold>^ i) ;; Q"
+      by (simp add: atLeastAtMost_insertL)
+    also have "... = (Q \<or> (\<Sqinter> i \<in> {1..n}. R \<^bold>^ i) ;; Q)"
+      by (metis (no_types, lifting) SUP_insert disj_pred_def seqr_left_unit seqr_or_distl upred_semiring.power_0)
+    also have "... = (Q \<or> (\<Sqinter> i \<in> {0..<n}. R \<^bold>^ Suc i) ;; Q)"
+      by (metis One_nat_def atLeastLessThanSuc_atLeastAtMost image_Suc_atLeastLessThan image_image)
+    finally show ?thesis
+      by (simp_all add: closure assms)
+  qed
+  show ?case
+    apply (subst upred_semiring.power_Suc)
+    apply (simp only: Suc)
+    apply (subst RHS_tri_normal_design_composition')
+    apply (simp_all add: assms closure)
+    using "3" apply blast
+    apply (simp add: "1" "2" wp_rea_Inf_pre)
+    done
 qed
 
 declare upred_semiring.power_Suc [simp del]
 
 theorem uplus_rdes_def [rdes_def]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"
-  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^sup>+ = \<^bold>R\<^sub>s(R\<^sup>\<star>\<^sup>r wp\<^sub>r P \<turnstile> (R\<^sup>\<star>\<^sup>r ;; Q) \<diamondop> R\<^sup>+)"
+  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^bold>+ = \<^bold>R\<^sub>s(R\<^sup>\<star>\<^sup>r wp\<^sub>r P \<turnstile> (R\<^sup>\<star>\<^sup>r ;; Q) \<diamondop> R\<^bold>+)"
 proof -
-  have 1:"(\<Sqinter> i \<bullet> R \<^bold>^ i) ;; Q = R\<^sup>\<star>\<^sup>r ;; Q"
-    by (metis (no_types) RA1 assms(2) rea_skip_unit(2) rrel_theory.Star_def ustar_alt_def)
+  have 1:"(\<Sqinter> i. R \<^bold>^ i) ;; Q = R\<^sup>\<star>\<^sup>r ;; Q"
+    by (simp add: assms(2) rea_skip_unit(2) rrel_theory.utp_star_def seqr_assoc ustar_def)
   show ?thesis
-    by (simp add: uplus_power_def seq_UINF_distr wp closure assms rdes_def)
-       (metis "1" seq_UINF_distr')       
+    apply (simp add: uplus_power_def seq_SUP_distr wp closure assms rdes_def)
 qed
 
 subsection \<open> UTP theory \<close>
@@ -900,7 +908,7 @@ interpretation nsrdes_theory: utp_theory_kleene NSRD II\<^sub>R
   and nsrdes_bottom: "nsrdes_theory.utp_bottom = Chaos"
 proof -
   have "utp_theory_continuous NSRD"
-    by (unfold_locales, simp_all add: NSRD_idem NSRD_Continuous)
+    by (unfold_locales, simp_all add: NSRD_Idempotent NSRD_Continuous)
   then interpret utp_theory_continuous NSRD
     by simp
   show t: "utp_top = Miracle" and b:"utp_bottom = Chaos"
@@ -923,6 +931,6 @@ lemma StarR_rdes_def [rdes_def]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"
   shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^sup>\<star>\<^sup>R = \<^bold>R\<^sub>s((R\<^sup>\<star>\<^sup>r wp\<^sub>r P) \<turnstile> (R\<^sup>\<star>\<^sup>r ;; Q) \<diamondop> R\<^sup>\<star>\<^sup>r)"
   by (simp add: StarR_def rrel_theory.Star_alt_def nsrdes_theory.Star_alt_def closure assms)
-     (simp add: rrel_theory.Star_alt_def assms closure rdes_def unrest rpred disj_upred_def)
+     (simp add: rrel_theory.Star_alt_def assms closure rdes_def unrest rpred disj_pred_def)
 
 end

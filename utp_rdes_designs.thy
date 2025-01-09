@@ -6,8 +6,6 @@ begin
 
 subsection \<open> Reactive design forms \<close>
 
-term "tr\<^sup>> = tr\<^sup><"
-
 lemma rdes_skip_def: "II\<^sub>C = \<^bold>R(true \<turnstile> (($tr\<^sup>> = $tr\<^sup>< \<and> \<not> $wait\<^sup>>)\<^sub>e \<and> \<lceil>II\<rceil>\<^sub>R))"
   apply (pred_auto) using minus_zero_eq by blast+
 
@@ -186,6 +184,13 @@ proof -
   thus ?thesis
     by (simp add: assms ex_unrest)
 qed
+
+theorem R1_design_composition':
+  assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S"
+  shows
+  "(R1(P \<turnstile> Q) ;; R1(R \<turnstile> S)) =
+    R1(((\<not>\<^sub>r P) wp\<^sub>r false \<and> R1(Q) wp\<^sub>r R) \<turnstile> (R1(Q) ;; R1(S)))"
+  by (simp add: R1_design_composition assms, (pred_auto; blast))
 
 theorem R1_design_composition_RR:
   assumes "P is RR" "Q is RR" "R is RR" "S is RR"

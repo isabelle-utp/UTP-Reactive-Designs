@@ -881,14 +881,26 @@ qed
 
 declare upred_semiring.power_Suc [simp del]
 
+lemma pred_nat_Sup_atLeastAtMost:
+  fixes P :: "nat \<Rightarrow> '\<alpha> pred"
+  shows "(\<Sqinter> n. \<Sqinter>i\<in>{0..n}. P i) = (\<Sqinter>i. P i)"
+  using atMost_atLeast0 by (pred_auto)
+
+lemma pred_nat_Inf_atLeastAtMost:
+  fixes P :: "nat \<Rightarrow> '\<alpha> pred"
+  shows "(\<Squnion> n. \<Squnion>i\<in>{0..n}. P i) = (\<Squnion>i. P i)"
+  using atMost_atLeast0 by pred_auto
+
 theorem uplus_rdes_def [rdes_def]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"
-  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^bold>+ = \<^bold>R\<^sub>s(R\<^sup>\<star>\<^sup>r wp\<^sub>r P \<turnstile> (R\<^sup>\<star>\<^sup>r ;; Q) \<diamondop> R\<^bold>+)"
+  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^bold>+ = \<^bold>R\<^sub>s((R\<^sup>\<star>\<^sup>r wp\<^sub>r P) \<turnstile> (R\<^sup>\<star>\<^sup>r ;; Q) \<diamondop> R\<^bold>+)"
 proof -
   have 1:"(\<Sqinter> i. R \<^bold>^ i) ;; Q = R\<^sup>\<star>\<^sup>r ;; Q"
     by (simp add: assms(2) rea_skip_unit(2) rrel_theory.utp_star_def seqr_assoc ustar_def)
+
   show ?thesis
-    apply (simp add: uplus_power_def seq_SUP_distr wp closure assms rdes_def)
+    by (simp add: uplus_power_def seq_SUP_distr wp closure assms rdes_def 1[THEN sym] pred_nat_Sup_atLeastAtMost pred_nat_Inf_atLeastAtMost)
+
 qed
 
 subsection \<open> UTP theory \<close>
@@ -924,8 +936,6 @@ definition StarR :: "('s, 't::trace, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, 
 "StarR \<equiv> nsrdes_theory.utp_star"
 
 text \<open> We also show how to calculate the Kleene closure of a reactive design. \<close>
-
-thm rdes_def
 
 lemma StarR_rdes_def [rdes_def]:
   assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q"

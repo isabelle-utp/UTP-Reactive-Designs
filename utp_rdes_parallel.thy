@@ -219,25 +219,10 @@ lemma parallel_ok_cases:
   ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>t) ;; (M\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
   ((P\<^sup>t \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
   ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)))"
-proof -
-  have "((P \<parallel>\<^sub>s Q) ;; M) = (\<Sqinter> ok\<^sub>0. (P \<parallel>\<^sub>s Q)\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>/0:ok\<^sup>>\<rbrakk> ;; M\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>/0:ok\<^sup><\<rbrakk>)"
-    by (simp add: seqr_middle[of "ok ;\<^sub>L mrg_left"] comp_vwb_lens, pred_auto)
-  also have "... = (\<Sqinter> ok\<^sub>0. \<Sqinter> ok\<^sub>1. ((P \<parallel>\<^sub>s Q)\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>/0:ok\<^sup>>\<rbrakk>\<lbrakk>\<guillemotleft>ok\<^sub>1\<guillemotright>/1:ok\<^sup>>\<rbrakk>) ;; (M\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>/0:ok\<^sup><\<rbrakk>\<lbrakk>\<guillemotleft>ok\<^sub>1\<guillemotright>/1:ok\<^sup><\<rbrakk>))"
-    by (simp add: seqr_middle[of "ok ;\<^sub>L mrg_right"] comp_vwb_lens, pred_auto)
-  also have "... = (\<Sqinter> ok\<^sub>0. \<Sqinter> ok\<^sub>1. (P\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>/ok\<^sup>>\<rbrakk> \<parallel>\<^sub>s Q\<lbrakk>\<guillemotleft>ok\<^sub>1\<guillemotright>/ok\<^sup>>\<rbrakk>) ;; (M\<lbrakk>\<guillemotleft>ok\<^sub>0\<guillemotright>,\<guillemotleft>ok\<^sub>1\<guillemotright>/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>))"
-    by (pred_auto)
-  also have "... = (
-      ((P\<^sup>t \<parallel>\<^sub>s Q\<^sup>t) ;; (M\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>t) ;; (M\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      ((P\<^sup>t \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)))"
-    by (simp add: true_pred_def[THEN sym] false_pred_def[THEN sym] disj_assoc
-      pred_ba.sup.left_commute pred_ba.sup_commute usubst)
-  finally show ?thesis .
-qed
+  by (pred_auto, (metis (full_types))+)
 
 lemma skip_srea_ok_f [usubst]:
-  "II\<^sub>R\<^sup>f = R1(\<not>$ok)"
+  "II\<^sub>R\<^sup>f = R1(\<not>ok\<^sup><)"
   by (pred_auto)
 
 lemma nmerge0_rd_unrest [unrest]:
@@ -251,15 +236,15 @@ lemma parallel_assm_lemma:
 proof -
   have "pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = pre\<^sub>s \<dagger> ((P \<parallel>\<^sub>s Q) ;; M\<^sub>R(M))"
     by (simp add: par_by_merge_def)
-  also have "... = ((P \<parallel>\<^sub>s Q)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> ;; N\<^sub>R M ;; R1(\<not> $ok))"
-    by (simp add: merge_rd_def usubst, pred_auto)
-  also have "... = ((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^sub>s Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; N\<^sub>1(M) ;; R1(\<not> $ok))"
-    by (pred_auto robust, (metis)+)
+  also have "... = ((P \<parallel>\<^sub>s Q)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> ;; N\<^sub>R M ;; R1(\<not> ok\<^sup><))"
+    apply (simp add: merge_rd_def usubst)
+  also have "... = ((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^sub>s Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; N\<^sub>1(M) ;; R1(\<not> ok\<^sup><))"
+    by (pred_auto, (metis)+)
   also have "... = ((
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> $ok))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> $ok))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> $ok))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> $ok)))) )"
+      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
+      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
+      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
+      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><)))) )"
     (is "_ = (?C1 \<or>\<^sub>p ?C2 \<or>\<^sub>p ?C3 \<or>\<^sub>p ?C4)")
     by (subst parallel_ok_cases, subst_tac)
   also have "... = (?C2 \<or> ?C3)"

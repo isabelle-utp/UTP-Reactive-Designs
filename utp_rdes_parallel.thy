@@ -6,6 +6,9 @@ theory utp_rdes_parallel
     utp_rdes_tactics
 begin
 
+lemma par_by_merge_mono: "\<lbrakk> P\<^sub>1 \<sqsubseteq> P\<^sub>2; Q\<^sub>1 \<sqsubseteq> Q\<^sub>2; M\<^sub>1 \<sqsubseteq> M\<^sub>2 \<rbrakk> \<Longrightarrow> P\<^sub>1 \<parallel>\<^bsub>M\<^sub>1\<^esub> Q\<^sub>1 \<sqsubseteq> P\<^sub>2 \<parallel>\<^bsub>M\<^sub>2\<^esub> Q\<^sub>2"
+  by (pred_auto, metis)
+
 text \<open> R3h implicitly depends on RD1, and therefore it requires that both sides be RD1. We also
   require that both sides are R3c, and that @{term "wait\<^sub>m"} is a quasi-unit, and @{term "div\<^sub>m"} yields
   divergence. \<close>
@@ -42,7 +45,7 @@ proof -
   also have "... = (((\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> \<triangleleft> $ok\<^sup>< \<triangleright> (P \<parallel>\<^bsub>M\<^esub> Q)\<lbrakk>False,True/ok\<^sup><,wait\<^sup><\<rbrakk>) \<triangleleft> $wait\<^sup>< \<triangleright> (P \<parallel>\<^bsub>M\<^esub> Q))"
   proof -
     have "(P \<parallel>\<^bsub>M\<^esub> Q)\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk> = ((\<lceil>P\<rceil>\<^sub>0 \<and> \<lceil>Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; R3hm(M))\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
-      by (simp add: par_by_merge_def U0_as_alpha U1_as_alpha assms Healthy_if, rel_simp)
+      by (simp add: par_by_merge_def par_sep_def U0_as_alpha U1_as_alpha assms Healthy_if, rel_simp)
     also have "... = ((\<lceil>P\<rceil>\<^sub>0 \<and> \<lceil>Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> <:st\<^sup>< \<Zspot> CPTYPE(M,($\<^bold>v\<^sup>> = $<\<^sup><)\<^sub>e)))\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
       by (pred_simp, meson)
     also have "... = ((\<lceil>R3h(P)\<rceil>\<^sub>0 \<and> \<lceil>R3h(Q)\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> <:st\<^sup>< \<Zspot> CPTYPE(M, ($\<^bold>v\<^sup>> = $<\<^sup><)\<^sub>e)))\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>"
@@ -214,12 +217,22 @@ lemma parallel_RR_closed:
   by (rule RR_R2_intro, simp_all add: unrest assms RR_implies_R2 closure)
 
 lemma parallel_ok_cases:
+"P \<parallel>\<^bsub>M\<^esub> Q = (
+  (P\<^sup>t \<parallel>\<^bsub>M\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>\<^esub> Q\<^sup>t) \<or>
+  (P\<^sup>f \<parallel>\<^bsub>M\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>\<^esub> Q\<^sup>t) \<or>
+  (P\<^sup>t \<parallel>\<^bsub>M\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>\<^esub> Q\<^sup>f) \<or>
+  (P\<^sup>f \<parallel>\<^bsub>M\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>\<^esub> Q\<^sup>f))"
+  by (pred_auto, (metis (full_types))+)
+
+(*
+lemma parallel_ok_cases:
 "((P \<parallel>\<^sub>s Q) ;; M) = (
   ((P\<^sup>t \<parallel>\<^sub>s Q\<^sup>t) ;; (M\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
   ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>t) ;; (M\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
   ((P\<^sup>t \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
   ((P\<^sup>f \<parallel>\<^sub>s Q\<^sup>f) ;; (M\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)))"
   by (pred_auto, (metis (full_types))+)
+*)
 
 lemma skip_srea_ok_f [usubst]:
   "II\<^sub>R\<^sup>f = R1(\<not>ok\<^sup><)"
@@ -229,48 +242,53 @@ lemma nmerge0_rd_unrest [unrest]:
   "$0:ok\<^sup>< \<sharp> N\<^sub>0 M" "$1:ok\<^sup>< \<sharp> N\<^sub>0 M"
   by (pred_auto)+
 
+term unrest
+
+lemma subst_upd_lit_seql [usubst]: "\<sigma>(x\<^sup>< \<leadsto> \<guillemotleft>v\<guillemotright>) \<dagger> (P ;; Q) = \<sigma> \<dagger> (([x\<^sup>< \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> P) ;; Q)"
+  by pred_auto
+
+lemma subst_upd_lit_seqr [usubst]: "\<sigma>(x\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>) \<dagger> (P ;; Q) = \<sigma> \<dagger> (P ;; [x\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> Q)"
+  by pred_auto
+
+expr_constructor wait_f
+expr_constructor wait_t
+
 lemma parallel_assm_lemma:
   assumes "P is RD2"
   shows "pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (((pre\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> (cmt\<^sub>s \<dagger> Q))
                                  \<or> ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> (pre\<^sub>s \<dagger> Q)))"
 proof -
-  have "pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = pre\<^sub>s \<dagger> ((P \<parallel>\<^sub>s Q) ;; M\<^sub>R(M))"
-    by (simp add: par_by_merge_def)
-  also have "... = ((P \<parallel>\<^sub>s Q)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> ;; N\<^sub>R M ;; R1(\<not> ok\<^sup><))"
-    apply (simp add: merge_rd_def usubst)
-  also have "... = ((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^sub>s Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; N\<^sub>1(M) ;; R1(\<not> ok\<^sup><))"
-    by (pred_auto, (metis)+)
-  also have "... = ((
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t) ;; ((N\<^sub>1 M)\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>t \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><))) \<or>
-      (((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f \<parallel>\<^sub>s (Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)\<^sup>f) ;; ((N\<^sub>1 M)\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> ;; R1(\<not> ok\<^sup><)))) )"
-    (is "_ = (?C1 \<or>\<^sub>p ?C2 \<or>\<^sub>p ?C3 \<or>\<^sub>p ?C4)")
-    by (subst parallel_ok_cases, subst_tac)
+  have "pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^bsub>N\<^sub>1(M) ;; R1(\<not> ok\<^sup><)\<^esub> Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)"
+    by (simp add: merge_rd_def nmerge_rd_def nmerge_rd1_def usubst unrest assms closure, pred_auto)
+
+  also have "... = 
+    (([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> P)\<lbrakk>True/ok\<^sup>>\<rbrakk> \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> True] \<dagger> (N\<^sub>1 M ;; R1 (\<not> ($ok)\<^sup><))\<^esub> ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> Q)\<lbrakk>True/ok\<^sup>>\<rbrakk> \<or>
+     ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> P)\<lbrakk>False/ok\<^sup>>\<rbrakk> \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> True] \<dagger> (N\<^sub>1 M ;; R1 (\<not> ($ok)\<^sup><))\<^esub> ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> Q)\<lbrakk>True/ok\<^sup>>\<rbrakk> \<or>
+     ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> P)\<lbrakk>True/ok\<^sup>>\<rbrakk> \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> False] \<dagger> (N\<^sub>1 M ;; R1 (\<not> ($ok)\<^sup><))\<^esub> ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> Q)\<lbrakk>False/ok\<^sup>>\<rbrakk> \<or>
+     ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> P)\<lbrakk>False/ok\<^sup>>\<rbrakk> \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> False] \<dagger> (N\<^sub>1 M ;; R1 (\<not> ($ok)\<^sup><))\<^esub> ([ok\<^sup>< \<leadsto> True, wait\<^sup>< \<leadsto> False] \<dagger> Q)\<lbrakk>False/ok\<^sup>>\<rbrakk>)"
+    (is "_ = ((?C1 :: _ pred) \<or> ?C2 \<or> ?C3 \<or> ?C4)")
+    by (simp add: parallel_ok_cases[THEN sym])
+
   also have "... = (?C2 \<or> ?C3)"
   proof -
     have "?C1 = false"
       by (pred_auto)
-    moreover have "`?C4 \<Rightarrow> ?C3`" (is "`(?A ;; ?B) \<Rightarrow> (?C ;; ?D)`")
+    moreover have "?C3 \<sqsubseteq> ?C4" (* have "`?C4 \<longrightarrow> ?C3`" (is "`(?A ;; ?B) \<longrightarrow> (?C ;; ?D)`") *)
     proof -
-      from assms have "`P\<^sup>f \<Rightarrow> P\<^sup>t`"
-        by (metis RD2_def H2_equivalence Healthy_def')
-      hence P: "`P\<^sup>f\<^sub>f \<Rightarrow> P\<^sup>t\<^sub>f`"
+      from assms have "`P\<^sup>f \<longrightarrow> P\<^sup>t`"
+        by (simp add: H2_equivalence[THEN sym] RD2_def Healthy_def')
+      hence P: "`P\<^sup>f\<lbrakk>False/wait\<^sup><\<rbrakk> \<longrightarrow> P\<^sup>t\<lbrakk>False/wait\<^sup><\<rbrakk>`"
         by (pred_auto)
-      have "`?A \<Rightarrow> ?C`"
-        using P by (pred_auto)
-      moreover have "`?B \<Rightarrow> ?D`"
-        by (pred_auto)
-      ultimately show ?thesis
-        by (simp add: impl_seqr_mono)
+      thus ?thesis
+        by pred_simp metis
     qed
     ultimately show ?thesis
-      by (simp add: subsumption2)
+      by (simp add: pred_ba.sup_absorb1)
   qed
   also have "... = (
       (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; ((N\<^sub>0 M ;; R1(true)))) \<or>
       (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; ((N\<^sub>0 M ;; R1(true)))))"
-    by (pred_auto, metis+)
+    by (pred_auto)
   also have "... = (
       ((pre\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0 M ;; R1(true)\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or>
       ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0 M ;; R1(true)\<^esub> (pre\<^sub>s \<dagger> Q)))"
@@ -293,7 +311,7 @@ proof -
   have "pre\<^sub>s \<dagger> P = pre\<^sub>s \<dagger> \<^bold>R\<^sub>s(pre\<^sub>R P \<turnstile> peri\<^sub>R P \<diamondop> post\<^sub>R P)"
     by (simp add: SRD_reactive_tri_design assms)
   also have "... = R1(R2c(\<not> pre\<^sub>s \<dagger> pre\<^sub>R P))"
-    by (simp add: RHS_def usubst R3h_def pre\<^sub>s_design)
+    by (simp add: RHS_def usubst R3h_def pre\<^sub>s_design, pred_simp)
   also have "... = R1(R2c(\<not> pre\<^sub>R P))"
     by (pred_auto)
   also have "... = (\<not>\<^sub>r pre\<^sub>R P)"
@@ -319,86 +337,81 @@ lemma parallel_assm_unrest_wait' [unrest]:
   "\<lbrakk> P is SRD; Q is SRD \<rbrakk> \<Longrightarrow> $wait\<^sup>> \<sharp> pre\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q)"
   by (simp add: parallel_assm, simp add: par_by_merge_def unrest)
 
-lemma JL1: "(M\<^sub>1 M)\<^sup>t\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> = N\<^sub>0(M) ;; R1(true)"
-  by (pred_auto; blast)
 
-lemma JL2: "(M\<^sub>1 M)\<^sup>t\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> = N\<^sub>0(M) ;; R1(true)"
-  by (pred_auto; blast)
 
-lemma JL3: "(M\<^sub>1 M)\<^sup>t\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> = N\<^sub>0(M) ;; R1(true)"
-  by (pred_auto; blast)
+lemma JL1: "[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> True, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M = N\<^sub>0(M) ;; R1(true)"
+  by (pred_auto; metis)
 
-lemma JL4: "(M\<^sub>1 M)\<^sup>t\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk> = ($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t"
-  by (simp add: merge_rd1_def usubst nmerge_rd1_def unrest)
+lemma JL2: "[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> False, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M = N\<^sub>0(M) ;; R1(true)"
+  by (pred_auto; metis)
+
+lemma JL3: "[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> False, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M = N\<^sub>0(M) ;; R1(true)"
+  by (pred_auto; metis)
+
+lemma JL4: "[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> True, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M = (ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t"
+  by (simp add: merge_rd1_def usubst nmerge_rd1_def unrest, pred_simp)
 
 lemma parallel_commitment_lemma_1:
   assumes "P is RD2"
   shows "cmt\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (
-  ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or>
+  ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>($ok\<^sup>> \<and> N\<^sub>0 M)\<^sub>e ;; II\<^sub>R\<^sup>t\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or>
   ((pre\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or>
   ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> (pre\<^sub>s \<dagger> Q)))"
 proof -
   have "cmt\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^bsub>(M\<^sub>1(M))\<^sup>t\<^esub> Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)"
     by (simp add: usubst, pred_auto)
-  also have "... = ((P\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<parallel>\<^sub>s Q\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; (M\<^sub>1 M)\<^sup>t)"
-    by (simp add: par_by_merge_def)
-  also have "... = (
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1 M)\<^sup>t\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1 M)\<^sup>t\<lbrakk>False,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1 M)\<^sup>t\<lbrakk>True,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1 M)\<^sup>t\<lbrakk>False,False/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)))"
-    by (subst parallel_ok_cases, subst_tac)
-  also have "... = (
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1 M)\<^sup>t\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; (N\<^sub>0(M) ;; R1(true))) \<or>
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; (N\<^sub>0(M) ;; R1(true))) \<or>
-      (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; (N\<^sub>0(M) ;; R1(true))))"
-      (is "_ = (?C1 \<or>\<^sub>p ?C2 \<or>\<^sub>p ?C3 \<or>\<^sub>p ?C4)")
-    by (simp add: JL1 JL2 JL3)
-  also have "... = (
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; ((M\<^sub>1(M))\<^sup>t\<lbrakk>True,True/0:ok\<^sup><,1:ok\<^sup><\<rbrakk>)) \<or>
-      (((pre\<^sub>s \<dagger> P) \<parallel>\<^sub>s (cmt\<^sub>s \<dagger> Q)) ;; (N\<^sub>0(M) ;; R1(true))) \<or>
-      (((cmt\<^sub>s \<dagger> P) \<parallel>\<^sub>s (pre\<^sub>s \<dagger> Q)) ;; (N\<^sub>0(M) ;; R1(true))))"
+  also have "... = 
+   ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> True, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M\<^esub> (cmt\<^sub>s \<dagger> Q) \<or>
+     npre\<^sub>R P \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> True, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M\<^esub> (cmt\<^sub>s \<dagger> Q) \<or>
+     (cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> False, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M\<^esub> npre\<^sub>R Q \<or> 
+     npre\<^sub>R P \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> False, 1:ok\<^sup>< \<leadsto> False, ok\<^sup>> \<leadsto> True] \<dagger> M\<^sub>1 M\<^esub> npre\<^sub>R Q)"
+    by (subst parallel_ok_cases, simp add: usubst)
+  also have "... = 
+     ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> True] \<dagger> M\<^sub>1 M\<lbrakk>True/ok\<^sup>>\<rbrakk>\<^esub> (cmt\<^sub>s \<dagger> Q) \<or>
+      npre\<^sub>R P \<parallel>\<^bsub>N\<^sub>0 M ;; true\<^sub>r\<^esub> (cmt\<^sub>s \<dagger> Q) \<or> 
+      (cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0 M ;; true\<^sub>r\<^esub> npre\<^sub>R Q \<or> 
+      npre\<^sub>R P \<parallel>\<^bsub>N\<^sub>0 M ;; true\<^sub>r\<^esub> npre\<^sub>R Q)"
+    (is "_ = ((?C1 :: _ pred) \<or> ?C2 \<or> ?C3 \<or> ?C4)")    
+    by (simp add: JL1 JL2 JL3 usubst)
+  also have "... = 
+      ((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>[0:ok\<^sup>< \<leadsto> True, 1:ok\<^sup>< \<leadsto> True] \<dagger> M\<^sub>1 M\<lbrakk>True/ok\<^sup>>\<rbrakk>\<^esub> (cmt\<^sub>s \<dagger> Q) \<or> 
+        npre\<^sub>R P \<parallel>\<^bsub>N\<^sub>0 M ;; true\<^sub>r\<^esub> (cmt\<^sub>s \<dagger> Q) \<or> 
+        (cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>N\<^sub>0 M ;; true\<^sub>r\<^esub> npre\<^sub>R Q)"
   proof -
-    from assms have "`P\<^sup>f \<Rightarrow> P\<^sup>t`"
-      by (metis RD2_def H2_equivalence Healthy_def')
-    hence P:"`P\<^sup>f\<^sub>f \<Rightarrow> P\<^sup>t\<^sub>f`"
+    from assms have "P\<^sup>t \<sqsubseteq> P\<^sup>f"
+      by (metis H2_equiv Healthy_def RD2_def)
+    hence "(cmt\<^sub>s \<dagger> P) \<sqsubseteq> (pre\<^sub>s \<dagger> P)"
       by (pred_auto)
-    have "`?C4 \<Rightarrow> ?C3`" (is "`(?A ;; ?B) \<Rightarrow> (?C ;; ?D)`")
-    proof -
-      have "`?A \<Rightarrow> ?C`"
-        using P by (pred_auto)
-      thus ?thesis
-        by (simp add: impl_seqr_mono)
-    qed
+    hence "?C3 \<sqsubseteq> ?C4"
+      by (simp add: par_by_merge_mono)
     thus ?thesis
-      by (simp add: subsumption2)
+      by (simp add: pred_ba.sup_absorb1)
   qed
   finally show ?thesis
-    by (simp add: par_by_merge_def JL4)
+    by (simp add: JL4 usubst, pred_simp)
 qed
 
 lemma parallel_commitment_lemma_2:
   assumes "P is RD2"
   shows "cmt\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) =
-         (((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or> pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q))"
-  by (simp add: parallel_commitment_lemma_1 assms parallel_assm_lemma)
+         (((cmt\<^sub>s \<dagger> P) \<parallel>\<^bsub>(ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> (cmt\<^sub>s \<dagger> Q)) \<or> pre\<^sub>s \<dagger> (P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q))"
+  by (simp add: parallel_commitment_lemma_1 assms parallel_assm_lemma, pred_simp)
     
 lemma parallel_commitment_lemma_3:
-  "M is R1m \<Longrightarrow> ($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t is R1m"
-  by (rel_simp, safe, metis+)  
+  "M is R1m \<Longrightarrow> (ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t is R1m"
+  by (pred_simp, blast)  
 
 lemma parallel_commitment:
   assumes "P is SRD" "Q is SRD" "M is RDM"
-  shows "cmt\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R(P) \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> cmt\<^sub>R(Q))"
-  by (simp add: parallel_commitment_lemma_2 parallel_commitment_lemma_3 Healthy_if assms cmt\<^sub>R_def pre\<^sub>s_SRD closure rea_impl_def disj_comm unrest)  
+  shows "cmt\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R(P) \<parallel>\<^bsub>(ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> cmt\<^sub>R(Q))"
+  by (simp add: parallel_commitment_lemma_2 parallel_commitment_lemma_3 Healthy_if assms cmt\<^sub>R_def pre\<^sub>s_SRD closure rea_impl_def pred_ba.sup_commute unrest)  
   
 theorem parallel_reactive_design:
   assumes "P is SRD" "Q is SRD" "M is RDM"
   shows "(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = \<^bold>R\<^sub>s(
     (\<not>\<^sub>r ((\<not>\<^sub>r pre\<^sub>R(P)) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> cmt\<^sub>R(Q)) \<and>
      \<not>\<^sub>r (cmt\<^sub>R(P) \<parallel>\<^bsub>N\<^sub>0(M) ;; R1(true)\<^esub> (\<not>\<^sub>r pre\<^sub>R(Q)))) \<turnstile>
-    (cmt\<^sub>R(P) \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> cmt\<^sub>R(Q)))" (is "?lhs = ?rhs")
+    (cmt\<^sub>R(P) \<parallel>\<^bsub>(ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<^sup>t\<^esub> cmt\<^sub>R(Q)))" (is "?lhs = ?rhs")
 proof -
   have "(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = \<^bold>R\<^sub>s(pre\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) \<turnstile> cmt\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q))"
     by (metis Healthy_def NSRD_is_SRD SRD_as_reactive_design assms(1) assms(2) assms(3) par_rdes_NSRD)
@@ -408,56 +421,61 @@ proof -
 qed
 
 lemma parallel_pericondition_lemma1:
-  "($ok\<acute> \<and> P) ;; II\<^sub>R\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> P)\<lbrakk>True,True/$ok\<acute>,$wait\<acute>\<rbrakk>"
+  "(ok\<^sup>> \<and> P) ;; II\<^sub>R\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> P)\<lbrakk>True,True/ok\<^sup>>,wait\<^sup>>\<rbrakk>"
   (is "?lhs = ?rhs")
 proof -
-  have "?lhs = ($ok\<acute> \<and> P) ;; (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk>"
-    by (pred_auto; blast)
+  have "?lhs = (ok\<^sup>> \<and> P) ;; (\<exists> st\<^sup>< \<Zspot> II)\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk>"
+    by (pred_simp, blast)
   also have "... = ?rhs"
     by (pred_auto)
   finally show ?thesis .
 qed
 
+lemma subst_ex_out [usubst]: "\<lbrakk> mwb_lens x; $x \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> \<sigma> \<dagger> (\<exists> x \<Zspot> P) = (\<exists> x \<Zspot> \<sigma> \<dagger> P)"
+  by (expr_simp)
+
 lemma parallel_pericondition_lemma2:
   assumes "M is RDM"
-  shows "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk> = (($0:wait \<or> $1:wait) \<and> (\<exists> st\<^sup>> \<Zspot> M))"
+  shows "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))"
 proof -
-  have "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> ($0:wait \<or> $1:wait) \<and> $tr\<acute> \<ge>\<^sub>u $<:tr \<and> M)"
-    by (simp add: usubst unrest nmerge_rd0_def ex_unrest Healthy_if R1m_def assms)
-  also have "... =  (\<exists> st\<^sup>> \<Zspot> ($0:wait \<or> $1:wait) \<and> M)"
-    by (metis (no_types, opaque_lifting) Healthy_if R1m_def R1m_idem R2m_def RDM_def assms utp_pred_laws.inf_commute)
-  also have "... = (($0:wait \<or> $1:wait) \<and> (\<exists> st\<^sup>> \<Zspot> M))"
+  have "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> (($0:wait\<^sup>< \<or> $1:wait\<^sup><) \<and> $tr\<^sup>> \<ge> $<:tr\<^sup><)\<^sub>e \<and> RDM(M))"
+    by (simp add: usubst unrest nmerge_rd0_def ex_unrest Healthy_if R1m_def assms, pred_simp)
+  also have "... = (\<exists> st\<^sup>> \<Zspot> ($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> RDM M)"
+    by (pred_simp, blast)
+  also have "... = (($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> RDM M))"
     by (pred_auto)
-  finally show ?thesis .
+  finally show ?thesis
+    by (simp add: Healthy_if assms)
 qed
 
 lemma parallel_pericondition_lemma3:
-  "(($0:wait \<or> $1:wait) \<and> (\<exists> st\<^sup>> \<Zspot> M)) = (($0:wait \<and> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> (\<not> $0:wait \<and> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> ($0:wait \<and> \<not> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M)))"
+  "(($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) = ((($0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> ((\<not> $0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> (($0:wait\<^sup>< \<and> \<not> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)))"
   by (pred_auto)
 
 lemma parallel_pericondition [rdes]:
   fixes M :: "('s,'t::trace,'\<alpha>) rsp merge"
   assumes "P is SRD" "Q is SRD" "M is RDM"
-  shows "peri\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
+  shows "peri\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
                                                   \<or> post\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
                                                   \<or> peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> post\<^sub>R(Q))"
 proof -
   have "peri\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) =
-        (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
+        (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
     by (simp add: peri_cmt_def parallel_commitment SRD_healths assms usubst unrest assms)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(\<exists> st\<^sup>> \<Zspot> N\<^sub>0 M)\<lbrakk>True,True/$ok\<acute>, $wait\<acute>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(\<exists> st\<^sup>> \<Zspot> N\<^sub>0 M)\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
     by (simp add: parallel_pericondition_lemma1)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>($0:wait \<or> $1:wait) \<and> (\<exists> st\<^sup>> \<Zspot> M)\<^esub> cmt\<^sub>R Q)"
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)\<^esub> cmt\<^sub>R Q)"
     by (simp add: parallel_pericondition_lemma2 assms)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r ((\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ($0:wait \<and> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M))
-                                       \<or> (\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<not> $0:wait \<and> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M))
-                                       \<or> (\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ($0:wait \<and> \<not> $1:wait \<and> (\<exists> st\<^sup>> \<Zspot> M))))"
-    by (simp add: par_by_merge_alt_def parallel_pericondition_lemma3 seqr_or_distr)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r ((\<lceil>peri\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r ((\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (($0:wait\<^sup><)\<^sub>e \<and> ($1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))
+                                       \<or> (\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ((\<not> $0:wait\<^sup><)\<^sub>e \<and> ($1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))
+                                       \<or> (\<lceil>cmt\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>cmt\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ((($0:wait\<^sup><)\<^sub>e \<and> (\<not> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)))))"
+    by (simp add: par_by_merge_alt_def parallel_pericondition_lemma3 seqr_or_distr, pred_simp)
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r ((\<lceil>peri\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)
                                        \<or> (\<lceil>post\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)
                                        \<or> (\<lceil>peri\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)))"
-    by (simp add: seqr_right_one_point_true seqr_right_one_point_false cmt\<^sub>R_def post\<^sub>R_def peri\<^sub>R_def usubst unrest assms)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
+    apply (simp add: seqr_right_one_point_true seqr_right_one_point_false cmt\<^sub>R_def post\<^sub>R_def peri\<^sub>R_def usubst unrest assms)
+    apply (pred_simp) (* GOT TO HERE *)
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
                                        \<or> post\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
                                        \<or> peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> post\<^sub>R(Q))"
     by (simp add: par_by_merge_alt_def)
@@ -465,10 +483,10 @@ proof -
 qed
 
 lemma parallel_postcondition_lemma1:
-  "($ok\<acute> \<and> P) ;; II\<^sub>R\<lbrakk>True,False/$ok\<acute>,$wait\<acute>\<rbrakk> = P\<lbrakk>True,False/$ok\<acute>,$wait\<acute>\<rbrakk>"
+  "(ok\<^sup>> \<and> P) ;; II\<^sub>R\<lbrakk>True,False/ok\<^sup>>,wait\<^sup>>\<rbrakk> = P\<lbrakk>True,False/ok\<^sup>>,wait\<^sup>>\<rbrakk>"
   (is "?lhs = ?rhs")
 proof -
-  have "?lhs = ($ok\<acute> \<and> P) ;; II\<lbrakk>True,False/$ok\<acute>, $wait\<acute>\<rbrakk>"
+  have "?lhs = (ok\<^sup>> \<and> P) ;; II\<lbrakk>True,False/ok\<^sup>>, wait\<^sup>>\<rbrakk>"
     by (pred_auto; blast)
   also have "... = ?rhs"
     by (pred_auto)
@@ -477,9 +495,9 @@ qed
 
 lemma parallel_postcondition_lemma2:
   assumes "M is RDM"
-  shows "(N\<^sub>0(M))\<lbrakk>True,False/$ok\<acute>,$wait\<acute>\<rbrakk> = ((\<not> $0:wait \<and> \<not> $1:wait) \<and> M)"
+  shows "(N\<^sub>0(M))\<lbrakk>True,False/ok\<^sup>>,wait\<^sup>>\<rbrakk> = ((\<not> $0:wait \<and> \<not> $1:wait) \<and> M)"
 proof -
-  have "(N\<^sub>0(M))\<lbrakk>True,False/$ok\<acute>,$wait\<acute>\<rbrakk> = ((\<not> $0:wait \<and> \<not> $1:wait) \<and> $tr\<acute> \<ge>\<^sub>u $<:tr \<and> M)"
+  have "(N\<^sub>0(M))\<lbrakk>True,False/ok\<^sup>>,wait\<^sup>>\<rbrakk> = ((\<not> $0:wait \<and> \<not> $1:wait) \<and> $tr\<acute> \<ge>\<^sub>u $<:tr \<and> M)"
     by (simp add: usubst unrest nmerge_rd0_def ex_unrest Healthy_if R1m_def assms)
   also have "... = ((\<not> $0:wait \<and> \<not> $1:wait) \<and> M)"
     by (metis Healthy_if R1m_def RDM_R1m assms utp_pred_laws.inf_commute)
@@ -489,15 +507,15 @@ qed
 lemma parallel_postcondition [rdes]:
   fixes M :: "('s,'t::trace,'\<alpha>) rsp merge"
   assumes "P is SRD" "Q is SRD" "M is RDM"
-  shows "post\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r post\<^sub>R(P) \<parallel>\<^bsub>M\<^esub> post\<^sub>R(Q))"
+  shows "post\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r post\<^sub>R(P) \<parallel>\<^bsub>M\<^esub> post\<^sub>R(Q))"
 proof -
   have "post\<^sub>R(P \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> Q) =
-        (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>($ok\<acute> \<and> N\<^sub>0 M) ;; II\<^sub>R\<lbrakk>True,False/$ok\<acute>, $wait\<acute>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
+        (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(ok\<^sup>> \<and> N\<^sub>0 M) ;; II\<^sub>R\<lbrakk>True,False/ok\<^sup>>, wait\<^sup>>\<rbrakk>\<^esub> cmt\<^sub>R Q)"
     by (simp add: post_cmt_def parallel_commitment assms usubst unrest SRD_healths)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(\<not> $0:wait \<and> \<not> $1:wait \<and> M)\<^esub> cmt\<^sub>R Q)"
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r cmt\<^sub>R P \<parallel>\<^bsub>(\<not> $0:wait \<and> \<not> $1:wait \<and> M)\<^esub> cmt\<^sub>R Q)"
     by (simp add: parallel_postcondition_lemma1 parallel_postcondition_lemma2 assms,
         simp add: utp_pred_laws.inf_commute utp_pred_laws.inf_left_commute)
-  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<Rightarrow>\<^sub>r post\<^sub>R P \<parallel>\<^bsub>M\<^esub> post\<^sub>R Q)"
+  also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r post\<^sub>R P \<parallel>\<^bsub>M\<^esub> post\<^sub>R Q)"
     by (simp add: par_by_merge_alt_def seqr_right_one_point_false usubst unrest cmt\<^sub>R_def post\<^sub>R_def assms)
   finally show ?thesis .
 qed
@@ -528,8 +546,8 @@ proof -
   also have "... = ((\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; N\<^sub>0 M\<lbrakk>True/$1:wait\<rbrakk> ;; R1 true \<or>
                     (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; N\<^sub>0 M\<lbrakk>False/$1:wait\<rbrakk> ;; R1 true)"
     by (simp add: usubst unrest)
-  also have "... = ((\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ($wait\<acute> \<and> M) ;; R1 true \<or>
-                    (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; ($wait\<acute> =\<^sub>u $0:wait \<and> M) ;; R1 true)"
+  also have "... = ((\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (wait\<^sup>> \<and> M) ;; R1 true \<or>
+                    (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (wait\<^sup>> =\<^sub>u $0:wait \<and> M) ;; R1 true)"
   proof -
     have "($tr\<acute> \<ge>\<^sub>u $<:tr \<and> M) = M"
       using RDM_R1m[OF assms(3)]
@@ -541,12 +559,12 @@ proof -
                     (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; M ;; R1 true)"
     (is "(?P\<^sub>1 \<or>\<^sub>p ?P\<^sub>2) = (?Q\<^sub>1 \<or> ?Q\<^sub>2)")
   proof -
-    have "?P\<^sub>1 = (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> $wait\<acute>) ;; R1 true"
+    have "?P\<^sub>1 = (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> wait\<^sup>>) ;; R1 true"
       by (simp add: conj_comm)
     hence 1: "?P\<^sub>1 = ?Q\<^sub>1"
       by (simp add: seqr_left_one_point_true seqr_left_one_point_false add: unrest usubst closure assms)
-    have "?P\<^sub>2 = ((\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> $wait\<acute>) ;; R1 true \<or>
-                 (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> \<not> $wait\<acute>) ;; R1 true)"
+    have "?P\<^sub>2 = ((\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> wait\<^sup>>) ;; R1 true \<or>
+                 (\<lceil>\<not>\<^sub>r pre\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<:\<^bold>v\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (M \<and> \<not> wait\<^sup>>) ;; R1 true)"
       by (subst seqr_bool_split[of "wait ;\<^sub>L mrg_left"], simp_all add: usubst unrest assms closure conj_comm)
     hence 2: "?P\<^sub>2 = ?Q\<^sub>2"
       by (simp add: seqr_left_one_point_true seqr_left_one_point_false unrest usubst closure assms)
@@ -579,20 +597,20 @@ lemma SymMerge_merge_rd [closure]:
     
 lemma nmerge_rd1_merge3:
   assumes "M is RDM"
-  shows "\<^bold>M3(N\<^sub>1(M)) = ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> 
-                      $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> 
+  shows "\<^bold>M3(N\<^sub>1(M)) = (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> 
+                      wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> 
                       \<^bold>M3(M))"
 proof -
-  have "\<^bold>M3(N\<^sub>1(M)) = \<^bold>M3($ok\<acute> =\<^sub>u ($0:ok \<and> $1:ok) \<and>
-                       $wait\<acute> =\<^sub>u ($0:wait \<or> $1:wait) \<and> 
+  have "\<^bold>M3(N\<^sub>1(M)) = \<^bold>M3(ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:ok) \<and>
+                       wait\<^sup>> =\<^sub>u ($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> 
                        ($<:tr\<^sup>< \<le> $tr\<^sup>>)\<^sub>e \<and> 
-                       (\<exists> {$0:ok, $1:ok, $<:ok, $ok\<acute>, $0:wait, $1:wait, $<:wait, $wait\<acute>} \<bullet> RDM(M)))"
+                       (\<exists> {$0:ok, $1:ok, $<:ok, ok\<^sup>>, $0:wait, $1:wait, $<:wait, wait\<^sup>>} \<bullet> RDM(M)))"
     by (simp add: nmerge_rd1_def nmerge_rd0_def assms Healthy_if)
-  also have "... = \<^bold>M3($ok\<acute> =\<^sub>u ($0:ok \<and> $1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:wait) \<and> RDM(M))"
+  also have "... = \<^bold>M3(ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> RDM(M))"
     by (pred_auto; blast)
-  also have "... = ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(RDM(M)))"  
+  also have "... = (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(RDM(M)))"  
     by (pred_auto; blast)
-  also have "... = ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M))"
+  also have "... = (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M))"
     by (simp add: assms Healthy_if)
   finally show ?thesis .
 qed
@@ -610,17 +628,17 @@ proof -
   have "rotate\<^sub>m ;; (\<^bold>M3(N\<^sub>R(M))) = 
         rotate\<^sub>m ;;
         ((\<exists> <:st\<^sup>< \<Zspot> ($\<^bold>v\<^sup>> = $<\<^sup><)\<^sub>e:\<^bold>v) \<triangleleft> $<:wait \<triangleright>
-            ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M)) \<triangleleft> $<:ok \<triangleright>
+            (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M)) \<triangleleft> $<:ok \<triangleright>
             (($<:tr\<^sup>< \<le> $tr\<^sup>>)\<^sub>e))"
     by (simp add: AssocMerge_def nmerge_rd_merge3 nmerge_rd1_merge3 assms)
   also have "... = 
         ((\<exists> <:st\<^sup>< \<Zspot> ($\<^bold>v\<^sup>> = $<\<^sup><)\<^sub>e:\<^bold>v) \<triangleleft> $<:wait \<triangleright>
-            ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> (rotate\<^sub>m ;; \<^bold>M3(M))) \<triangleleft> $<:ok \<triangleright>
+            (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> (rotate\<^sub>m ;; \<^bold>M3(M))) \<triangleleft> $<:ok \<triangleright>
             (($<:tr\<^sup>< \<le> $tr\<^sup>>)\<^sub>e))"
     by (pred_auto; blast)
   also have "... = 
         ((\<exists> <:st\<^sup>< \<Zspot> ($\<^bold>v\<^sup>> = $<\<^sup><)\<^sub>e:\<^bold>v) \<triangleleft> $<:wait \<triangleright>
-            ($ok\<acute> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> $wait\<acute> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M)) \<triangleleft> $<:ok \<triangleright>
+            (ok\<^sup>> =\<^sub>u ($0:ok \<and> $1:0:ok \<and> $1:1:ok) \<and> wait\<^sup>> =\<^sub>u ($0:wait \<or> $1:0:wait \<or> $1:1:wait) \<and> \<^bold>M3(M)) \<triangleleft> $<:ok \<triangleright>
             (($<:tr\<^sup>< \<le> $tr\<^sup>>)\<^sub>e))"
     using "1" by auto
   also have "... = \<^bold>M3(N\<^sub>R(M))"
@@ -733,7 +751,7 @@ proof -
   finally show ?thesis .
 qed
 
-lemma wppR_impl [wp]: "(P \<Rightarrow>\<^sub>r Q) wr\<^sub>R(M) R = ((\<not>\<^sub>r P) wr\<^sub>R(M) R \<and> Q wr\<^sub>R(M) R)"
+lemma wppR_impl [wp]: "(P \<longrightarrow>\<^sub>r Q) wr\<^sub>R(M) R = ((\<not>\<^sub>r P) wr\<^sub>R(M) R \<and> Q wr\<^sub>R(M) R)"
   by (simp add: rea_impl_def wp)
 
 lemma wppR_miracle [wp]: "false wr\<^sub>R(M) P = true\<^sub>r"
@@ -748,15 +766,15 @@ lemma parallel_precondition_wr [rdes]:
                               peri\<^sub>R(P) wr\<^sub>R(swap\<^sub>m ;; M) pre\<^sub>R(Q) \<and> post\<^sub>R(P) wr\<^sub>R(swap\<^sub>m ;; M) pre\<^sub>R(Q))"
   by (simp add: assms parallel_precondition wrR_def)
 
-lemma rea_impl_merge_left: "(P \<Rightarrow>\<^sub>r Q) \<parallel>\<^bsub>M\<^esub> R = (((\<not>\<^sub>r P) \<parallel>\<^bsub>M\<^esub> R) \<or> (Q \<parallel>\<^bsub>M\<^esub> R))"
+lemma rea_impl_merge_left: "(P \<longrightarrow>\<^sub>r Q) \<parallel>\<^bsub>M\<^esub> R = (((\<not>\<^sub>r P) \<parallel>\<^bsub>M\<^esub> R) \<or> (Q \<parallel>\<^bsub>M\<^esub> R))"
   by (simp add: rea_impl_def par_by_merge_or_left)
 
-lemma rea_impl_merge_right: "P \<parallel>\<^bsub>M\<^esub> (Q \<Rightarrow>\<^sub>r R) = (P \<parallel>\<^bsub>M\<^esub> (\<not>\<^sub>r Q) \<or> P \<parallel>\<^bsub>M\<^esub> R)"
+lemma rea_impl_merge_right: "P \<parallel>\<^bsub>M\<^esub> (Q \<longrightarrow>\<^sub>r R) = (P \<parallel>\<^bsub>M\<^esub> (\<not>\<^sub>r Q) \<or> P \<parallel>\<^bsub>M\<^esub> R)"
   by (simp add: rea_impl_def par_by_merge_or_right)
 
 lemma parallel_pre_lemma:
-  "((Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2))
-       = ((Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> P\<^sub>2 \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2))"
+  "((Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2))
+       = ((Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> P\<^sub>2 \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2))"
   apply (simp add: par_by_merge_alt_def)
   apply (pred_auto)
   apply (meson order_refl)
@@ -772,8 +790,8 @@ lemma parallel_rdes_def [rdes_def]:
           "$st\<acute> \<sharp> P\<^sub>2" "$st\<acute> \<sharp> Q\<^sub>2"
           "M is RDM"
   shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<parallel>\<^bsub>M\<^sub>R(M)\<^esub> \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3) = 
-         \<^bold>R\<^sub>s(((Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>3) wr\<^sub>R(M) P\<^sub>1 \<and> 
-              (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>2) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1 \<and> (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>3) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1) \<turnstile>
+         \<^bold>R\<^sub>s(((Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>3) wr\<^sub>R(M) P\<^sub>1 \<and> 
+              (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>2) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1 \<and> (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>3) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1) \<turnstile>
           (P\<^sub>2 \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub>  Q\<^sub>2 \<or>
            P\<^sub>3 \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> Q\<^sub>2 \<or> P\<^sub>2 \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> Q\<^sub>3) \<diamondop>
           (P\<^sub>3 \<parallel>\<^bsub>M\<^esub> Q\<^sub>3))" (is "?lhs = ?rhs")
@@ -781,11 +799,11 @@ proof -
   have "?lhs = \<^bold>R\<^sub>s (pre\<^sub>R ?lhs \<turnstile> peri\<^sub>R ?lhs \<diamondop> post\<^sub>R ?lhs)"
     by (simp add: SRD_reactive_tri_design assms closure)
   also have "... = 
-         \<^bold>R\<^sub>s(((Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>3) wr\<^sub>R(M) P\<^sub>1 \<and> 
-              (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>2) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1 \<and> (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>3) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1) \<turnstile>
-          ((P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) \<or>
-           (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>3) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>2) \<or> (P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>3)) \<diamondop>
-          ((P\<^sub>1 \<Rightarrow>\<^sub>r P\<^sub>3) \<parallel>\<^bsub>M\<^esub> (Q\<^sub>1 \<Rightarrow>\<^sub>r Q\<^sub>3)))"
+         \<^bold>R\<^sub>s(((Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) wr\<^sub>R(M) P\<^sub>1 \<and> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>3) wr\<^sub>R(M) P\<^sub>1 \<and> 
+              (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>2) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1 \<and> (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>3) wr\<^sub>R(swap\<^sub>m ;; M) Q\<^sub>1) \<turnstile>
+          ((P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) \<or>
+           (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>3) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>2) \<or> (P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>2) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>3)) \<diamondop>
+          ((P\<^sub>1 \<longrightarrow>\<^sub>r P\<^sub>3) \<parallel>\<^bsub>M\<^esub> (Q\<^sub>1 \<longrightarrow>\<^sub>r Q\<^sub>3)))"
     (is "_ = \<^bold>R\<^sub>s( ?X 
                \<turnstile> (?Y\<^sub>1 \<or> ?Y\<^sub>2 \<or> ?Y\<^sub>3)
                \<diamondop> ?Z)")
@@ -859,9 +877,9 @@ lemma BasicMerge'_calc:
   shows "P \<parallel>\<^bsub>N\<^sub>B\<^esub> Q = ((\<exists> st\<^sup>> \<Zspot> P) \<and> (\<exists> st\<^sup>> \<Zspot> Q) \<and> $st\<acute> =\<^sub>u $st)"
   using assms
 proof -
-  have P:"(\<exists> {$ok\<acute>,$wait\<acute>} \<bullet> R2(P)) = P" (is "?P' = _")
+  have P:"(\<exists> {ok\<^sup>>,wait\<^sup>>} \<bullet> R2(P)) = P" (is "?P' = _")
     by (simp add: ex_unrest ex_plus Healthy_if assms)
-  have Q:"(\<exists> {$ok\<acute>,$wait\<acute>} \<bullet> R2(Q)) = Q" (is "?Q' = _")
+  have Q:"(\<exists> {ok\<^sup>>,wait\<^sup>>} \<bullet> R2(Q)) = Q" (is "?Q' = _")
     by (simp add: ex_unrest ex_plus Healthy_if assms)
   have "?P' \<parallel>\<^bsub>N\<^sub>B\<^esub> ?Q' = ((\<exists> st\<^sup>> \<Zspot> ?P') \<and> (\<exists> st\<^sup>> \<Zspot> ?Q') \<and> $st\<acute> =\<^sub>u $st)"
     by (simp add: par_by_merge_alt_def, pred_auto, blast+)

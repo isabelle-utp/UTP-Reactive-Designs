@@ -439,6 +439,8 @@ lemma parallel_pericondition_lemma2:
   shows "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))"
 proof -
   have "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> (($0:wait\<^sup>< \<or> $1:wait\<^sup><) \<and> $tr\<^sup>> \<ge> $<:tr\<^sup><)\<^sub>e \<and> RDM(M))"
+    apply (simp add: nmerge_rd0_def R1m_def assms)
+    apply (simp add: usubst_eval)
     by (simp add: usubst unrest nmerge_rd0_def ex_unrest Healthy_if R1m_def assms, pred_simp)
   also have "... = (\<exists> st\<^sup>> \<Zspot> ($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> RDM M)"
     by (pred_simp, blast)

@@ -208,8 +208,7 @@ theorem R1_design_composition_RC:
   by (simp add: R1_design_composition_RR assms unrest Healthy_if closure wp)
 
 lemma R2s_design: "R2s(P \<turnstile> Q) = (R2s(P) \<turnstile> R2s(Q))"
-  by (simp add: R2s_def design_def usubst)
-
+  by (simp add: R2s_def design_def usubst subst_apply_SEXP)
 
 lemma R2c_design: "R2c(P \<turnstile> Q) = (R2c(P) \<turnstile> R2c(Q))"
   by pred_auto
@@ -364,7 +363,7 @@ proof -
         using R2c_seq by blast
       also have "... = ((R1 (R2s Q))\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; ((\<exists> st\<^sup>< \<Zspot> \<lceil>II\<rceil>\<^sub>D) \<triangleleft> $wait\<^sup>< \<triangleright> R1 (R2s S))\<lbrakk>True/wait\<^sup><\<rbrakk>)"
         apply (simp add: usubst R2_des_lift_skip)
-        apply (metis (no_types) R2_def R2_des_lift_skip R2_st_ex R2_subst_wait'_true R2_subst_wait_true)
+        apply (metis (no_types) R2_def R2_des_lift_skip R2_st_ex R2_subst_wait_true subst_apply_twice)
       done
       finally show ?thesis .
     qed

@@ -200,25 +200,25 @@ lemma cmt\<^sub>s_design: "cmt\<^sub>s \<dagger> (P \<turnstile> Q) = cmt\<^sub>
   by (simp add: design_def usubst wait'_cond_def, pred_simp)
 
 lemma pre\<^sub>s_R1 [usubst]: "pre\<^sub>s \<dagger> R1(P) = R1(pre\<^sub>s \<dagger> P)"
-  by (simp add: R1_def usubst, pred_simp)
+  by (simp add: R1_def usubst)
 
 lemma pre\<^sub>s_R2c [usubst]: "pre\<^sub>s \<dagger> R2c(P) = R2c(pre\<^sub>s \<dagger> P)"
   by (simp add: R2c_def R2s_def usubst, pred_simp)
 
 lemma peri\<^sub>s_R1 [usubst]: "peri\<^sub>s \<dagger> R1(P) = R1(peri\<^sub>s \<dagger> P)"
-  by (simp add: R1_def usubst, pred_simp)
+  by (simp add: R1_def usubst)
 
 lemma peri\<^sub>s_R2c [usubst]: "peri\<^sub>s \<dagger> R2c(P) = R2c(peri\<^sub>s \<dagger> P)"
   by (simp add: R2c_def R2s_def usubst, pred_simp)
 
 lemma post\<^sub>s_R1 [usubst]: "post\<^sub>s \<dagger> R1(P) = R1(post\<^sub>s \<dagger> P)"
-  by (simp add: R1_def usubst, pred_simp)
+  by (simp add: R1_def usubst)
 
 lemma post\<^sub>s_R2c [usubst]: "post\<^sub>s \<dagger> R2c(P) = R2c(post\<^sub>s \<dagger> P)"
   by (simp add: R2c_def R2s_def usubst, pred_simp)
 
 lemma cmt\<^sub>s_R1 [usubst]: "cmt\<^sub>s \<dagger> R1(P) = R1(cmt\<^sub>s \<dagger> P)"
-  by (simp add: R1_def usubst, pred_simp)
+  by (simp add: R1_def usubst)
 
 lemma cmt\<^sub>s_R2c [usubst]: "cmt\<^sub>s \<dagger> R2c(P) = R2c(cmt\<^sub>s \<dagger> P)"
   by (simp add: R2c_def R2s_def usubst, pred_simp)
@@ -796,7 +796,7 @@ proof -
     moreover
     have "((R1 (R2s Q\<^sub>1) \<and> wait\<^sup>>) \<or> ((R1 (R2s Q\<^sub>2)) ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2))))
           = (R1 (R2s Q\<^sub>1) \<or> (R1 (R2s Q\<^sub>2) ;; R1 (R2s S\<^sub>1))) \<diamondop> ((R1 (R2s Q\<^sub>2) ;; R1 (R2s S\<^sub>2)))"
-      by (simp add: wait'_cond_def rcond_seq_right_distr cond_and_T_integrate usubst unrest)
+      by (simp add: wait'_cond_def rcond_seq_right_distr cond_and_T_integrate unrest usubst_eval)
 
     ultimately show ?thesis
       by (simp add: R2s_wait'_cond R1_wait'_cond wait'_cond_seq pred_ex_simps unrest)  
@@ -932,10 +932,10 @@ proof -
     moreover
     have "((R1 (R2s Q\<^sub>1) \<and> wait\<^sup>>) \<or> ((R1 (R2s Q\<^sub>2)) ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2))))
           = (R1 (R2s Q\<^sub>1) \<or> (R1 (R2s Q\<^sub>2) ;; R1 (R2s S\<^sub>1))) \<diamondop> ((R1 (R2s Q\<^sub>2) ;; R1 (R2s S\<^sub>2)))"
-      by (simp add: wait'_cond_def rcond_seq_right_distr cond_and_T_integrate usubst unrest)
+      by (simp add: wait'_cond_def rcond_seq_right_distr cond_and_T_integrate usubst_eval unrest)
       
     ultimately show ?thesis
-      apply (simp add: R2s_wait'_cond R1_wait'_cond wait'_cond_seq pred_ex_simps unrest usubst)
+      apply (simp add: R2s_wait'_cond R1_wait'_cond wait'_cond_seq pred_ex_simps unrest usubst_eval)
       apply (simp add: cond_and_T_integrate rcond_seq_right_distr unrest wait'_cond_def)
       done
   qed
@@ -1075,7 +1075,7 @@ proof -
   also have "... \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `((P\<^sub>1 \<and> Q\<^sub>2) \<diamondop> (P\<^sub>1 \<and> Q\<^sub>3) \<longrightarrow> P\<^sub>2 \<diamondop> P\<^sub>3)\<lbrakk>True/wait\<^sup>>\<rbrakk>` \<and> `((P\<^sub>1 \<and> Q\<^sub>2) \<diamondop> (P\<^sub>1 \<and> Q\<^sub>3) \<longrightarrow> P\<^sub>2 \<diamondop> P\<^sub>3)\<lbrakk>False/wait\<^sup>>\<rbrakk>`"
     by (pred_auto, metis)
   also have "... \<longleftrightarrow> ?rhs"
-    by (simp add: usubst unrest assms, pred_simp)
+    by (simp add: usubst subst_apply_SEXP unrest assms, pred_simp)
   finally show ?thesis .
 qed
 
@@ -1110,7 +1110,7 @@ proof -
   also have "... \<longleftrightarrow> `P\<^sub>1 \<longrightarrow> Q\<^sub>1` \<and> `((P\<^sub>1 \<and> Q\<^sub>2) \<diamondop> (P\<^sub>1 \<and> Q\<^sub>3) \<longrightarrow> P\<^sub>2 \<diamondop> P\<^sub>3)\<lbrakk>True/wait\<^sup>>\<rbrakk>` \<and> `((P\<^sub>1 \<and> Q\<^sub>2) \<diamondop> (P\<^sub>1 \<and> Q\<^sub>3) \<longrightarrow> P\<^sub>2 \<diamondop> P\<^sub>3)\<lbrakk>False/wait\<^sup>>\<rbrakk>`"
     by (pred_auto, metis)
   also have "... \<longleftrightarrow> ?rhs"
-    by (simp add: usubst unrest assms, pred_simp)
+    by (simp add: usubst unrest subst_apply_SEXP assms, pred_simp)
   finally show ?thesis .
 qed
 

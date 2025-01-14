@@ -311,7 +311,7 @@ proof -
   have "pre\<^sub>s \<dagger> P = pre\<^sub>s \<dagger> \<^bold>R\<^sub>s(pre\<^sub>R P \<turnstile> peri\<^sub>R P \<diamondop> post\<^sub>R P)"
     by (simp add: SRD_reactive_tri_design assms)
   also have "... = R1(R2c(\<not> pre\<^sub>s \<dagger> pre\<^sub>R P))"
-    by (simp add: RHS_def usubst R3h_def pre\<^sub>s_design, pred_simp)
+    by (simp add: RHS_def usubst R3h_def pre\<^sub>s_design)
   also have "... = R1(R2c(\<not> pre\<^sub>R P))"
     by (pred_auto)
   also have "... = (\<not>\<^sub>r pre\<^sub>R P)"
@@ -439,8 +439,6 @@ lemma parallel_pericondition_lemma2:
   shows "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))"
 proof -
   have "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (\<exists> st\<^sup>> \<Zspot> (($0:wait\<^sup>< \<or> $1:wait\<^sup><) \<and> $tr\<^sup>> \<ge> $<:tr\<^sup><)\<^sub>e \<and> RDM(M))"
-    apply (simp add: nmerge_rd0_def R1m_def assms)
-    apply (simp add: usubst_eval)
     by (simp add: usubst unrest nmerge_rd0_def ex_unrest Healthy_if R1m_def assms, pred_simp)
   also have "... = (\<exists> st\<^sup>> \<Zspot> ($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> RDM M)"
     by (pred_simp, blast)
@@ -453,6 +451,17 @@ qed
 lemma parallel_pericondition_lemma3:
   "(($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) = ((($0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> ((\<not> $0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> (($0:wait\<^sup>< \<and> \<not> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)))"
   by (pred_auto)
+
+declare [[show_types]]
+
+term "\<lambda> s. s \<oplus>\<^sub>L s' on x"
+
+lemma subst_ext_lens_apply: "\<lbrakk> mwb_lens a; -$a \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> (a\<^sup>\<up> \<circ>\<^sub>s \<sigma>) \<dagger> P = ((\<sigma> \<down>\<^sub>s a) \<dagger> P) \<up> a"
+  by (expr_simp, simp add: lens_override_def scene_override_commute)
+
+lemma "(U0\<alpha>\<^sup>\<up> \<circ>\<^sub>s [0:wait\<^sup>> \<leadsto> True]) \<dagger> P = ([wait\<^sup>> \<leadsto> True] \<dagger> P) \<up> U0\<alpha>"
+  apply pred_simp
+  oops
 
 lemma parallel_pericondition [rdes]:
   fixes M :: "('s,'t::trace,'\<alpha>) rsp merge"
@@ -476,6 +485,9 @@ proof -
                                        \<or> (\<lceil>post\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>peri\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)
                                        \<or> (\<lceil>peri\<^sub>R P\<rceil>\<^sub>0 \<and> \<lceil>post\<^sub>R Q\<rceil>\<^sub>1 \<and> ($<\<^sup>> = $\<^bold>v\<^sup><)\<^sub>e) ;; (\<exists> st\<^sup>> \<Zspot> M)))"
     apply (simp add: seqr_right_one_point_true seqr_right_one_point_false cmt\<^sub>R_def post\<^sub>R_def peri\<^sub>R_def usubst unrest assms)
+    apply (subst subst_ext_lens_apply)
+    apply pred_simp[1]
+    apply simp
     apply (pred_simp) (* GOT TO HERE *)
   also have "... = (pre\<^sub>R (P \<parallel>\<^bsub>M\<^sub>R M\<^esub> Q) \<longrightarrow>\<^sub>r peri\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)
                                        \<or> post\<^sub>R(P) \<parallel>\<^bsub>\<exists> st\<^sup>> \<Zspot> M\<^esub> peri\<^sub>R(Q)

@@ -187,8 +187,8 @@ lemma wait'_post_unrest [unrest]: "$wait\<^sup>> \<sharp> post\<^sub>R P"
 
 subsubsection \<open> Substitution laws \<close>
 
-lemma pre\<^sub>s_design: "pre\<^sub>s \<dagger> (P \<turnstile> Q) = (\<not> pre\<^sub>s \<dagger> P)\<^sub>e"
-  by (simp add: design_def pre\<^sub>R_def usubst)
+lemma pre\<^sub>s_design: "pre\<^sub>s \<dagger> (P \<turnstile> Q) = (\<not> pre\<^sub>s \<dagger> P)"
+  by (simp add: design_def pre\<^sub>R_def usubst, pred_simp)
 
 lemma peri\<^sub>s_design: "peri\<^sub>s \<dagger> (P \<turnstile> Q \<diamondop> R) = peri\<^sub>s \<dagger> (P \<longrightarrow> Q)"
   by (simp add: design_def usubst wait'_cond_def, pred_simp)
@@ -232,10 +232,10 @@ lemma cmt_wait_false:
   by (pred_auto)
 
 lemma rea_pre_RH_design: "pre\<^sub>R(\<^bold>R(P \<turnstile> Q)) = R1(R2c(pre\<^sub>s \<dagger> P))"
-  by (simp add: RH_def usubst R3c_def pre\<^sub>R_def pre\<^sub>s_design R1_negate_R1 R2c_not rea_not_def, pred_auto)
+  by (simp add: RH_def usubst R3c_def pre\<^sub>R_def pre\<^sub>s_design R1_negate_R1 R2c_not rea_not_def)
 
 lemma rea_pre_RHS_design: "pre\<^sub>R(\<^bold>R\<^sub>s(P \<turnstile> Q)) = R1(R2c(pre\<^sub>s \<dagger> P))"
-  by (simp add: RHS_def usubst R3h_def pre\<^sub>R_def pre\<^sub>s_design R1_negate_R1 R2c_not rea_not_def, pred_auto)
+  by (simp add: RHS_def usubst R3h_def pre\<^sub>R_def pre\<^sub>s_design R1_negate_R1 R2c_not rea_not_def)
 
 lemma rea_cmt_RH_design: "cmt\<^sub>R(\<^bold>R(P \<turnstile> Q)) = R1(R2c(cmt\<^sub>s \<dagger> (P \<longrightarrow> Q)))"
   by (simp add: RH_def usubst R3c_def cmt\<^sub>R_def cmt\<^sub>s_design R1_idem)

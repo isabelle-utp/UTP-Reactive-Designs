@@ -751,6 +751,11 @@ subsubsection \<open> Regular \<close>
 lemma R2c_conj: "R2c(P \<and> Q) = (R2c P \<and> R2c Q)"
   by pred_auto
 
+lemma seqr_right_one_point_false':
+  assumes "vwb_lens x"
+  shows "(P ;; (\<not>($x\<^sup><)\<^sub>e \<and> Q)) = (P\<lbrakk>False/x\<^sup>>\<rbrakk> ;; Q\<lbrakk>False/x\<^sup><\<rbrakk>)"
+  using assms by (pred_auto, metis (full_types) vwb_lens_wb wb_lens.get_put)
+
 theorem RH_tri_design_composition:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q\<^sub>1" "$ok\<^sup>> \<sharp> Q\<^sub>2" "$ok\<^sup>< \<sharp> R" "$ok\<^sup>< \<sharp> S\<^sub>1" "$ok\<^sup>< \<sharp> S\<^sub>2"
           "$wait\<^sup>< \<sharp> R" "$wait\<^sup>> \<sharp> Q\<^sub>2" "$wait\<^sup>< \<sharp> S\<^sub>1" "$wait\<^sup>< \<sharp> S\<^sub>2"
@@ -785,7 +790,7 @@ proof -
         by (simp add: aext_var cond_and_R pred_ba.boolean_algebra.conj_disj_distrib pred_ba.inf.commute)
 
       also have "... = ((R1 (R2s Q\<^sub>2))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk>)"
-        by (simp add: aext_var seqr_right_one_point_false)
+        by (simp add: aext_var seqr_right_one_point_false')
 
       also have "... = ((R1 (R2s Q\<^sub>2)) ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2)))"
         by (simp add: wait'_cond_def usubst unrest closure rcond_seq_right_distr assms)

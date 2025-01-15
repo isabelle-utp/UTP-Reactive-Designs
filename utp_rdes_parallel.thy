@@ -175,12 +175,6 @@ proof -
     by (simp add: merge_rd_def par_by_merge_def seqr_assoc)
 qed
 
-lemma unrest_pair [unrest]:
-  assumes "mwb_lens x" "mwb_lens y" "$x \<sharp> P" "$y \<sharp> P"
-  shows "$(x, y) \<sharp> P"
-  using assms
-  by expr_simp (simp add: lens_override_def lens_scene.rep_eq scene_override.rep_eq)
-
 lemma RDM_intro:
   assumes "M is R2m" "$0:ok\<^sup>< \<sharp> M" "$1:ok\<^sup>< \<sharp> M" "$<:ok\<^sup>< \<sharp> M" "$ok\<^sup>> \<sharp> M"
           "$0:wait\<^sup>< \<sharp> M" "$1:wait\<^sup>< \<sharp> M" "$<:wait\<^sup>< \<sharp> M" "$wait\<^sup>> \<sharp> M"
@@ -241,12 +235,6 @@ lemma skip_srea_ok_f [usubst]:
 lemma nmerge0_rd_unrest [unrest]:
   "$0:ok\<^sup>< \<sharp> N\<^sub>0 M" "$1:ok\<^sup>< \<sharp> N\<^sub>0 M"
   by (pred_auto)+
-
-lemma subst_upd_lit_seql [usubst]: "\<sigma>(x\<^sup>< \<leadsto> \<guillemotleft>v\<guillemotright>) \<dagger> (P ;; Q) = \<sigma> \<dagger> (([x\<^sup>< \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> P) ;; Q)"
-  by pred_auto
-
-lemma subst_upd_lit_seqr [usubst]: "\<sigma>(x\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>) \<dagger> (P ;; Q) = \<sigma> \<dagger> (P ;; [x\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> Q)"
-  by pred_auto
 
 expr_constructor wait_f
 expr_constructor wait_t
@@ -429,9 +417,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma subst_ex_out [usubst]: "\<lbrakk> mwb_lens x; $x \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> \<sigma> \<dagger> (\<exists> x \<Zspot> P) = (\<exists> x \<Zspot> \<sigma> \<dagger> P)"
-  by (expr_simp)
-
 lemma parallel_pericondition_lemma2:
   assumes "M is RDM"
   shows "(\<exists> st\<^sup>> \<Zspot> N\<^sub>0(M))\<lbrakk>True,True/ok\<^sup>>, wait\<^sup>>\<rbrakk> = (($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M))"
@@ -450,17 +435,11 @@ lemma parallel_pericondition_lemma3:
   "(($0:wait\<^sup>< \<or> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) = ((($0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> ((\<not> $0:wait\<^sup>< \<and> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)) \<or> (($0:wait\<^sup>< \<and> \<not> $1:wait\<^sup><)\<^sub>e \<and> (\<exists> st\<^sup>> \<Zspot> M)))"
   by (pred_auto)
 
-lemma subst_ext_lens_apply: "\<lbrakk> mwb_lens a; -$a \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> (a\<^sup>\<up> \<circ>\<^sub>s \<sigma>) \<dagger> P = ((\<sigma> \<down>\<^sub>s a) \<dagger> P) \<up> a"
-  by (expr_simp, simp add: lens_override_def scene_override_commute)
+lemma U0_res [simp]: "((0:x\<^sup>>) \<restriction> U0\<alpha>)\<^sub>v = (x\<^sup>>)\<^sub>v"
+  by (pred_simp)
 
-lemma unrest_subst_upd_compl [unrest]: "\<lbrakk> vwb_lens x; y \<subseteq>\<^sub>L x; -$x \<sharp> (e)\<^sub>e; -$x \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> -$x \<sharp>\<^sub>s \<sigma>(y \<leadsto> e)"
-  by (expr_auto, simp add: lens_override_def scene_override_commute)
-  
-lemma varl_sub_merge_left [simp]: "vwb_lens x \<Longrightarrow> (0:x\<^sup>>)\<^sub>v \<subseteq>\<^sub>L U0\<alpha>"
-  by (metis U0\<alpha>_comp_out_var comp_vwb_lens lens_comp_lb ns_alpha_def snd_vwb_lens)
-
-lemma varr_sub_merge_right [simp]: "vwb_lens x \<Longrightarrow> (1:x\<^sup>>)\<^sub>v \<subseteq>\<^sub>L U1\<alpha>"
-  by (metis U1\<alpha>_comp_out_var comp_vwb_lens ns_alpha_def snd_vwb_lens sublens_def)
+lemma U1_res [simp]: "((1:x\<^sup>>) \<restriction> U1\<alpha>)\<^sub>v = (x\<^sup>>)\<^sub>v"
+  by (pred_simp)
 
 lemma [usubst]: "(U0\<alpha>\<^sup>\<up> \<circ>\<^sub>s [0:wait\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>]) \<dagger> P = ([wait\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> P) \<up> U0\<alpha>"
   by (pred_auto)
@@ -473,11 +452,6 @@ lemma [usubst]: "(U0\<alpha>\<^sup>\<up> \<circ>\<^sub>s [1:wait\<^sup>> \<leads
 
 lemma [usubst]: "(U1\<alpha>\<^sup>\<up> \<circ>\<^sub>s [1:wait\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>]) \<dagger> P = ([wait\<^sup>> \<leadsto> \<guillemotleft>v\<guillemotright>] \<dagger> P) \<up> U1\<alpha>"
   by (pred_auto)
-
-lemma seqr_right_one_point_false:
-  assumes "vwb_lens x"
-  shows "(P ;; ((\<not>$x\<^sup><)\<^sub>e \<and> Q)) = (P\<lbrakk>False/x\<^sup>>\<rbrakk> ;; Q\<lbrakk>False/x\<^sup><\<rbrakk>)"
-  using assms by (pred_auto, metis (full_types) vwb_lens_wb wb_lens.get_put)
 
 lemma parallel_pericondition [rdes]:
   fixes M :: "('s,'t::trace,'\<alpha>) rsp merge"
@@ -919,8 +893,6 @@ lemma BasicMerge_SymMerge [closure]:
   "N\<^sub>B is SymMerge"
   by (pred_auto)
  
-declare ex_commute [simp del]
-
 lemma BasicMerge'_calc:
   assumes "$ok\<^sup>> \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$wait\<^sup>> \<sharp> Q" "P is R2" "Q is R2"
   shows "P \<parallel>\<^bsub>N\<^sub>B\<^esub> Q = ((\<exists> st\<^sup>> \<Zspot> P) \<and> (\<exists> st\<^sup>> \<Zspot> Q) \<and> ($st\<^sup>> = $st\<^sup><)\<^sub>e)"

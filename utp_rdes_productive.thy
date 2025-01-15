@@ -12,9 +12,6 @@ text \<open> A reactive design is productive if it strictly increases the trace,
 definition Productive :: "('s, 't::trace, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" where
 [pred]: "Productive(P) = P \<parallel>\<^sub>R \<^bold>R\<^sub>s(true \<turnstile> true \<diamondop> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)"
 
-
-thm pred
-
 lemma Productive_alt_def:
   "Productive(P) = P \<parallel>\<^sub>R \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> true\<^sub>r \<diamondop> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)" (is "_ = _ \<parallel>\<^sub>R ?P")
 proof - 

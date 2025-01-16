@@ -525,7 +525,9 @@ lemma U0_comp [simp]: "(U0\<alpha>:(x\<^sup>>))\<^sub>v = (0:x\<^sup>>)\<^sub>v"
 lemma U1_comp [simp]: "(U1\<alpha>:(x\<^sup>>))\<^sub>v = (1:x\<^sup>>)\<^sub>v"
   by (auto simp add: U1\<alpha>_def lens_defs)
 
-lemma atomize_upred: 
+lemma atomize_upred:
+  "(True)\<^sub>e = true"
+  "(False)\<^sub>e = false"
   "(\<not> P)\<^sub>e = (\<not> (P)\<^sub>e)"
   "(P \<and> Q)\<^sub>e = ((P)\<^sub>e \<and> (Q)\<^sub>e)"
   "(P \<or> Q)\<^sub>e = ((P)\<^sub>e \<or> (Q)\<^sub>e)"

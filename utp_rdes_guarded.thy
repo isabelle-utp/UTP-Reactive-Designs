@@ -100,23 +100,11 @@ lemma UINF_Guarded [closure]:
 proof (rule GuardedI)
   fix X n
   have "\<And> Y. ((\<Sqinter>P\<in>A. P Y) \<and> gvrt(n+1)) = ((\<Sqinter>P\<in>A. (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
-  proof -
-    fix Y
-    let ?lhs = "((\<Sqinter>P\<in>A. P Y) \<and> gvrt(n+1))" and ?rhs = "((\<Sqinter>P\<in>A. (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
-    have a:"?lhs\<lbrakk>False/ok\<^sup><\<rbrakk> = ?rhs\<lbrakk>False/ok\<^sup><\<rbrakk>"
-      by (pred_auto)
-    have b:"?lhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>True/wait\<^sup><\<rbrakk> = ?rhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>True/wait\<^sup><\<rbrakk>"
-      by (pred_auto)
-    have c:"?lhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>False/wait\<^sup><\<rbrakk> = ?rhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>False/wait\<^sup><\<rbrakk>"
-      by (pred_auto)
-    show "?lhs = ?rhs"
-      using a b c
-      by (rule_tac bool_eq_splitI[of "in_var ok"], simp, rule_tac bool_eq_splitI[of "in_var wait"], simp_all)
-  qed
+    by pred_auto
   moreover have "((\<Sqinter>P\<in>A. (P X \<and> gvrt(n+1))) \<and> gvrt(n+1)) =  ((\<Sqinter>P\<in>A. (P (X \<and> gvrt(n)) \<and> gvrt(n+1))) \<and> gvrt(n+1))"
   proof -
     have "(\<Sqinter>P\<in>A. (P X \<and> gvrt(n+1))) = (\<Sqinter>P\<in>A. (P (X \<and> gvrt(n)) \<and> gvrt(n+1)))"
-    proof (rule UINF_cong)
+    proof (rule SUP_cong, simp)
       fix P assume "P \<in> A"
       thus "(P X \<and> gvrt(n+1)) = (P (X \<and> gvrt(n)) \<and> gvrt(n+1))"
         using Guarded_def assms by blast
@@ -140,9 +128,21 @@ qed
 lemma cond_srea_Guarded [closure]:
   assumes "Guarded P" "Guarded Q"
   shows "Guarded (\<lambda> X. P(X) \<triangleleft> b \<triangleright>\<^sub>R Q(X))"
-  using assms by (pred_auto)
+  using assms by (pred_simp, meson)
 
 text \<open> A tail recursive reactive design with a productive body is guarded. \<close>
+
+lemma SRD_left_zero_2:
+  assumes "P is SRD"
+  shows "(\<exists> st\<^sup>< \<Zspot> II\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; P = (\<exists> st\<^sup>< \<Zspot> II\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>)"
+proof -
+  have "(\<exists> st\<^sup>< \<Zspot> II\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>) ;; R3h(P) = (\<exists> st\<^sup>< \<Zspot> II\<lbrakk>True,True/ok\<^sup><,wait\<^sup><\<rbrakk>)"
+    by (pred_auto)
+  thus ?thesis
+    by (simp add: Healthy_if SRD_healths(3) assms)
+qed
+
+lemma pred_expr_simps [simp]: "((True)\<^sub>e \<and> P) = P" by pred_simp
 
 lemma Guarded_if_Productive [closure]:
   fixes P :: "('s, 't::size_trace,'\<alpha>) rsp_hrel"
@@ -154,111 +154,98 @@ proof (clarsimp simp add: Guarded_def)
   fix X n
   have a:"(P ;; SRD(X) \<and> gvrt (Suc n))\<lbrakk>False/ok\<^sup><\<rbrakk> =
         (P ;; SRD(X \<and> gvrt n) \<and> gvrt (Suc n))\<lbrakk>False/ok\<^sup><\<rbrakk>"
-    by (simp add: usubst closure SRD_left_zero_1 assms)
+    by (simp add: usubst closure assms )
+       (simp add: Healthy_def' SRD_idem SRD_left_zero_1)
   have b:"((P ;; SRD(X) \<and> gvrt (Suc n))\<lbrakk>True/ok\<^sup><\<rbrakk>)\<lbrakk>True/wait\<^sup><\<rbrakk> =
           ((P ;; SRD(X \<and> gvrt n) \<and> gvrt (Suc n))\<lbrakk>True/ok\<^sup><\<rbrakk>)\<lbrakk>True/wait\<^sup><\<rbrakk>"
-    by (simp add: usubst closure SRD_left_zero_2 assms)
+    by (simp add: Healthy_Idempotent usubst closure SRD_left_zero_2 assms)
   have c:"((P ;; SRD(X) \<and> gvrt (Suc n))\<lbrakk>True/ok\<^sup><\<rbrakk>)\<lbrakk>False/wait\<^sup><\<rbrakk> =
           ((P ;; SRD(X \<and> gvrt n) \<and> gvrt (Suc n))\<lbrakk>True/ok\<^sup><\<rbrakk>)\<lbrakk>False/wait\<^sup><\<rbrakk>"
   proof -
-    have 1:"(P\<lbrakk>True/$wait\<acute>\<rbrakk> ;; (SRD X)\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-          (P\<lbrakk>True/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
-      by (metis (no_types, lifting) Healthy_def R3h_wait_true SRD_healths(3) SRD_idem)
-    have 2:"(P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD X)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-          (P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+    have 1:"(P\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; (SRD X)\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+          (P\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
+      by (simp add: Healthy_Idempotent R3h_wait_true SRD_Idempotent SRD_healths(3))
+    have 2:"(P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD X)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+          (P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
     proof -
-      have exp:"\<And> Y::('s, 't,'\<alpha>) rsp_hrel. (P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-                  ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD Y)\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>))
-                     \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+      have exp:"\<And> Y::('s, 't,'\<alpha>) rsp_hrel. (P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+                  ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>))
+                     \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
       proof -
         fix Y :: "('s, 't,'\<alpha>) rsp_hrel"
 
-        have "(P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-              ((\<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> (post\<^sub>R(P) \<and> $tr <\<^sub>u $tr\<acute>)))\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+        have "(P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+              ((\<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> (post\<^sub>R(P) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
           by (metis (no_types) Healthy_def Productive_form assms(1) assms(2) NSRD_is_SRD)
         also have "... =
-             ((R1(R2c(pre\<^sub>R(P) \<Rightarrow> ($ok\<acute> \<and> post\<^sub>R(P) \<and> $tr <\<^sub>u $tr\<acute>))))\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
-          by (simp add: RHS_def R1_def R2c_def R2s_def R3h_def RD1_def RD2_def usubst unrest assms closure design_def)
+             ((R1(R2c(pre\<^sub>R(P) \<longrightarrow> (ok\<^sup>> \<and> post\<^sub>R(P) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e))))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
+          by (simp add: RHS_def R1_def R2c_def R2s_def R3h_def RD1_def RD2_def wait'_cond_def usubst_eval usubst unrest assms closure design_def)
+
         also have "... =
-             (((\<not>\<^sub>r pre\<^sub>R(P) \<or> ($ok\<acute> \<and> post\<^sub>R(P) \<and> $tr <\<^sub>u $tr\<acute>)))\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
-          by (simp add: impl_alt_def R2c_disj R1_disj R2c_not  assms closure R2c_and
+             (((\<not>\<^sub>r pre\<^sub>R(P) \<or> (ok\<^sup>> \<and> post\<^sub>R(P) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
+          by (simp add: impl_neg_disj R2c_disj R1_disj R2c_not  assms closure R2c_and
               R2c_preR rea_not_def R1_extend_conj' R2c_ok' R2c_post_SRD R1_tr_less_tr' R2c_tr_less_tr')
         also have "... =
-             ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> ($ok\<acute> \<and> post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>)) \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+             ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (ok\<^sup>> \<and> post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>)) \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
           by (simp add: usubst unrest assms closure seqr_or_distl NSRD_neg_pre_left_zero)
         also have "... =
-             ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD Y)\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>)) \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+             ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)) \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
         proof -
-          have "($ok\<acute> \<and> post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> =
-                ((post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) \<and> $ok\<acute> =\<^sub>u true) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>"
-            by (rel_blast)
-          also have "... = (post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr)\<lbrakk>True/$ok\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>\<lbrakk>True/ok\<^sup><\<rbrakk>"
-            using seqr_left_one_point[of ok "(post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr)" True "(SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>"]
-            by (simp add: true_alt_def[THEN sym])
+          have "(ok\<^sup>> \<and> post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> =
+                ((post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) \<and> ($ok\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>"
+            by (simp add: pred_ba.inf_assoc pred_ba.inf_commute aext_var)
+          also have "... = (post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)\<lbrakk>True/ok\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>\<lbrakk>True/ok\<^sup><\<rbrakk>"
+            using seqr_left_one_point[of ok "(post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)" True "(SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk>"]
+            by simp
           finally show ?thesis by (simp add: usubst unrest)
         qed
-        finally
-        show "(P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-                 ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD Y)\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>))
-                 \<and> gvrt (Suc n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>" .
+        finally 
+        show "(P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD Y)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+                  ((((\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(Y))\<lbrakk>False/wait\<^sup><\<rbrakk> \<or> (post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD Y)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>))
+                     \<and> gvrt (Suc n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>" .        
       qed
 
-      have 1:"((post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD X)\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> \<and> gvrt (Suc n)) =
-              ((post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr) ;; (SRD (X \<and> gvrt n))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))"
-        apply (pred_auto)
-         apply (rename_tac tr st more ok wait tr' st' more' tr\<^sub>0 st\<^sub>0 more\<^sub>0 ok')
-         apply (rule_tac x="tr\<^sub>0" in exI, rule_tac x="st\<^sub>0" in exI, rule_tac x="more\<^sub>0" in exI)
-         apply (simp)
-         apply (erule trace_strict_prefixE)
-         apply (rename_tac tr st ref ok wait tr' st' ref' tr\<^sub>0 st\<^sub>0 ref\<^sub>0 ok' zs)
-         apply (rule_tac x="False" in exI)
-         apply (simp add: size_minus_trace)
-         apply (subgoal_tac "size(tr) < size(tr\<^sub>0)")
-          apply (simp add: less_diff_conv2 size_mono)
-        using size_strict_mono apply blast
-        apply (rename_tac tr st more ok wait tr' st' more' tr\<^sub>0 st\<^sub>0 more\<^sub>0 ok')
-        apply (rule_tac x="tr\<^sub>0" in exI, rule_tac x="st\<^sub>0" in exI, rule_tac x="more\<^sub>0" in exI)
-        apply (simp)
-        apply (erule trace_strict_prefixE)
-        apply (rename_tac tr st more ok wait tr' st' more' tr\<^sub>0 st\<^sub>0 more\<^sub>0 ok' zs)
-        apply (auto simp add: size_minus_trace)
-        apply (subgoal_tac "size(tr) < size(tr\<^sub>0)")
-         apply (simp add: less_diff_conv2 size_mono)
-        using size_strict_mono apply blast
-        done
+
+      have 1:"((post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD X)\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<and> gvrt (Suc n)) =
+               ((post\<^sub>R P \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) ;; (SRD (X \<and> gvrt n))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<and> gvrt (Suc n))"
+        apply (pred_auto add: size_minus_trace less_diff_conv2 size_mono)
+        apply (smt (z3) add_strict_left_mono nat_neq_iff not_less_eq order_less_trans size_strict_mono)
+        apply (smt (z3) add_strict_left_mono nat_neq_iff not_less_eq order_le_less order_less_le_trans size_strict_mono)
+         apply blast+
+          done
       have 2:"(\<not>\<^sub>r pre\<^sub>R P) ;; (SRD X)\<lbrakk>False/wait\<^sup><\<rbrakk> = (\<not>\<^sub>r pre\<^sub>R P) ;; (SRD(X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk>"
-        by (simp add: NSRD_neg_pre_left_zero closure assms SRD_healths)
+        by (simp add: Healthy_Idempotent NSRD_neg_pre_left_zero R1_wait_false_closed RD1_wait_false SRD_Idempotent SRD_healths(1) SRD_healths(4) assms(1))
       show ?thesis
-        by (simp add: exp 1 2 utp_pred_laws.inf_sup_distrib2)
+        by (simp add: "1" "2" exp pred_ba.boolean_algebra.conj_disj_distrib2)
     qed
 
     show ?thesis
     proof -
-      have "(P ;; (SRD X) \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> =
-          ((P\<lbrakk>True/$wait\<acute>\<rbrakk> ;; (SRD X)\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> \<or>
-          (P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD X)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>)"
-        by (subst seqr_bool_split[of wait], simp_all add: usubst utp_pred_laws.distrib(4))
+      have "(P ;; (SRD X) \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> =
+          ((P\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; (SRD X)\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<or>
+          (P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD X)\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)"
+        by (subst seqr_bool_split[of wait], simp_all add: usubst pred_ba.boolean_algebra.conj_disj_distrib2)
 
       also
-      have "... = ((P\<lbrakk>True/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk> \<or>
-                 (P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>)"
+      have "... = ((P\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk> \<or>
+                 (P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk> \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>)"
         by (simp add: 1 2)
 
       also
-      have "... = ((P\<lbrakk>True/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<or>
-                    P\<lbrakk>False/$wait\<acute>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk>) \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
-        by (simp add: usubst utp_pred_laws.distrib(4))
+      have "... = ((P\<lbrakk>True/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>True/wait\<^sup><\<rbrakk> \<or>
+                    P\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (SRD (X \<and> gvrt n))\<lbrakk>False/wait\<^sup><\<rbrakk>) \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
+        by (simp add: usubst pred_ba.boolean_algebra.conj_disj_distrib2)
 
-      also have "... = (P ;; (SRD (X \<and> gvrt n)) \<and> gvrt (n+1))\<lbrakk>True,false/$ok,wait\<^sup><\<rbrakk>"
+      also have "... = (P ;; (SRD (X \<and> gvrt n)) \<and> gvrt (n+1))\<lbrakk>True,False/ok\<^sup><,wait\<^sup><\<rbrakk>"
         by (subst seqr_bool_split[of wait], simp_all add: usubst)
       finally show ?thesis by (simp add: usubst)
     qed
 
   qed
   show "(P ;; SRD(X) \<and> gvrt (Suc n)) = (P ;; SRD(X \<and> gvrt n) \<and> gvrt (Suc n))"
-    apply (rule_tac bool_eq_splitI[of "in_var ok"])
+    apply (rule_tac bool_eq_substI[of "(ok\<^sup><)\<^sub>v"])
       apply (simp_all add: a)
-    apply (rule_tac bool_eq_splitI[of "in_var wait"])
+    apply (rule_tac bool_eq_substI[of "(wait\<^sup><)\<^sub>v"])
       apply (simp_all add: b c)
   done
 qed
@@ -270,17 +257,17 @@ declare upred_semiring.power_Suc [simp]
 lemma mu_csp_form_1 [rdes]:
   fixes P :: "('s, 't::size_trace,'\<alpha>) rsp_hrel"
   assumes "P is NSRD" "P is Productive"
-  shows "(\<mu> X \<bullet> P ;; SRD(X)) = (\<Sqinter>i \<bullet> P \<^bold>^ (i+1)) ;; Miracle"
+  shows "(\<mu> X \<bullet> P ;; SRD(X)) = (\<Sqinter>i. P \<^bold>^ (i+1)) ;; Miracle"
 proof -
   have 1:"Continuous (\<lambda>X. P ;; SRD X)"
     using SRD_Continuous
     by (clarsimp simp add: Continuous_def seq_SUP_distl[THEN sym], drule_tac x="A" in spec, simp)
-  have 2: "(\<lambda>X. P ;; SRD X) \<in> \<lbrakk>id\<rbrakk>\<^sub>H \<rightarrow> \<lbrakk>SRD\<rbrakk>\<^sub>H"
+  have 2: "(\<lambda>X. P ;; SRD X) \<in> \<lbrakk>id\<rbrakk>\<^sub>H \<rightarrow> \<lbrakk>SRD\<rbrakk>\<^sub>H"  
     by (blast intro: funcsetI closure assms)
   with 1 2 have "(\<mu> X \<bullet> P ;; SRD(X)) = (\<nu> X \<bullet> P ;; SRD(X))"
     by (simp add: guarded_fp_uniq Guarded_if_Productive[OF assms] funcsetI closure)
   also have "... = (\<Sqinter>i. ((\<lambda>X. P ;; SRD X) ^^ i) false)"
-    by (simp add: sup_continuous_lfp 1 sup_continuous_Continuous false_upred_def)
+    by (simp add: sup_continuous_lfp 1 sup_continuous_Continuous false_pred_def bot_fun_def SEXP_def)
   also have "... = ((\<lambda>X. P ;; SRD X) ^^ 0) false \<sqinter> (\<Sqinter>i. ((\<lambda>X. P ;; SRD X) ^^ (i+1)) false)"
     by (subst Sup_power_expand, simp)
   also have "... = (\<Sqinter>i. ((\<lambda>X. P ;; SRD X) ^^ (i+1)) false)"
@@ -300,9 +287,9 @@ proof -
     qed
   qed
   also have "... = (\<Sqinter>i. P \<^bold>^ (i+1)) ;; Miracle"
-    by (simp add: seq_Sup_distr)
+    by (simp add: seq_SUP_distr)
   finally show ?thesis
-    by (simp add: UINF_as_Sup_collect)
+    by blast
 qed
 
 lemma mu_csp_form_NSRD [closure]:
@@ -316,10 +303,10 @@ lemma mu_csp_form_1':
   assumes "P is NSRD" "P is Productive"
   shows "(\<mu> X \<bullet> P ;; SRD(X)) = (P ;; P\<^sup>\<star>) ;; Miracle"
 proof -
-  have "(\<mu> X \<bullet> P ;; SRD(X)) = (\<Sqinter> i\<in>UNIV \<bullet> P ;; P \<^bold>^ i) ;; Miracle"
+  have "(\<mu> X \<bullet> P ;; SRD(X)) = (\<Sqinter> i\<in>UNIV. P ;; P \<^bold>^ i) ;; Miracle"
     by (simp add: mu_csp_form_1 assms closure ustar_def)
   also have "... = (P ;; P\<^sup>\<star>) ;; Miracle"
-    by (simp only: seq_UINF_distl[THEN sym], simp add: ustar_def)
+    by (simp only: seq_SUP_distl[THEN sym], simp add: ustar_def)
   finally show ?thesis .
 qed
 

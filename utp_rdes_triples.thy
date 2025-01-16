@@ -926,7 +926,7 @@ proof -
         by (simp add: aext_var cond_and_R pred_ba.boolean_algebra.conj_disj_distrib pred_ba.inf.commute)
 
       also have "... = ((R1 (R2s Q\<^sub>2))\<lbrakk>False/wait\<^sup>>\<rbrakk> ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2))\<lbrakk>False/wait\<^sup><\<rbrakk>)"
-        by (simp add: aext_var seqr_right_one_point_false)
+        by (simp add: aext_var seqr_right_one_point_false')
 
       also have "... = ((R1 (R2s Q\<^sub>2)) ;; (R1 (R2s S\<^sub>1) \<diamondop> R1 (R2s S\<^sub>2)))"
         by (simp add: wait'_cond_def usubst unrest assms closure)

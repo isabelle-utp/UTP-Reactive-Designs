@@ -915,6 +915,10 @@ definition rea_design_par ::
   "('s, 't::trace, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" (infixr "\<parallel>\<^sub>R" 85)
 where [pred]: "P \<parallel>\<^sub>R Q = \<^bold>R\<^sub>s((pre\<^sub>R(P)  \<and> pre\<^sub>R(Q)) \<turnstile> (cmt\<^sub>R(P) \<and> cmt\<^sub>R(Q)))"
 
+lemma rea_design_par_tri_def: 
+  "P \<parallel>\<^sub>R Q = \<^bold>R\<^sub>s((pre\<^sub>R(P) \<and> pre\<^sub>R(Q)) \<turnstile> (peri\<^sub>R(P) \<and> peri\<^sub>R(Q)) \<diamondop> (post\<^sub>R(P) \<and> post\<^sub>R(Q)))"
+  by (simp add: rea_design_par_def wait'_cond_conj_exchange wait'_cond_peri_post_cmt)
+
 lemma RHS_design_par:
   assumes
     "$ok\<^sup>> \<sharp> P\<^sub>1" "$ok\<^sup>> \<sharp> P\<^sub>2"

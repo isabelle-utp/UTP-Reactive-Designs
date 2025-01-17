@@ -36,10 +36,6 @@ lemma postR_srd_subst [rdes]:
   "post\<^sub>R(\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P) = \<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> post\<^sub>R(P)"
   by (pred_auto)
 
-lemma unrest_subst_aext [unrest]: "x \<bowtie> a \<Longrightarrow> $x \<sharp>\<^sub>s (\<sigma> \<up>\<^sub>s a)"
-  by (expr_simp)
-     (metis lens_indep_def lens_override_def lens_scene.rep_eq scene_override.rep_eq)
-
 lemma st'_unrest_st_lift [unrest]: "$st\<^sup>> \<sharp>\<^sub>s \<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma>"
   by (simp add: subst_st_lift_def unrest_subst_aext)
 
@@ -54,14 +50,11 @@ definition assigns_srd :: "'s subst \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp
 [pred]: "assigns_srd \<sigma> = \<^bold>R\<^sub>s(true \<turnstile> (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<not> wait\<^sup>> \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> ($\<^bold>v\<^sub>S\<^sup>> = $\<^bold>v\<^sub>S\<^sup><)\<^sub>e))"
 
 syntax
-  "_assign_srd" :: "svids \<Rightarrow> uexprs \<Rightarrow> logic"  ("'(_') :=\<^sub>R '(_')")  
-  "_assign_srd" :: "svids \<Rightarrow> uexprs \<Rightarrow> logic"  (infixr ":=\<^sub>R" 62)
+  "_assignment_srd" :: "svid \<Rightarrow> logic \<Rightarrow> logic"  (infixr ":=\<^sub>R" 62)
 
 translations
-  "_assign_srd xs vs" => "CONST assigns_srd (_mk_usubst (id\<^sub>s) xs vs)"
-  "_assign_srd x v" <= "CONST assigns_srd (CONST subst_upd (id\<^sub>s) x v)"
-  "_assign_srd x v" <= "_assign_srd (_spvar x) v"
-  "x,y :=\<^sub>R u,v" <= "CONST assigns_srd (CONST subst_upd (CONST subst_upd (id\<^sub>s) (CONST pr_var x) u) (CONST pr_var y) v)"
+  "_assignment_srd x e" == "CONST assigns_srd (CONST subst_upd (CONST subst_id) x (e)\<^sub>e)"
+  "_assignment_srd (_svid_tuple (_of_svid_list (x +\<^sub>L y))) e" <= "_assignment_srd (x +\<^sub>L y) e" 
 
 lemma assigns_srd_RHS_tri_des [rdes_def]:
   "\<langle>\<sigma>\<rangle>\<^sub>R = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> false \<diamondop> \<langle>\<sigma>\<rangle>\<^sub>r)"
@@ -80,18 +73,18 @@ lemma postR_assigns_srd [rdes]: "post\<^sub>R(\<langle>\<sigma>\<rangle>\<^sub>R
   by (simp add: rdes_def rdes closure rpred)
 
 lemma taut_eq_impl_property:
-  "\<lbrakk> vwb_lens x; $x \<sharp> P \<rbrakk> \<Longrightarrow> `($x =\<^sub>u \<guillemotleft>v\<guillemotright> \<and> Q) \<Rightarrow> P` = `Q\<lbrakk>\<guillemotleft>v\<guillemotright>/$x\<rbrakk> \<Rightarrow> P`"
+  "\<lbrakk> vwb_lens x; $x\<^sup>< \<sharp> P \<rbrakk> \<Longrightarrow> `(($x\<^sup>< = \<guillemotleft>v\<guillemotright>) \<and> Q) \<longrightarrow> P` = `Q\<lbrakk>\<guillemotleft>v\<guillemotright>/x\<^sup><\<rbrakk> \<longrightarrow> P`"
   by (pred_auto, meson mwb_lens_weak vwb_lens_mwb weak_lens.put_get)
 
 lemma st_subst_taut_impl:
-  assumes "vwb_lens x" "$st:x \<sharp> Q" "P is RR" "Q is RR"
-  shows "`[&x \<mapsto>\<^sub>s \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<Rightarrow> Q` = `[&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> P \<Rightarrow> Q`" (is "?lhs = ?rhs")
+  assumes "vwb_lens x" "$st:x\<^sup>< \<sharp> Q" "P is RR" "Q is RR"
+  shows "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<longrightarrow> Q` = `[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> P \<longrightarrow> Q`" (is "?lhs = ?rhs")
 proof -
   have "?lhs = `P\<lbrakk>\<guillemotleft>k\<guillemotright>/$st:x\<rbrakk> \<Rightarrow> Q`"
     by (simp add: usubst_st_lift_def alpha usubst)
   also have "... = `($st:x =\<^sub>u \<guillemotleft>k\<guillemotright>) \<and> RR(P) \<Rightarrow> RR(Q)`"
     by (simp add: Healthy_if assms taut_eq_impl_property)
-  also have "... = `[&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> RR(P) \<Rightarrow> RR(Q)`"
+  also have "... = `[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> RR(P) \<Rightarrow> RR(Q)`"
     by (rel_blast)
   finally show ?thesis by (simp add: assms Healthy_if)
 qed
@@ -99,23 +92,31 @@ qed
 text \<open> The following law explains how to refine a program $Q$ when it is first initialised by
   an assignment. Would be good if it could be generalised to a more general precondition. \<close>
 
+term taut
+
+expr_constructor rea_st_cond
+
+term rea_assigns
+
 lemma AssignR_init_refine_intro:
   assumes 
-    "vwb_lens x" "$st:x \<sharp> P\<^sub>2" "$st:x \<sharp> P\<^sub>3"
+    "vwb_lens x" "$st:x\<^sup>< \<sharp> P\<^sub>2" "$st:x\<^sup>< \<sharp> P\<^sub>3"
     "P\<^sub>2 is RR" "P\<^sub>3 is RR" "Q is NSRD"
-    "\<^bold>R\<^sub>s([&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> Q"
+    "\<^bold>R\<^sub>s([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> Q"
   shows "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> (x :=\<^sub>R \<guillemotleft>k\<guillemotright>) ;; Q"
 proof -
-  have "\<^bold>R\<^sub>s([&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
+  have "\<^bold>R\<^sub>s([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
     by (simp add: NSRD_is_SRD SRD_reactive_tri_design assms)
   hence "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> x :=\<^sub>R \<guillemotleft>k\<guillemotright> ;; \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
-  proof (clarsimp simp add: rdes_def assms closure unrest rpred wp RHS_tri_design_refine, safe)
-  assume a1:"`[&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<Rightarrow> pre\<^sub>R(Q)`" and a2:"`[&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> peri\<^sub>R(Q) \<Rightarrow> P\<^sub>2`" and a3:"`[&x =\<^sub>u \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> post\<^sub>R(Q) \<Rightarrow> P\<^sub>3`"  
-  from a1 assms(1) show "`R1 true \<Rightarrow> [&x \<mapsto>\<^sub>s \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S pre\<^sub>R(Q)`"
-    by (rel_simp)
-  show "`[&x \<mapsto>\<^sub>s \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S peri\<^sub>R(Q) \<Rightarrow> P\<^sub>2`"
+    apply (clarsimp simp add: rdes_def assms closure unrest rpred wp RHS_tri_design_refine, safe)
+    defer
+    apply (subst rpred)
+  assume a1:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longrightarrow> pre\<^sub>R(Q)`" and a2:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> peri\<^sub>R(Q) \<longrightarrow> P\<^sub>2`" and a3:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> post\<^sub>R(Q) \<longrightarrow> P\<^sub>3`"  
+  from a1 assms(1) show "`R1 true \<longrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S pre\<^sub>R(Q)`"
+    by (pred_simp)
+  show "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S peri\<^sub>R(Q) \<longrightarrow> P\<^sub>2`"
     by (simp add: a2 assms st_subst_taut_impl closure)
-  show "`[&x \<mapsto>\<^sub>s \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S post\<^sub>R(Q) \<Rightarrow> P\<^sub>3`"
+  show "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S post\<^sub>R(Q) \<longrightarrow> P\<^sub>3`"
     by (simp add: a3 assms st_subst_taut_impl closure)
   qed
   thus ?thesis

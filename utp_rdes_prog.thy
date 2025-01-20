@@ -72,31 +72,43 @@ lemma periR_assigns_srd [rdes]: "peri\<^sub>R(\<langle>\<sigma>\<rangle>\<^sub>R
 lemma postR_assigns_srd [rdes]: "post\<^sub>R(\<langle>\<sigma>\<rangle>\<^sub>R) = \<langle>\<sigma>\<rangle>\<^sub>r"
   by (simp add: rdes_def rdes closure rpred)
 
+lemma taut_eq_refine_property:
+  "\<lbrakk> vwb_lens x; $x\<^sup>< \<sharp> P \<rbrakk> \<Longrightarrow> P \<sqsubseteq> (($x\<^sup>< = \<guillemotleft>v\<guillemotright>)\<^sub>e \<and> Q) \<longleftrightarrow> P \<sqsubseteq> Q\<lbrakk>\<guillemotleft>v\<guillemotright>/x\<^sup><\<rbrakk>"
+  by (pred_auto, meson mwb_lens_weak vwb_lens_mwb weak_lens.put_get)
+
 lemma taut_eq_impl_property:
   "\<lbrakk> vwb_lens x; $x\<^sup>< \<sharp> P \<rbrakk> \<Longrightarrow> `(($x\<^sup>< = \<guillemotleft>v\<guillemotright>) \<and> Q) \<longrightarrow> P` = `Q\<lbrakk>\<guillemotleft>v\<guillemotright>/x\<^sup><\<rbrakk> \<longrightarrow> P`"
   by (pred_auto, meson mwb_lens_weak vwb_lens_mwb weak_lens.put_get)
 
-lemma st_subst_taut_impl:
+lemma st_subst_refine:
   assumes "vwb_lens x" "$st:x\<^sup>< \<sharp> Q" "P is RR" "Q is RR"
-  shows "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<longrightarrow> Q` = `[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> P \<longrightarrow> Q`" (is "?lhs = ?rhs")
+  shows "Q \<sqsubseteq> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<longleftrightarrow> Q \<sqsubseteq> ([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> P)" (is "?lhs = ?rhs")
 proof -
-  have "?lhs = `P\<lbrakk>\<guillemotleft>k\<guillemotright>/$st:x\<rbrakk> \<Rightarrow> Q`"
-    by (simp add: usubst_st_lift_def alpha usubst)
-  also have "... = `($st:x =\<^sub>u \<guillemotleft>k\<guillemotright>) \<and> RR(P) \<Rightarrow> RR(Q)`"
-    by (simp add: Healthy_if assms taut_eq_impl_property)
-  also have "... = `[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> RR(P) \<Rightarrow> RR(Q)`"
-    by (rel_blast)
+  have "?lhs = (Q \<sqsubseteq> P\<lbrakk>\<guillemotleft>k\<guillemotright>/st:x\<^sup><\<rbrakk>)"
+    by pred_simp
+  also have "... = (RR(Q) \<sqsubseteq> (($st:x\<^sup>< = \<guillemotleft>k\<guillemotright>)\<^sub>e \<and> RR(P)))"
+    by (simp add: Healthy_if assms taut_eq_refine_property)
+  also have "... \<longleftrightarrow> (RR(Q) \<sqsubseteq> ([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> RR(P)))"
+    by (pred_simp, blast)
   finally show ?thesis by (simp add: assms Healthy_if)
 qed
 
 text \<open> The following law explains how to refine a program $Q$ when it is first initialised by
   an assignment. Would be good if it could be generalised to a more general precondition. \<close>
 
-term taut
-
 expr_constructor rea_st_cond
 
-term rea_assigns
+lemma refine_st_eq_true:
+  assumes "vwb_lens x" "P is RR"
+  shows "P \<sqsubseteq> [($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P = true\<^sub>r"
+proof -
+  from assms(1) have "RR P \<sqsubseteq> [($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S RR P = true\<^sub>r"
+    by (pred_auto, metis vwb_lens_wb wb_lens.get_put)
+  thus ?thesis
+    by (simp add: Healthy_if assms(2))
+qed
+
+
 
 lemma AssignR_init_refine_intro:
   assumes 
@@ -108,17 +120,7 @@ proof -
   have "\<^bold>R\<^sub>s([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
     by (simp add: NSRD_is_SRD SRD_reactive_tri_design assms)
   hence "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> x :=\<^sub>R \<guillemotleft>k\<guillemotright> ;; \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
-    apply (clarsimp simp add: rdes_def assms closure unrest rpred wp RHS_tri_design_refine, safe)
-    defer
-    apply (subst rpred)
-  assume a1:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longrightarrow> pre\<^sub>R(Q)`" and a2:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> peri\<^sub>R(Q) \<longrightarrow> P\<^sub>2`" and a3:"`[($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> post\<^sub>R(Q) \<longrightarrow> P\<^sub>3`"  
-  from a1 assms(1) show "`R1 true \<longrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S pre\<^sub>R(Q)`"
-    by (pred_simp)
-  show "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S peri\<^sub>R(Q) \<longrightarrow> P\<^sub>2`"
-    by (simp add: a2 assms st_subst_taut_impl closure)
-  show "`[x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S post\<^sub>R(Q) \<longrightarrow> P\<^sub>3`"
-    by (simp add: a3 assms st_subst_taut_impl closure)
-  qed
+    by (clarsimp simp add: rdes_def assms closure unrest rpred wp RHS_tri_design_refine' st_subst_refine refine_st_eq_true)
   thus ?thesis
     by (simp add: NSRD_is_SRD SRD_reactive_tri_design assms)
 qed
@@ -158,19 +160,19 @@ proof (rule NSRD_RC_intro)
   show "pre\<^sub>R (P \<triangleleft> b \<triangleright>\<^sub>R Q) is RC"
   proof -
     have 1:"(\<lceil>\<not> b\<rceil>\<^sub>S\<^sub>< \<or> \<not>\<^sub>r pre\<^sub>R P) ;; R1(true) = (\<lceil>\<not> b\<rceil>\<^sub>S\<^sub>< \<or> \<not>\<^sub>r pre\<^sub>R P)"
-      by (metis (no_types, lifting) NSRD_neg_pre_unit aext_not assms(1) seqr_or_distl st_lift_R1_true_right)
+      by (simp add: seqr_or_distl st_lift_R1_true_right NSRD_neg_pre_unit assms)
     have 2:"(\<lceil>b\<rceil>\<^sub>S\<^sub>< \<or> \<not>\<^sub>r pre\<^sub>R Q) ;; R1(true) = (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<or> \<not>\<^sub>r pre\<^sub>R Q)"
       by (simp add: NSRD_neg_pre_unit assms seqr_or_distl st_lift_R1_true_right)
     show ?thesis
       by (simp add: rdes closure assms)
   qed
-  show "$st\<acute> \<sharp> peri\<^sub>R (P \<triangleleft> b \<triangleright>\<^sub>R Q)"
+  show "$st\<^sup>> \<sharp> peri\<^sub>R (P \<triangleleft> b \<triangleright>\<^sub>R Q)"
    by (simp add: rdes assms closure unrest)
 qed
 
 subsection \<open> Assumptions \<close>
 
-definition AssumeR :: "'s cond \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel" ("[_]\<^sup>\<top>\<^sub>R") where
+definition AssumeR :: "'s pred \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel" ("[_]\<^sup>\<top>\<^sub>R") where
 [pred]: "AssumeR b = II\<^sub>R \<triangleleft> b \<triangleright>\<^sub>R Miracle"
 
 lemma AssumeR_rdes_def [rdes_def]: 
@@ -217,7 +219,7 @@ lemma cond_srea_AssumeR_form:
 lemma cond_srea_insert_assume:
   assumes "P is NSRD" "Q is NSRD"
   shows "P \<triangleleft> b \<triangleright>\<^sub>R Q = ([b]\<^sup>\<top>\<^sub>R ;; P \<triangleleft> b \<triangleright>\<^sub>R [\<not>b]\<^sup>\<top>\<^sub>R ;; Q)"
-  by (simp add: AssumeR_NSRD AssumeR_comp NSRD_seqr_closure RA1 assms cond_srea_AssumeR_form)
+  by (simp add: AssumeR_NSRD AssumeR_comp NSRD_seqr_closure seqr_assoc[THEN sym] assms cond_srea_AssumeR_form)
 
 lemma AssumeR_cond_left:
   assumes "P is NSRD" "Q is NSRD"
@@ -231,7 +233,7 @@ lemma AssumeR_cond_right:
 
 subsection \<open> Guarded commands \<close>
 
-definition GuardedCommR :: "'s cond \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" ("_ \<rightarrow>\<^sub>R _" [85, 86] 85) where
+definition GuardedCommR :: "'s pred \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" ("_ \<rightarrow>\<^sub>R _" [85, 86] 85) where
 gcmd_def[rdes_def]: "GuardedCommR g A = A \<triangleleft> g \<triangleright>\<^sub>R Miracle"
 
 lemma gcmd_false[simp]: "(false \<rightarrow>\<^sub>R A) = Miracle"
@@ -277,14 +279,15 @@ lemma AssumeR_gcomm:
 subsection \<open> Generalised Alternation \<close>
 
 definition AlternateR 
-  :: "'a set \<Rightarrow> ('a \<Rightarrow> 's upred) \<Rightarrow> ('a \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel) \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" where
-[pred, rdes_def]: "AlternateR I g A B = (\<Sqinter> i \<in> I \<bullet> ((g i) \<rightarrow>\<^sub>R (A i))) \<sqinter> ((\<not> (\<Or> i \<in> I \<bullet> g i)) \<rightarrow>\<^sub>R B)"
+  :: "'a set \<Rightarrow> ('a \<Rightarrow> 's pred) \<Rightarrow> ('a \<Rightarrow> ('s, 't::trace, '\<alpha>) rsp_hrel) \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" where
+[pred, rdes_def]: "AlternateR I g A B = (\<Sqinter> i \<in> I. ((g i) \<rightarrow>\<^sub>R (A i))) \<sqinter> ((\<not> (\<exists> i \<in> \<guillemotleft>I\<guillemotright>. @(g i))\<^sub>e) \<rightarrow>\<^sub>R B)"
 
 definition AlternateR_list 
-  :: "('s upred \<times> ('s, 't::trace, '\<alpha>) rsp_hrel) list \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" where 
+  :: "('s pred \<times> ('s, 't::trace, '\<alpha>) rsp_hrel) list \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel" where 
 [pred, ndes_simp]:
   "AlternateR_list xs P = AlternateR {0..<length xs} (\<lambda> i. map fst xs ! i) (\<lambda> i. map snd xs ! i) P"
 
+(*
 syntax
   "_altindR_els"   :: "pttrn \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("if\<^sub>R _\<in>_ \<bullet> _ \<rightarrow> _ else _ fi")
   "_altindR"       :: "pttrn \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("if\<^sub>R _\<in>_ \<bullet> _ \<rightarrow> _ fi")
@@ -377,6 +380,7 @@ proof -
     by (simp add: closure assms)
   finally show ?thesis .
 qed
+*)
 
 subsection \<open> Choose \<close>
 
@@ -412,11 +416,11 @@ lemma ndiv_srd_refines_preR_true:
 proof
   assume ?lhs
   thus ?rhs
-    by (metis R1_preR ndiv_srd_def preR_antitone preR_srdes rea_true_RR rea_true_disj(2) utp_pred_laws.sup.orderE)    
+    by (metis Healthy_if R1_mono R1_preR ndiv_srd_def preR_antitone preR_srdes pred_ba.order_antisym rea_true_RR rel_theory.utp_bottom)    
 next
   assume ?rhs
   hence "ndiv\<^sub>R \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P))"
-    by (simp add: RHS_tri_design_conj assms ndiv_srd_def closure rea_true_conj(1) rea_true_impl utp_pred_laws.inf.absorb_iff2)
+    by (simp add: ndiv_srd_def srdes_tri_refine_intro')
   thus ?lhs
     by (simp add: SRD_reactive_tri_design assms)
 qed
@@ -429,7 +433,7 @@ lemma ndiv_srd_refines_rdes_pre_true:
 subsection \<open> State Abstraction \<close>
 
 definition state_srea ::
-  "'s itself \<Rightarrow> ('s,'t::trace,'\<alpha>,'\<beta>) rel_rsp \<Rightarrow> (unit,'t,'\<alpha>,'\<beta>) rel_rsp" where
+  "'s itself \<Rightarrow> ('s,'t::trace,'\<alpha>,'\<beta>) rsp_rel \<Rightarrow> (unit,'t,'\<alpha>,'\<beta>) rsp_rel" where
 [pred]: "state_srea t P = \<langle>\<exists> {$st,$st\<acute>} \<bullet> P\<rangle>\<^sub>S"
 
 syntax

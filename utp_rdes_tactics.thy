@@ -8,8 +8,8 @@ text \<open> Theorems for normalisation \<close>
 
 lemmas rdes_rel_norms = 
   prod.case_eq_if
-  conj_assoc
-  disj_assoc
+(*  conj_assoc
+  disj_assoc *)
   pred_ba.distrib(3,4)
   seqr_or_distl
   seqr_or_distr
@@ -27,7 +27,7 @@ method rdes_expand uses cls = (insert cls, (erule RD_elim)+)
 text \<open> Tactic to simplify the definition of a reactive design \<close>
   
 method rdes_simp uses cls cong simps =
-  ((rdes_expand cls: cls)?, (simp add: closure)?, (simp add: rdes_def rdes_rel_norms rdes rpred cls closure alpha frame usubst unrest wp simps cong: cong))
+  ((rdes_expand cls: cls)?(* , (simp add: closure)? *), (simp add: rdes_def rdes_rel_norms rdes rpred cls closure alpha frame usubst unrest wp simps del: SEXP_apply cong: cong))
 
 text \<open> Tactic to split a refinement conjecture into three POs \<close>
 
@@ -38,27 +38,27 @@ text \<open> Tactics to split an equality conjecture into three POs \<close>
 
 method rdes_eq_split uses cls cong simps =
   (rdes_simp cls: cls cong: cong simps: simps; (rule_tac rdes_tri_eq_intro srdes_tri_eq_intro))
-
+         
 method rdes_eq_split' uses cls cong simps =
   (rdes_simp cls: cls cong: cong simps: simps; (rule_tac rdes_tri_eq_intro' srdes_tri_eq_intro'))
 
 text \<open> Tactic to prove a refinement \<close>
   
 method rdes_refine uses cls cong simps =
-  (rdes_refine_split cls: cls cong: cong simps: simps; (insert cls; rel_auto))
+  (rdes_refine_split cls: cls cong: cong simps: simps; (insert cls; pred_auto))
 
 text \<open> Tactics to prove an equality \<close>
 
 method rdes_eq uses cls cong simps =
-  (rdes_eq_split cls: cls cong: cong simps: simps; rel_auto)
+  (rdes_eq_split cls: cls cong: cong simps: simps; pred_auto)
 
 method rdes_eq' uses cls cong simps =
-  (rdes_eq_split' cls: cls cong: cong simps: simps; rel_auto)
+  (rdes_eq_split' cls: cls cong: cong simps: simps; pred_auto)
 
 text \<open> Via antisymmetry \<close>
 
 method rdes_eq_anti uses cls cong simps =
-  (rdes_simp cls: cls cong: cong simps: simps; (rule_tac antisym; (rule_tac rdes_tri_refine_intro srdes_tri_refine_intro; rel_auto)))
+  (rdes_simp cls: cls cong: cong simps: simps; (rule_tac antisym; (rule_tac rdes_tri_refine_intro srdes_tri_refine_intro; pred_auto)))
 
 text \<open> Tactic to calculate pre/peri/postconditions from reactive designs \<close>
 

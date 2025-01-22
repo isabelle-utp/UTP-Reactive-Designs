@@ -803,16 +803,16 @@ theorem WhileR_true:
 lemma WhileR_insert_assume:
   assumes "P is NSRD" "P is Productive"
   shows "while\<^sub>R b do ([b]\<^sup>\<top>\<^sub>R ;; P) od = while\<^sub>R b do P od"
-  by (simp add: AssumeR_NSRD AssumeR_comp NSRD_seqr_closure Productive_seq_2 RA1 WhileR_iter_form assms)
+  by (simp add: AssumeR_NSRD AssumeR_comp NSRD_seqr_closure Productive_seq_2 seqr_assoc[THEN sym] WhileR_iter_form assms)
 
 theorem WhileR_rdes_def [rdes_def]:
-  assumes "P is RC" "Q is RR" "R is RR" "$st\<acute> \<sharp> Q" "R is R4"
+  assumes "P is RC" "Q is RR" "R is RR" "$st\<^sup>> \<sharp> Q" "R is R4"
   shows "while\<^sub>R b do \<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R) od = 
-         \<^bold>R\<^sub>s (([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<Rightarrow>\<^sub>r P) \<turnstile> (([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r ;; [b]\<^sup>\<top>\<^sub>r ;; Q) \<diamondop> (([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r))" 
+         \<^bold>R\<^sub>s ((([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r P)) \<turnstile> (([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r ;; [b]\<^sup>\<top>\<^sub>r ;; Q) \<diamondop> (([b]\<^sup>\<top>\<^sub>r ;; R)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r))" 
   (is "?lhs = ?rhs")
 proof -
   have "?lhs = ([b]\<^sup>\<top>\<^sub>R ;; \<^bold>R\<^sub>s (P \<turnstile> Q \<diamondop> R))\<^sup>\<star>\<^sup>R ;; [\<not> b]\<^sup>\<top>\<^sub>R"
-    by (simp add: WhileR_iter_form Productive_rdes_RR_intro assms closure)
+    by (simp add: WhileR_iter_form assms closure)
   also have "... = ?rhs"
     by (simp add: rdes_def assms closure unrest rpred wp del: rea_star_wp)
   finally show ?thesis .
@@ -823,52 +823,53 @@ text \<open> Refinement introduction law for reactive while loops \<close>
 theorem WhileR_refine_intro:
   assumes 
     \<comment> \<open> Closure conditions \<close>
-    "Q\<^sub>1 is RC" "Q\<^sub>2 is RR" "Q\<^sub>3 is RR" "$st\<acute> \<sharp> Q\<^sub>2" "Q\<^sub>3 is R4"
+    "Q\<^sub>1 is RC" "Q\<^sub>2 is RR" "Q\<^sub>3 is RR" "$st\<^sup>> \<sharp> Q\<^sub>2" "Q\<^sub>3 is R4"
     \<comment> \<open> Refinement conditions \<close>
-    "([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<Rightarrow>\<^sub>r Q\<^sub>1) \<sqsubseteq> P\<^sub>1"
+    "([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r Q\<^sub>1) \<sqsubseteq> P\<^sub>1"
     "P\<^sub>2 \<sqsubseteq> [b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>2"
     "P\<^sub>2 \<sqsubseteq> [b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3 ;; P\<^sub>2"
     "P\<^sub>3 \<sqsubseteq> [\<not>b]\<^sup>\<top>\<^sub>r"
     "P\<^sub>3 \<sqsubseteq> [b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3 ;; P\<^sub>3"
   shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> while\<^sub>R b do \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3) od"
 proof (simp add: rdes_def assms, rule srdes_tri_refine_intro')
-  show "([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<Rightarrow>\<^sub>r Q\<^sub>1) \<sqsubseteq> P\<^sub>1"
+  show "([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r wp\<^sub>r ([b]\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r Q\<^sub>1) \<sqsubseteq> P\<^sub>1"
     by (simp add: assms)
   show "P\<^sub>2 \<sqsubseteq> (P\<^sub>1 \<and> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>2)"
   proof -
     have "P\<^sub>2 \<sqsubseteq> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>2"
       by (simp add: assms rea_assume_RR rrel_theory.Star_inductl seq_RR_closed seqr_assoc)
     thus ?thesis
-      by (simp add: utp_pred_laws.le_infI2)
+      by (meson pred_ba.le_infI2)
   qed
   show "P\<^sub>3 \<sqsubseteq> (P\<^sub>1 \<and> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r)"
   proof -
     have "P\<^sub>3 \<sqsubseteq> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r"
       by (simp add: assms rea_assume_RR rrel_theory.Star_inductl seqr_assoc)
     thus ?thesis
-      by (simp add: utp_pred_laws.le_infI2)
+      by (meson pred_ba.inf.coboundedI2)
   qed
 qed
 
 lemma WhileR_post_lemma:
   assumes 
     "P\<^sub>1 is RC" "P\<^sub>2 is RR" "P\<^sub>3 is RR"
-    "Q\<^sub>1 is RC" "Q\<^sub>2 is RR" "Q\<^sub>3 is RR" "$st\<acute> \<sharp> Q\<^sub>2" "Q\<^sub>3 is R4"
+    "Q\<^sub>1 is RC" "Q\<^sub>2 is RR" "Q\<^sub>3 is RR" "$st\<^sup>> \<sharp> Q\<^sub>2" "Q\<^sub>3 is R4"
     "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> while\<^sub>R b do \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3) od"
   shows "P\<^sub>3 \<sqsubseteq> (P\<^sub>1 \<and> [\<not>b]\<^sup>\<top>\<^sub>r)"
 proof -  
   from assms have "P\<^sub>3 \<sqsubseteq> (P\<^sub>1 \<and> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r)"
     by (simp add: rdes_def assms RHS_tri_design_refine' closure)
   moreover have "(P\<^sub>1 \<and> ([b]\<^sup>\<top>\<^sub>r ;; Q\<^sub>3)\<^sup>\<star>\<^sup>r ;; [\<not> b]\<^sup>\<top>\<^sub>r) \<sqsubseteq> (P\<^sub>1 \<and> [\<not> b]\<^sup>\<top>\<^sub>r)"
-    by (metis (no_types, opaque_lifting) order_refl rea_assume_RR rea_skip_unit(2) rrel_theory.Star_unfoldl semilattice_sup_class.le_sup_iff urel_dioid.mult_isor utp_pred_laws.inf_mono)
+    by (metis assms(6) pred_ba.inf.orderI pred_ba.inf_idem pred_ba.inf_mono rea_assume_RR ref_lattice.inf_le1 rrel_theory.Star_alt_def rrel_theory.Unit_Left seq_RR_closed upred_semiring.distrib_right)
   thus ?thesis
-    by (meson calculation order.trans) 
+    using calculation by order 
 qed
 
+(*
 subsection \<open> Iteration Construction \<close>
 
 definition IterateR
-  :: "'a set \<Rightarrow> ('a \<Rightarrow> 's upred) \<Rightarrow> ('a \<Rightarrow> ('s, 't::size_trace, '\<alpha>) rsp_hrel) \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel"
+  :: "'a set \<Rightarrow> ('a \<Rightarrow> 's pred) \<Rightarrow> ('a \<Rightarrow> ('s, 't::size_trace, '\<alpha>) rsp_hrel) \<Rightarrow> ('s, 't, '\<alpha>) rsp_hrel"
 where "IterateR A g P = while\<^sub>R (\<Or> i\<in>A \<bullet> g(i)) do (if\<^sub>R i\<in>A \<bullet> g(i) \<rightarrow> P(i) fi) od"
 
 definition IterateR_list 
@@ -1200,5 +1201,6 @@ lemma StateInvR_seq_refine:
 
 lemma ndiv_StateInvR: "ndiv\<^sub>R = sinv\<^sub>R(true)"
   by (rdes_eq)
+*)
 
 end

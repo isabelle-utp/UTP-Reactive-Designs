@@ -81,6 +81,14 @@ proof -
     by (simp add: Healthy_def)
 qed
 
+lemma tr'_eq_tr_RR [closure]: "($tr\<^sup>< = $tr\<^sup>>)\<^sub>e is RR"
+  using minus_zero_eq by pred_auto
+
+lemma wpR_property [wp]: "(\<not>\<^sub>r (\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false\<^sub>h) wp\<^sub>r false\<^sub>h = (\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false\<^sub>h"
+  using dual_order.trans by (pred_simp, blast)
+
+thm wp_rea_false_RC
+
 lemma ISRD_implies_NSRD [closure]: 
   assumes "P is ISRD"
   shows "P is NSRD"
@@ -93,12 +101,12 @@ proof -
     by (simp add: RD3_def, subst SRD_right_unit_tri_lemma, simp_all add: assms ISRD_implies_SRD)
   also have "... = \<^bold>R\<^sub>s (((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false\<^sub>h) \<turnstile> false \<diamondop> (post\<^sub>R P \<and> ($tr\<^sup>< = $tr\<^sup>>)\<^sub>e))"
     by (simp add: RHS_tri_design_par ISRD1_def unrest choose_srd_def rpred closure ISRD_implies_SRD assms)
-  also have "... = (... ;; II\<^sub>R)"
-    apply (rdes_simp, simp add: RHS_tri_normal_design_composition' closure assms unrest ISRD_implies_SRD R5_def wp rpred wp_rea_false_RC)
-  also have "... is RD3"
-    by (simp add: Healthy_def RD3_def seqr_assoc)
-  finally show ?thesis
-    by (simp add: SRD_RD3_implies_NSRD Healthy_if assms ISRD_implies_SRD)
+  finally have 1: "ISRD(P) = ..." .
+  hence "... = (... ;; II\<^sub>R)"
+    by (rdes_simp, simp_all add: RHS_tri_design_composition_wp closure unrest_ssubst_expr unrest rpred usubst_eval wp assms ISRD_implies_SRD)
+
+  thus ?thesis
+    by (metis (no_types, lifting) "1" Healthy_if Healthy_intro ISRD_implies_SRD RD3_def SRD_RD3_implies_NSRD assms)
 qed
   
 lemma ISRD_form:
@@ -119,7 +127,7 @@ lemma ISRD_elim [RD_elim]:
   by (simp add: ISRD_form)
   
 lemma skip_srd_ISRD [closure]: "II\<^sub>R is ISRD"
-  by (rule ISRD_intro, simp_all add: rdes closure)
+  by (rule ISRD_intro, simp_all add: rdes closure, pred_auto)
     
 lemma assigns_srd_ISRD [closure]: "\<langle>\<sigma>\<rangle>\<^sub>R is ISRD"
   by (rule ISRD_intro, simp_all add: rdes closure, pred_auto)
@@ -147,19 +155,21 @@ lemma ISRD_recurse_Chaos:
   shows "(\<mu>\<^sub>R X \<bullet> P ;; X) = Chaos"
 proof -
   have 1: "(\<mu>\<^sub>R X \<bullet> P ;; X) = (\<mu> X \<bullet> P ;; SRD(X))"
-    by (auto simp add: srdes_theory.utp_lfp_def closure assms)
+    by (auto simp add: srdes_theory.utp_lfp_def closure mono assms)
   have "(\<mu> X \<bullet> P ;; SRD(X)) \<sqsubseteq> Chaos"
-  proof (rule gfp_upperbound)
+  proof -
     have "P ;; Chaos \<sqsubseteq> Chaos"
       apply (rdes_refine_split cls: assms)
       using assms(2) apply (pred_auto, metis (no_types, lifting) dual_order.antisym order_refl)
        apply (pred_auto)+
       done
-    thus "P ;; SRD Chaos \<sqsubseteq> Chaos"
+    hence "P ;; SRD Chaos \<sqsubseteq> Chaos"
       by (simp add: Healthy_if srdes_theory.bottom_closed)
+    thus ?thesis
+      by (metis "1" \<open>P ;; Chaos \<sqsubseteq> Chaos\<close> srdes_theory.LFP_lowerbound srdes_theory.bottom_closed)
   qed
   thus ?thesis
-    by (metis "1" dual_order.antisym srdes_theory.LFP_closed srdes_theory.bottom_lower)
+    by (metis "1" pred_ba.order.eq_iff srdes_theory.LFP_closed srdes_theory.bottom_lower)
 qed
 
 lemma recursive_assign_Chaos:
@@ -170,14 +180,14 @@ lemma unproductive_form:
   assumes "P\<^sub>2 is RR" "P\<^sub>3 is RR" "P\<^sub>3 is R5" "P\<^sub>3 \<noteq> false"
   shows "\<not> (\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) is Productive)"
 proof -
-  have "Productive(\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3)) = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> R4(P\<^sub>3))"
+  have 1:"Productive(\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3)) = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> R4(P\<^sub>3))"
     by (simp add: Productive_RHS_R4_design_form closure assms)
-  also have "... = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> false)"
+  have 2:"... = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> false)"
     by (metis Healthy_if R4_R5 assms(3))
-  also have "... \<noteq> \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3)"
+  have 3:"... \<noteq> \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3)"
     by (simp add: R5_implies_R1 assms rea_true_conj(1) rrel_theory.bottom_closed rrel_theory.top_closed srdes_tri_eq_iff)
-  finally show ?thesis
-    using Healthy_if by blast
+  thus ?thesis
+    by (metis "1" "2" Healthy_if)
 qed
 
 lemma unproductive_assigns: "\<not> (\<langle>\<sigma>\<rangle>\<^sub>R is Productive)"

@@ -969,4 +969,7 @@ lemma RHS_comp_assoc:
   shows "(P \<parallel>\<^sub>R Q) \<parallel>\<^sub>R R = P \<parallel>\<^sub>R Q \<parallel>\<^sub>R R"
   by (rdes_eq cls: assms)
 
+lemma rea_design_par_mono: "P \<sqsubseteq> Q \<Longrightarrow> P \<parallel>\<^sub>R R \<sqsubseteq> Q \<parallel>\<^sub>R R"
+  by (pred_simp, blast)
+
 end

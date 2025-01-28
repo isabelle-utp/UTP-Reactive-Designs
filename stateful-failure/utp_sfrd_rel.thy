@@ -275,25 +275,24 @@ lemma unrest_ref_map_st [unrest]: "$ref\<^sup>< \<sharp> P \<Longrightarrow> $re
 lemma unrest_ref'_map_st [unrest]: "$ref\<^sup>> \<sharp> P \<Longrightarrow> $ref\<^sup>> \<sharp> P \<up>\<^sub>2 map_st\<^sub>L[a]"
   by (pred_auto)
 
-(*
 lemma unrest_ref_rdes_frame_ext [unrest]: 
-  "$ref\<^sup>< \<sharp> P \<Longrightarrow> $ref\<^sup>< \<sharp> a:[P]\<^sub>r\<^sup>+"
-  by (rel_blast)
+  "\<lbrakk> vwb_lens a; $ref\<^sup>< \<sharp> P \<rbrakk> \<Longrightarrow> $ref\<^sup>< \<sharp> a:[P]\<^sub>r\<^sup>+"
+  by (pred_simp, blast)
 
 lemma unrest_ref'_rdes_frame_ext [unrest]: 
-  "$ref\<^sup>> \<sharp> P \<Longrightarrow> $ref\<^sup>> \<sharp> a:[P]\<^sub>r\<^sup>+"
-  by (rel_blast)
-*)
+  "\<lbrakk> vwb_lens a; $ref\<^sup>> \<sharp> P \<rbrakk> \<Longrightarrow> $ref\<^sup>> \<sharp> a:[P]\<^sub>r\<^sup>+"
+  by (pred_simp, blast)
 
 lemma map_st_ext_CRR_closed [closure]:
   assumes "P is CRR"
   shows "P \<up>\<^sub>2 map_st\<^sub>L[a] is CRR"
-  apply (rule CRR_intro, simp_all add: closure unrest assms)
+  by (rule CRR_intro, simp_all add: closure unrest assms)
 
 lemma map_st_ext_CRC_closed [closure]:
   assumes "P is CRC"
   shows "P \<up>\<^sub>2 map_st\<^sub>L[a] is CRC"
-  by (rule CRC_intro, simp_all add: closure unrest assms)
+  apply (rule CRC_intro, simp_all add: closure unrest assms)
+  oops
 
  lemma rdes_frame_ext_CRR_closed [closure]:
   assumes "P is CRR"

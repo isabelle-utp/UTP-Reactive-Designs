@@ -115,21 +115,20 @@ lemma unrest_circus_alpha:
   shows "\<Sigma> \<sharp> P"
   by (rule bij_lens_unrest_all[OF circus_alpha_bij_lens], simp add: unrest assms)
 
-(*
+lemma unrest_subst_upd_same [unrest]: "\<lbrakk> vwb_lens x; $x \<sharp> e; $x \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> $x \<sharp> \<sigma>(x \<leadsto> e) \<dagger> f"
+  by (expr_simp)
+
+lemma unrest_subst_upd_diff: "\<lbrakk> vwb_lens x; vwb_lens y; x \<bowtie> y; $x \<sharp> e; $x \<sharp> \<sigma> \<dagger> f; $y \<sharp>\<^sub>s \<sigma> \<rbrakk> \<Longrightarrow> $x \<sharp> \<sigma>(y \<leadsto> e) \<dagger> f"
+  by (expr_simp, metis lens_indep.lens_put_comm)
+
+
 lemma unrest_all_circus_vars:
   fixes P :: "('s, 'e) action"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "\<Sigma> \<sharp> r'" "\<Sigma> \<sharp> s" "\<Sigma> \<sharp> s'" "\<Sigma> \<sharp> t" "\<Sigma> \<sharp> t'"
   shows "\<Sigma> \<sharp> [ref\<^sup>> \<leadsto> r', st\<^sup>< \<leadsto> s, st\<^sup>> \<leadsto> s', tr\<^sup>< \<leadsto> t, tr\<^sup>> \<leadsto> t'] \<dagger> P"
   using assms
-  apply (simp add: bij_lens_unrest_all_eq[OF circus_alpha_bij_lens] unrest_pair_split plus_vwb_lens)
-  apply auto
-  apply (simp add: unrest)+
-  apply (rule unrest)
-              apply unrest
-  apply simp
-            apply (rule unrest) back
-  apply simp
-  apply (rule unrest)
+  by (simp add: bij_lens_unrest_all_eq[OF circus_alpha_bij_lens] unrest_pair_split unrest unrest_subst_upd_diff)
+(*
 
 lemma unrest_all_circus_vars_st_st':
   fixes P :: "('s, 'e) action"

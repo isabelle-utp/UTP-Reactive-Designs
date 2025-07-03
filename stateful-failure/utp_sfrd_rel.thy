@@ -845,21 +845,25 @@ lemma R5_csp_enable_nil [rpred]:
   by (pred_auto)
 
 lemma R4_csp_enable_Cons [rpred]: 
-  "R4(\<E>(s,bop Cons x xs, E)) = \<E>(s,bop Cons x xs, E)"
+  "R4(\<E>(s,x # xs, E)) = \<E>(s,x # xs, E)"
   by (pred_auto, simp add: Prefix_Order.strict_prefixI')
 
 lemma R5_csp_enable_Cons [rpred]: 
-  "R5(\<E>(s,bop Cons x xs, E)) = false"
+  "R5(\<E>(s,x # xs, E)) = false"
   by (pred_auto)
 
 lemma rel_aext_csp_enable [alpha]: 
-  "vwb_lens a \<Longrightarrow> \<E>(s, t, E) \<up>\<^sub>2 map_st\<^sub>L[a] = \<E>(s \<oplus>\<^sub>p a, t \<oplus>\<^sub>p a, E \<oplus>\<^sub>p a)"
+  "vwb_lens a \<Longrightarrow> \<E>(s, t, E) \<up>\<^sub>2 map_st\<^sub>L[a] = \<E>(s \<up> a, t \<up> a, E \<up> a)"
   by (pred_auto)
 
 subsection \<open> Completed Trace Interaction \<close>
 
-definition csp_do :: "'s upred \<Rightarrow> ('s usubst) \<Rightarrow> ('e list, 's) uexpr \<Rightarrow> ('s, 'e) action" ("\<Phi>'(_,_,_')") where
-[pred]: "\<Phi>(s,\<sigma>,t) = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> $tr\<^sup>> =\<^sub>u $tr @ \<lceil>t\<rceil>\<^sub>S\<^sub>< \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S)"
+definition csp_do :: "'s pred \<Rightarrow> 's subst \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('s, 'e) action" where
+[pred]: "csp_do s \<sigma> t = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S)"
+
+syntax "_csp_do" :: "logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("\<Phi>'(_,_,_')")
+translations "_csp_do s \<sigma> t" == "CONST csp_do (s)\<^sub>e \<sigma> (t)\<^sub>e"
+syntax_consts "_csp_do" == csp_do
 
 lemma csp_do_eq_intro:
   assumes "s\<^sub>1 = s\<^sub>2" "\<sigma>\<^sub>1 = \<sigma>\<^sub>2" "t\<^sub>1 = t\<^sub>2"
@@ -870,14 +874,14 @@ text \<open> Predicate @{term "\<Phi>(s,\<sigma>,t)"} states that if the initial
   the trace @{term t} is performed, then afterwards the state update @{term \<sigma>} is executed. \<close>
 
 lemma unrest_csp_do [unrest]: 
-  "\<lbrakk> x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<^sup>>)\<^sub>v; x \<bowtie> ($st)\<^sub>v; x \<bowtie> ($st\<acute>)\<^sub>v \<rbrakk> \<Longrightarrow> x \<sharp> \<Phi>(s,\<sigma>,t)"
-  by (simp_all add: csp_do_def alpha_in_var alpha_out_var prod_as_plus unrest lens_indep_sym)
+  "\<lbrakk> vwb_lens x; x \<bowtie> (tr\<^sup><)\<^sub>v; x \<bowtie> (tr\<^sup>>)\<^sub>v; x \<bowtie> (st\<^sup><)\<^sub>v; x \<bowtie> (st\<^sup>>)\<^sub>v \<rbrakk> \<Longrightarrow> $x \<sharp> \<Phi>(s,\<sigma>,t)"
+  by (pred_simp, expr_simp add: lens_indep_def)
     
 lemma csp_do_CRF [closure]: "\<Phi>(s,\<sigma>,t) is CRF"
   by (pred_auto)
 
 lemma csp_do_R4_closed [closure]:
-  "\<Phi>(b,\<sigma>,bop Cons x xs) is R4"
+  "\<Phi>(b,\<sigma>, x # xs) is R4"
   by (pred_auto, simp add: Prefix_Order.strict_prefixI')
 
 lemma st_pred_conj_csp_do [rpred]: 
@@ -887,21 +891,21 @@ lemma st_pred_conj_csp_do [rpred]:
 lemma trea_subst_csp_do [usubst]:
   "(\<Phi>(s,\<sigma>,t\<^sub>2))\<lbrakk>t\<^sub>1\<rbrakk>\<^sub>t = \<Phi>(s,\<sigma>,t\<^sub>1 @ t\<^sub>2)"
   apply (pred_auto)
-  apply (metis append.assoc less_eq_list_def prefix_concat_minus)
-  apply (simp add: list_concat_minus_list_concat)
-done
+  apply (metis add_monoid_diff_cancel_left append_assoc diff_add_cancel_left' plus_list_def)
+  apply (simp add: list_concat_minus_list_concat plus_list_def)
+  done
 
 lemma st_subst_csp_do [usubst]:
   "\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> \<Phi>(s,\<rho>,t) = \<Phi>(\<sigma> \<dagger> s,\<rho> \<circ>\<^sub>s \<sigma>,\<sigma> \<dagger> t)"
   by (pred_auto)
 
-lemma csp_do_nothing: "\<Phi>(true,id\<^sub>s,\<guillemotleft>[]\<guillemotright>) = II\<^sub>c"
+lemma csp_do_nothing: "\<Phi>(True,[\<leadsto>],\<guillemotleft>[]\<guillemotright>) = II\<^sub>c"
   by (pred_auto)
 
-lemma csp_do_nothing_0: "\<Phi>(true,id\<^sub>s,0) = II\<^sub>c"
+lemma csp_do_nothing_0: "\<Phi>(True,[\<leadsto>],0) = II\<^sub>c"
   by (pred_auto)
 
-lemma csp_do_false [rpred]: "\<Phi>(false,s,t) = false"
+lemma csp_do_false [rpred]: "\<Phi>(False,s,t) = false"
   by (pred_auto)
             
 lemma subst_state_csp_enable [usubst]:
@@ -909,11 +913,11 @@ lemma subst_state_csp_enable [usubst]:
   by (pred_auto)
     
 lemma csp_do_assign_enable [rpred]: 
-  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<E>(s\<^sub>2,t\<^sub>2,e) = \<E>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1@(\<sigma> \<dagger> t\<^sub>2), (\<sigma> \<dagger> e))"
+  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<E>(s\<^sub>2,t\<^sub>2,e) = \<E>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1 @ (\<sigma> \<dagger> t\<^sub>2), (\<sigma> \<dagger> e))"
   by (pred_auto)
 
 lemma csp_do_assign_do [rpred]: 
-  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<Phi>(s\<^sub>2,\<rho>,t\<^sub>2) = \<Phi>(s\<^sub>1 \<and> (\<sigma> \<dagger> s\<^sub>2), \<rho> \<circ>\<^sub>s \<sigma>, t\<^sub>1@(\<sigma> \<dagger> t\<^sub>2))"
+  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<Phi>(s\<^sub>2,\<rho>,t\<^sub>2) = \<Phi>(s\<^sub>1 \<and> (\<sigma> \<dagger> s\<^sub>2), \<rho> \<circ>\<^sub>s \<sigma>, t\<^sub>1 @ (\<sigma> \<dagger> t\<^sub>2))"
   by (pred_auto)
 
 lemma csp_do_cond [rpred]:
@@ -929,15 +933,17 @@ lemma csp_do_comp:
   shows "\<Phi>(s,\<sigma>,t) ;; P = ([s]\<^sub>S\<^sub>< \<and> (\<sigma> \<dagger>\<^sub>S P)\<lbrakk>t\<rbrakk>\<^sub>t)"
 proof -
   have "\<Phi>(s,\<sigma>,t) ;; (CRR P) = ([s]\<^sub>S\<^sub>< \<and> ((\<sigma> \<dagger>\<^sub>S CRR P))\<lbrakk>t\<rbrakk>\<^sub>t)"
-    by (pred_auto; blast)
+    by (pred_auto, (metis plus_list_def)+)
   thus ?thesis
     by (simp add: Healthy_if assms)
 qed
 
+term "($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e"
+
 lemma wp_rea_csp_do_lemma:
   fixes P :: "('\<sigma>, '\<phi>) action"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
-  shows "(\<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> $tr\<^sup>> =\<^sub>u $tr @ \<lceil>t\<rceil>\<^sub>S\<^sub><) ;; P = (\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P)\<lbrakk>$tr @ \<lceil>t\<rceil>\<^sub>S\<^sub></tr\<^sup><\<rbrakk>"
+  shows "(\<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e) ;; P = (\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P)\<lbrakk>$tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub></tr\<^sup><\<rbrakk>"
   using assms by (pred_auto, meson)
 
 text \<open> This operator sets an upper bound on the permissible traces, when starting from a particular state \<close>
@@ -956,12 +962,12 @@ lemma st_pred_impl_csp_do_wp [rpred]:
 
 lemma csp_do_seq_USUP_distl [rpred]:
   assumes "\<And> i. i \<in> A \<Longrightarrow> P(i) is CRR" "A \<noteq> {}"
-  shows "\<Phi>(s,\<sigma>,t) ;; (\<And> i\<in>A \<bullet> P(i)) = (\<And> i\<in>A \<bullet> \<Phi>(s,\<sigma>,t) ;; P(i))"
+  shows "\<Phi>(s,\<sigma>,t) ;; (\<Squnion> i\<in>A. P(i)) = (\<Squnion> i\<in>A. \<Phi>(s,\<sigma>,t) ;; P(i))"
 proof -
-  from assms(2) have "\<Phi>(s,\<sigma>,t) ;; (\<Squnion> i\<in>A \<bullet> CRR(P(i))) = (\<Squnion> i\<in>A \<bullet> \<Phi>(s,\<sigma>,t) ;; CRR(P(i)))"
-    by (rel_blast)    
+  from assms(2) have "\<Phi>(s,\<sigma>,t) ;; (\<Squnion> i\<in>A. CRR(P(i))) = (\<Squnion> i\<in>A. \<Phi>(s,\<sigma>,t) ;; CRR(P(i)))"
+    by (pred_auto)
   thus ?thesis
-    by (simp cong: USUP_cong add: assms(1) Healthy_if)
+    by (simp cong: INF_cong add: assms(1) Healthy_if)
 qed
 
 lemma csp_do_seq_conj_distl:
@@ -969,29 +975,50 @@ lemma csp_do_seq_conj_distl:
   shows "\<Phi>(s,\<sigma>,t) ;; (P \<and> Q) = (\<Phi>(s,\<sigma>,t) ;; P \<and> \<Phi>(s,\<sigma>,t) ;; Q)"
 proof -
   have "\<Phi>(s,\<sigma>,t) ;; (CRR(P) \<and> CRR(Q)) = ((\<Phi>(s,\<sigma>,t) ;; (CRR P)) \<and> (\<Phi>(s,\<sigma>,t) ;; (CRR Q)))"
-    by (rel_blast)
+    by (pred_auto, blast+)
   thus ?thesis
     by (simp add: assms Healthy_if)
 qed
 
+lemma tr_iter_Suc_left: "tr_iter (Suc n) t = t + tr_iter n t"
+  by (induct n, simp_all add: add.assoc)
+
 lemma csp_do_power_Suc [rpred]:
-  "\<Phi>(true, id\<^sub>s, t) \<^bold>^ (Suc i) = \<Phi>(true, id\<^sub>s, iter[Suc i](t))"
-  by (induct i, (pred_auto)+)
+  "\<Phi>(True, [\<leadsto>], t) \<^bold>^ (Suc i) = \<Phi>(True, [\<leadsto>], tr_iter \<guillemotleft>Suc i\<guillemotright> t)"
+proof (induct i)
+  case 0
+  then show ?case by (pred_simp add: power.power.power_0 power.power.power_Suc)
+next
+  case (Suc i)
+
+  then show ?case 
+    apply (simp del:SEXP_apply add: plus_list_def[THEN sym] power.power.power_Suc rpred usubst_eval usubst)
+    apply (pred_auto add: inf_fun_def )
+     apply (metis plus_list_def tr_iter_Suc tr_iter_Suc_left)+
+    done
+qed
 
 lemma csp_power_do_comp [rpred]:
   assumes "P is CRR"
-  shows "\<Phi>(true, id\<^sub>s, t) \<^bold>^ i ;; P = \<Phi>(true, id\<^sub>s, iter[i](t)) ;; P"
+  shows "\<Phi>(True, [\<leadsto>], t) \<^bold>^ i ;; P = \<Phi>(True, [\<leadsto>], tr_iter \<guillemotleft>i\<guillemotright> t) ;; P"
+proof -
+  have "\<Phi>(True, [\<leadsto>], t) \<^bold>^ i ;; CRR P = \<Phi>(True, [\<leadsto>], tr_iter \<guillemotleft>i\<guillemotright> t) ;; CRR P"
   apply (cases i)
    apply (simp_all add: csp_do_comp rpred usubst assms closure)
-  done
+    apply pred_auto
+    apply blast
+    done
+  thus ?thesis
+    by (simp add: Healthy_if assms)
+qed
 
 lemma csp_do_id [rpred]:
-  "P is CRR \<Longrightarrow> \<Phi>(b,id\<^sub>s,\<guillemotleft>[]\<guillemotright>) ;; P = ([b]\<^sub>S\<^sub>< \<and> P)"
+  "P is CRR \<Longrightarrow> \<Phi>(b,[\<leadsto>],\<guillemotleft>[]\<guillemotright>) ;; P = ([b]\<^sub>S\<^sub>< \<and> P)"
   by (simp add: csp_do_comp usubst)
 
 lemma csp_do_id_wp [wp]: 
-  "P is CRR \<Longrightarrow> \<Phi>(b,id\<^sub>s,\<guillemotleft>[]\<guillemotright>) wp\<^sub>r P = ([b]\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r P)"
-  by (metis (no_types, lifting) CRR_implies_RR RR_implies_R1 csp_do_id rea_impl_conj rea_impl_false rea_not_CRR_closed rea_not_not wp_rea_def)
+  "P is CRR \<Longrightarrow> \<Phi>(b,[\<leadsto>],\<guillemotleft>[]\<guillemotright>) wp\<^sub>r P = ([b]\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r P)"
+  by (simp add: wp_rea_def rpred closure rea_impl_def)
 
 lemma wp_rea_csp_do_st_pre [wp]: "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) wp\<^sub>r [s\<^sub>2]\<^sub>S\<^sub>< = \<I>(s\<^sub>1 \<and> \<not> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1)"
   by (pred_auto)
@@ -1005,6 +1032,7 @@ lemma wp_rea_csp_do_skip [wp]:
   apply (simp_all add: closure assms usubst)
   oops
 
+(*
 lemma msubst_csp_do [usubst]: 
   "\<Phi>(s(x),\<sigma>,t(x))\<lbrakk>x\<rightarrow>\<lceil>v\<rceil>\<^sub>S\<^sub>\<leftarrow>\<rbrakk> = \<Phi>(s(x)\<lbrakk>x\<rightarrow>v\<rbrakk>,\<sigma>,t(x)\<lbrakk>x\<rightarrow>v\<rbrakk>)"
   by (pred_auto)
@@ -1012,16 +1040,17 @@ lemma msubst_csp_do [usubst]:
 lemma rea_frame_ext_csp_do [frame]: 
   "vwb_lens a \<Longrightarrow> a:[\<Phi>(s,\<sigma>,t)]\<^sub>r\<^sup>+ = \<Phi>(s \<oplus>\<^sub>p a,\<sigma> \<oplus>\<^sub>s a ,t \<oplus>\<^sub>p a)"
   by (pred_auto)
+*)
 
 lemma R5_csp_do_nil [rpred]: "R5(\<Phi>(s,\<sigma>,\<guillemotleft>[]\<guillemotright>)) = \<Phi>(s,\<sigma>,\<guillemotleft>[]\<guillemotright>)"
   by (pred_auto)
 
-lemma R5_csp_do_Cons [rpred]: "R5(\<Phi>(s,\<sigma>,x #\<^sub>u xs)) = false"
+lemma R5_csp_do_Cons [rpred]: "R5(\<Phi>(s,\<sigma>,x # xs)) = false"
   by (pred_auto)
 
 text \<open> Iterated do relations \<close>
 
-fun titr :: "nat \<Rightarrow> 's usubst \<Rightarrow> ('a list, 's) uexpr \<Rightarrow> ('a list, 's) uexpr" where
+fun titr :: "nat \<Rightarrow> 's subst \<Rightarrow> ('a list, 's) expr \<Rightarrow> ('a list, 's) expr" where
 "titr 0 \<sigma> t = 0" |
 "titr (Suc n) \<sigma> t = (titr n \<sigma> t) + (\<sigma> ^\<^sub>s n) \<dagger> t"
 
@@ -1100,7 +1129,7 @@ qed
 subsection \<open> Assumptions \<close>
 
 abbreviation crf_assume :: "'s upred \<Rightarrow> ('s, 'e) action" ("[_]\<^sub>c") where
-"[b]\<^sub>c \<equiv> \<Phi>(b, id\<^sub>s, \<guillemotleft>[]\<guillemotright>)"
+"[b]\<^sub>c \<equiv> \<Phi>(b, [\<leadsto>], \<guillemotleft>[]\<guillemotright>)"
 
 lemma crf_assume_true [rpred]: "P is CRR \<Longrightarrow> [true]\<^sub>c ;; P = P"
   by (simp add: crel_skip_left_unit csp_do_nothing)

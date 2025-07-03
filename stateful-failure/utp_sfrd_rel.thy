@@ -583,48 +583,53 @@ qed
 
 lemma wp_rea_circus_form_alt:
   assumes "P is CRR" "$ref\<^sup>> \<sharp> P" "Q is CRC"
-  shows "(P wp\<^sub>r Q) = (\<^bold>\<forall> (s\<^sub>0,t\<^sub>0) \<bullet> $tr ^\<^sub>u \<guillemotleft>t\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                               \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>))"
+  shows "(P wp\<^sub>r Q) = (\<Squnion> (s\<^sub>0,t\<^sub>0). ($tr\<^sup>< @ \<guillemotleft>t\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                                \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>))"
 proof -
   have "(P wp\<^sub>r Q) = R2(P wp\<^sub>r Q)"
     by (simp add: CRC_implies_RR CRR_implies_RR Healthy_if RR_implies_R2 assms wp_rea_R2_closed)
-  also have "... = R2(\<^bold>\<forall> (s\<^sub>0,tr\<^sub>0) \<bullet> \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup>>\<rbrakk> \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup><,tr\<^sup><\<rbrakk>)"
+  also have "... = R2(\<Squnion> (s\<^sub>0,t\<^sub>0). (\<guillemotleft>t\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup>>\<rbrakk> \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup><,tr\<^sup><\<rbrakk>)"
     by (simp add: wp_rea_circus_form assms closure Healthy_if)
-  also have "... = (\<^bold>\<exists> tt\<^sub>0 \<bullet> (\<^bold>\<forall> (s\<^sub>0,tr\<^sub>0) \<bullet> \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u \<guillemotleft>tt\<^sub>0\<guillemotright> \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>,\<guillemotleft>tt\<^sub>0\<guillemotright>/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>) 
-                                         \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<guillemotleft>tt\<^sub>0\<guillemotright>)"
+  also have "... = (\<Sqinter> tt\<^sub>0. (\<Squnion> (s\<^sub>0,tr\<^sub>0). (\<guillemotleft>tr\<^sub>0\<guillemotright> \<le> \<guillemotleft>tt\<^sub>0\<guillemotright>)\<^sub>e \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>,\<guillemotleft>tt\<^sub>0\<guillemotright>/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>) 
+                                         \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<guillemotleft>tt\<^sub>0\<guillemotright>)\<^sub>e)"
     by (simp add: R2_form, pred_auto)
-  also have "... = (\<^bold>\<exists> tt\<^sub>0 \<bullet> (\<^bold>\<forall> (s\<^sub>0,tr\<^sub>0) \<bullet> \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u \<guillemotleft>tt\<^sub>0\<guillemotright> \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tt\<^sub>0-tr\<^sub>0\<guillemotright>/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>) 
-                                         \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<guillemotleft>tt\<^sub>0\<guillemotright>)"
+  also have "... = (\<Sqinter> tt\<^sub>0. (\<Squnion> (s\<^sub>0,tr\<^sub>0). (\<guillemotleft>tr\<^sub>0\<guillemotright> \<le> \<guillemotleft>tt\<^sub>0\<guillemotright>)\<^sub>e \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tt\<^sub>0-tr\<^sub>0\<guillemotright>/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>) 
+                                         \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<guillemotleft>tt\<^sub>0\<guillemotright>)\<^sub>e)"
     by (pred_auto)
-  also have "... = (\<^bold>\<exists> tt\<^sub>0 \<bullet> (\<^bold>\<forall> (s\<^sub>0,tr\<^sub>0) \<bullet> $tr ^\<^sub>u \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>tr\<^sub>0\<guillemotright>)/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>) 
-                                         \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<guillemotleft>tt\<^sub>0\<guillemotright>)"
-    by (pred_auto, (metis list_concat_minus_list_concat)+)
-  also have "... = (\<^bold>\<forall> (s\<^sub>0,tr\<^sub>0) \<bullet> $tr ^\<^sub>u \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                                        \<longrightarrow>\<^sub>r R1((RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>tr\<^sub>0\<guillemotright>)/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>))"
+  also have "... = (\<Sqinter> tt\<^sub>0. (\<Squnion> (s\<^sub>0,tr\<^sub>0). ($tr\<^sup>< @ \<guillemotleft>tr\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                                        \<longrightarrow>\<^sub>r (RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(tt-\<guillemotleft>tr\<^sub>0\<guillemotright>)/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>) 
+                                         \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<guillemotleft>tt\<^sub>0\<guillemotright>)\<^sub>e)"
+    by (pred_auto, (metis list_concat_minus_list_concat plus_list_def)+)
+  also have "... = (\<Squnion> (s\<^sub>0,tr\<^sub>0). ($tr\<^sup>< @ \<guillemotleft>tr\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e \<and> (RR P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                                        \<longrightarrow>\<^sub>r R1((RR Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(tt-\<guillemotleft>tr\<^sub>0\<guillemotright>)/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>))"
     by (pred_auto, blast+)
-  also have "... = (\<^bold>\<forall> (s\<^sub>0,t\<^sub>0) \<bullet> $tr ^\<^sub>u \<guillemotleft>t\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                               \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>))"
+  also have "... = (\<Squnion> (s\<^sub>0,t\<^sub>0). ($tr\<^sup>< @ \<guillemotleft>t\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                               \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>))"
     by (simp add: Healthy_if assms closure)
   finally show ?thesis .
 qed
 
+(*
 lemma wp_rea_circus_form_alt:
   assumes "P is CRR" "$ref\<^sup>> \<sharp> P" "Q is CRC"
-  shows "(P wp\<^sub>r Q) = (\<^bold>\<forall> (s\<^sub>0,t\<^sub>0) \<bullet> $tr ^\<^sub>u \<guillemotleft>t\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute> \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,$tr,tr\<^sup>>\<rbrakk> 
-                               \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,$tr,tr\<^sup>>\<rbrakk>))"
+  shows "(P wp\<^sub>r Q) = (\<^bold>\<forall> (s\<^sub>0,t\<^sub>0) \<bullet> $tr @ \<guillemotleft>t\<^sub>0\<guillemotright> \<le> $tr\<^sup>> \<and> P\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<^sub>0\<guillemotright>/st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk> 
+                               \<longrightarrow>\<^sub>r R1(Q\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>[]\<guillemotright>,(&tt-\<guillemotleft>t\<^sub>0\<guillemotright>)/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>))"
   oops
+*)
 
 subsection \<open> Trace Substitution \<close>
 
-definition trace_subst ("_\<lbrakk>_\<rbrakk>\<^sub>t" [999,0] 999) 
-where [pred]: "P\<lbrakk>v\<rbrakk>\<^sub>t = (P\<lbrakk>(&tt-\<lceil>v\<rceil>\<^sub>S\<^sub><)/&tt\<rbrakk> \<and> $tr + \<lceil>v\<rceil>\<^sub>S\<^sub>< \<le>\<^sub>u $tr\<acute>)"
+definition trace_subst  
+where [pred]: "trace_subst P v = (P\<lbrakk>(tt-\<lceil>v\<rceil>\<^sub>S\<^sub><)/tt\<rbrakk> \<and> ($tr\<^sup>< + \<lceil>v\<rceil>\<^sub>S\<^sub>< \<le> $tr\<^sup>>)\<^sub>e)"
+
+syntax "_trace_subst" :: "logic \<Rightarrow> logic \<Rightarrow> logic" ("_\<lbrakk>_\<rbrakk>\<^sub>t" [999,0] 999)
+translations "_trace_subst P v" == "CONST trace_subst P (v)\<^sub>e"
 
 lemma unrest_trace_subst [unrest]:
-  "\<lbrakk> mwb_lens x; x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<acute>)\<^sub>v; x \<bowtie> ($st)\<^sub>v; x \<sharp> P \<rbrakk> \<Longrightarrow> x \<sharp> P\<lbrakk>v\<rbrakk>\<^sub>t"
-  by (simp add: trace_subst_def lens_indep_sym unrest)
+  "\<lbrakk> vwb_lens x; x \<bowtie> (tr\<^sup><)\<^sub>v; x \<bowtie> (tr\<^sup>>)\<^sub>v; x \<bowtie> (st\<^sup><)\<^sub>v; $x \<sharp> P \<rbrakk> \<Longrightarrow> $x \<sharp> P\<lbrakk>v\<rbrakk>\<^sub>t"
+  by (pred_simp, expr_simp add: lens_indep_def)
   
 lemma trace_subst_RR_closed [closure]:
   assumes "P is RR"
@@ -671,21 +676,25 @@ lemma tsubst_disj [usubst]: "(P \<or> Q)\<lbrakk>v\<rbrakk>\<^sub>t = (P\<lbrakk
 lemma rea_subst_R1_closed [closure]: "P\<lbrakk>v\<rbrakk>\<^sub>t is R1"
   apply (pred_auto) using le_add order.trans by blast
   
-lemma tsubst_UINF_ind [usubst]: "(\<Sqinter> i \<bullet> P(i))\<lbrakk>v\<rbrakk>\<^sub>t = (\<Sqinter> i \<bullet> (P(i))\<lbrakk>v\<rbrakk>\<^sub>t)"
+lemma tsubst_UINF_ind [usubst]: "(\<Sqinter> i. P(i))\<lbrakk>v\<rbrakk>\<^sub>t = (\<Sqinter> i. (P(i))\<lbrakk>v\<rbrakk>\<^sub>t)"
   by (pred_auto)
 
 subsection \<open> Initial Interaction \<close>
 
-definition rea_init :: "'s upred \<Rightarrow> ('t::trace, 's) uexpr \<Rightarrow> ('s, 't, '\<alpha>, '\<beta>) rel_rsp" ("\<I>'(_,_')") where
-[pred]: "\<I>(s,t) = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r \<not>\<^sub>r $tr + \<lceil>t\<rceil>\<^sub>S\<^sub>< \<le>\<^sub>u $tr\<acute>)"
-  
+definition rea_init :: "'s pred \<Rightarrow> ('t::trace, 's) expr \<Rightarrow> ('s, 't, '\<alpha>, '\<beta>) rsp_rel" where
+[pred]: "rea_init s t = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r \<not>\<^sub>r ($tr\<^sup>< + \<lceil>t\<rceil>\<^sub>S\<^sub>< \<le> $tr\<^sup>>)\<^sub>e)" 
+
+syntax "_rea_init" :: "logic \<Rightarrow> logic \<Rightarrow> logic" ("\<I>'(_,_')")
+translations "_rea_init s t" == "CONST rea_init (s)\<^sub>e (t)\<^sub>e"
+syntax_consts "_rea_init" == "rea_init"
+
 lemma usubst_rea_init' [usubst]:
   "\<sigma> \<dagger>\<^sub>S \<I>(s,t) = \<I>(\<sigma>\<dagger>s,\<sigma>\<dagger>t)"
   by (pred_auto)
 
 lemma unrest_rea_init [unrest]:
-  "\<lbrakk> x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<acute>)\<^sub>v; x \<bowtie> ($st)\<^sub>v \<rbrakk> \<Longrightarrow> x \<sharp> \<I>(s,t)"
-  by (simp add: rea_init_def unrest lens_indep_sym)
+  "\<lbrakk> vwb_lens x; x \<bowtie> (tr\<^sup><)\<^sub>v; x \<bowtie> (tr\<^sup>>)\<^sub>v; x \<bowtie> (st\<^sup><)\<^sub>v \<rbrakk> \<Longrightarrow> $x \<sharp> \<I>(s,t)"
+  by (pred_simp, expr_simp add: lens_indep_def)
 
 lemma rea_init_R1 [closure]: "\<I>(s,t) is R1"
   by (pred_auto)
@@ -711,7 +720,7 @@ lemma csp_init_CRR [closure]: "\<I>(s,t) is CRR"
 lemma rea_init_RC [closure]: "\<I>(s,t) is CRC"
   apply (pred_auto) by fastforce
 
-lemma rea_init_false [rpred]: "\<I>(false, t) = true\<^sub>r"
+lemma rea_init_false [rpred]: "\<I>(False, t) = true\<^sub>r"
   by (pred_auto)
 
 lemma rea_init_nil [rpred]: "\<I>(s,\<guillemotleft>[]\<guillemotright>) = [\<not> s]\<^sub>S\<^sub><"
@@ -745,8 +754,12 @@ lemma R5_trace_subst [rpred]:
 
 subsection \<open> Enabled Events \<close>
 
-definition csp_enable :: "'s upred \<Rightarrow> ('e list, 's) uexpr \<Rightarrow> ('e set, 's) uexpr \<Rightarrow> ('s, 'e) action" ("\<E>'(_,_, _')") where
-[pred]: "\<E>(s,t,E) = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<lceil>t\<rceil>\<^sub>S\<^sub>< \<and> (\<^bold>\<forall> e\<in>\<lceil>E\<rceil>\<^sub>S\<^sub>< \<bullet> \<guillemotleft>e\<guillemotright> \<notin>\<^sub>u $ref\<acute>))"
+definition csp_enable :: "'s pred \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('e set, 's) expr \<Rightarrow> ('s, 'e) action" where
+[pred]: "csp_enable s t E = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e \<and> (\<forall> e\<in>\<lceil>E\<rceil>\<^sub>S\<^sub><. \<guillemotleft>e\<guillemotright> \<notin> $ref\<^sup>>)\<^sub>e)"
+
+syntax "_csp_enable" :: "logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("\<E>'(_,_, _')")
+translations "_csp_enable s t E" == "CONST csp_enable (s)\<^sub>e (t)\<^sub>e (E)\<^sub>e"
+syntax_consts "_csp_enable" == csp_enable
 
 text \<open> Predicate @{term "\<E>(s, t, E)"} states that, if the initial state satisfies predicate @{term s},
   then @{term t} is a possible (failure) trace, such that the events in the set @{term E} are enabled
@@ -761,21 +774,21 @@ lemma csp_enable_R2_closed [closure]: "\<E>(s,t,E) is R2c"
 lemma csp_enable_RR [closure]: "\<E>(s,t,E) is CRR"
   by (pred_auto)
 
-lemma tsubst_csp_enable [usubst]: "\<E>(s,t\<^sub>2,e)\<lbrakk>t\<^sub>1\<rbrakk>\<^sub>t = \<E>(s,t\<^sub>1^\<^sub>ut\<^sub>2,e)"
+lemma tsubst_csp_enable [usubst]: "\<E>(s,t\<^sub>2,e)\<lbrakk>t\<^sub>1\<rbrakk>\<^sub>t = \<E>(s,t\<^sub>1@t\<^sub>2,e)"
   apply (pred_auto)
-  apply (metis append.assoc less_eq_list_def prefix_concat_minus)
-  apply (simp add: list_concat_minus_list_concat)
+  apply (metis add.assoc diff_add_cancel_left' plus_list_def trace_class.add_diff_cancel_left)
+  apply (simp add: list_concat_minus_list_concat plus_list_def)
 done
 
 lemma csp_enable_unrests [unrest]:
-  "\<lbrakk> x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<acute>)\<^sub>v; x \<bowtie> ($st)\<^sub>v; x \<bowtie> ($ref\<acute>)\<^sub>v \<rbrakk> \<Longrightarrow> x \<sharp> \<E>(s,t,e)"
-  by (simp add: csp_enable_def R1_def lens_indep_sym unrest)
+  "\<lbrakk> vwb_lens x; x \<bowtie> (tr\<^sup><)\<^sub>v; x \<bowtie> (tr\<^sup>>)\<^sub>v; x \<bowtie> (st\<^sup><)\<^sub>v; x \<bowtie> (ref\<^sup>>)\<^sub>v \<rbrakk> \<Longrightarrow> $x \<sharp> \<E>(s,t,e)"
+  by (pred_simp, expr_simp add: lens_indep_def)
 
-lemma st_unrest_csp_enable [unrest]: "\<lbrakk> &\<^bold>v \<sharp> s; &\<^bold>v \<sharp> t; &\<^bold>v \<sharp> E \<rbrakk> \<Longrightarrow> $st \<sharp> \<E>(s, t, E)" 
-  by (simp add: csp_enable_def unrest)
+lemma st_unrest_csp_enable [unrest]: "\<lbrakk> $\<^bold>v \<sharp> s; $\<^bold>v \<sharp> t; $\<^bold>v \<sharp> E \<rbrakk> \<Longrightarrow> $st\<^sup>< \<sharp> \<E>(s, t, E)" 
+  by (pred_simp, expr_simp add: lens_indep_def, blast)
 
-lemma csp_enable_tr'_eq_tr [rpred]: 
-  "\<E>(s,\<guillemotleft>[]\<guillemotright>,r) \<triangleleft> $tr\<acute> =\<^sub>u $tr \<triangleright> false = \<E>(s,\<guillemotleft>[]\<guillemotright>,r)"
+lemma csp_enable_tr'_eq_tr [rpred]:
+  "\<E>(s,\<guillemotleft>[]\<guillemotright>,r) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> false = \<E>(s,\<guillemotleft>[]\<guillemotright>,r)"
   by (pred_auto)
     
 lemma csp_enable_st_pred [rpred]: 
@@ -783,7 +796,7 @@ lemma csp_enable_st_pred [rpred]:
   by (pred_auto)
 
 lemma csp_enable_conj [rpred]:
-  "(\<E>(s, t, E\<^sub>1) \<and> \<E>(s, t, E\<^sub>2)) = \<E>(s, t, E\<^sub>1 \<union>\<^sub>u E\<^sub>2)"
+  "(\<E>(s, t, E\<^sub>1) \<and> \<E>(s, t, E\<^sub>2)) = \<E>(s, t, E\<^sub>1 \<union> E\<^sub>2)"
   by (pred_auto)
 
 lemma csp_enable_cond [rpred]:
@@ -794,12 +807,13 @@ lemma csp_enable_rea_assm [rpred]:
   "[b]\<^sup>\<top>\<^sub>r ;; \<E>(s,t,E) = \<E>(b\<and>s,t,E)"
   by (pred_auto)
 
-lemma csp_enable_tr_empty: "\<E>(true,\<guillemotleft>[]\<guillemotright>,{v}\<^sub>u) = ($tr\<acute> =\<^sub>u $tr \<and> \<lceil>v\<rceil>\<^sub>S\<^sub>< \<notin>\<^sub>u $ref\<acute>)"
+lemma csp_enable_tr_empty: "\<E>(True, [], {v}) = ($tr\<^sup>> = $tr\<^sup>< \<and> \<lceil>v\<rceil>\<^sub>S\<^sub>< \<notin> $ref\<^sup>>)\<^sub>e"
   by (pred_auto)
 
-lemma csp_enable_nothing: "\<E>(true,\<guillemotleft>[]\<guillemotright>, {}\<^sub>u) = ($tr\<acute> =\<^sub>u $tr)"
+lemma csp_enable_nothing: "\<E>(True, [], {}) = ($tr\<^sup>> = $tr\<^sup><)\<^sub>e"
   by (pred_auto)
 
+(*
 lemma msubst_nil_csp_enable [usubst]: 
   "\<E>(s(x),t(x),E(x))\<lbrakk>x\<rightarrow>\<guillemotleft>[]\<guillemotright>\<rbrakk> = \<E>(s(x)\<lbrakk>x\<rightarrow>\<guillemotleft>[]\<guillemotright>\<rbrakk>,t(x)\<lbrakk>x\<rightarrow>\<guillemotleft>[]\<guillemotright>\<rbrakk>,E(x)\<lbrakk>x\<rightarrow>\<guillemotleft>[]\<guillemotright>\<rbrakk>)"
   by (pred_auto)
@@ -807,18 +821,19 @@ lemma msubst_nil_csp_enable [usubst]:
 lemma msubst_csp_enable [usubst]: 
   "\<E>(s(x),t(x),E(x))\<lbrakk>x\<rightarrow>\<lceil>v\<rceil>\<^sub>S\<^sub>\<leftarrow>\<rbrakk> = \<E>(s(x)\<lbrakk>x\<rightarrow>v\<rbrakk>,t(x)\<lbrakk>x\<rightarrow>v\<rbrakk>,E(x)\<lbrakk>x\<rightarrow>v\<rbrakk>)"
   by (pred_auto)
+*)
 
-lemma csp_enable_false [rpred]: "\<E>(false,t,E) = false"
+lemma csp_enable_false [rpred]: "\<E>(False,t,E) = false"
   by (pred_auto)
 
-lemma conj_csp_enable [rpred]: "(\<E>(b\<^sub>1, t, E\<^sub>1) \<and> \<E>(b\<^sub>2, t, E\<^sub>2)) = \<E>(b\<^sub>1 \<and> b\<^sub>2, t, E\<^sub>1 \<union>\<^sub>u E\<^sub>2)"
+lemma conj_csp_enable [rpred]: "(\<E>(b\<^sub>1, t, E\<^sub>1) \<and> \<E>(b\<^sub>2, t, E\<^sub>2)) = \<E>(b\<^sub>1 \<and> b\<^sub>2, t, E\<^sub>1 \<union> E\<^sub>2)"
   by (pred_auto)
 
-lemma refine_csp_enable: "\<E>(b\<^sub>1, t, E\<^sub>1) \<sqsubseteq> \<E>(b\<^sub>2, t, E\<^sub>2) \<longleftrightarrow> (`b\<^sub>2 \<Rightarrow> b\<^sub>1 \<and> E\<^sub>1 \<subseteq>\<^sub>u E\<^sub>2`)"
-  by (rel_blast)
+lemma refine_csp_enable: "\<E>(b\<^sub>1, t, E\<^sub>1) \<sqsubseteq> \<E>(b\<^sub>2, t, E\<^sub>2) \<longleftrightarrow> (`b\<^sub>2 \<longrightarrow> b\<^sub>1 \<and> E\<^sub>1 \<subseteq> E\<^sub>2`)"
+  by (pred_simp, blast)
 
 lemma USUP_csp_enable [rpred]:
-  "(\<Squnion> x \<bullet> \<E>(s, t, A(x))) = \<E>(s, t, (\<Or> x \<bullet> A(x)))"
+  "(\<Squnion> x. \<E>(s, t, A(x))) = \<E>(s, t, (\<Sqinter> x. A(x)))"
   by (pred_auto)
 
 lemma R4_csp_enable_nil [rpred]:
@@ -844,7 +859,7 @@ lemma rel_aext_csp_enable [alpha]:
 subsection \<open> Completed Trace Interaction \<close>
 
 definition csp_do :: "'s upred \<Rightarrow> ('s usubst) \<Rightarrow> ('e list, 's) uexpr \<Rightarrow> ('s, 'e) action" ("\<Phi>'(_,_,_')") where
-[pred]: "\<Phi>(s,\<sigma>,t) = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<lceil>t\<rceil>\<^sub>S\<^sub>< \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S)"
+[pred]: "\<Phi>(s,\<sigma>,t) = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> $tr\<^sup>> =\<^sub>u $tr @ \<lceil>t\<rceil>\<^sub>S\<^sub>< \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S)"
 
 lemma csp_do_eq_intro:
   assumes "s\<^sub>1 = s\<^sub>2" "\<sigma>\<^sub>1 = \<sigma>\<^sub>2" "t\<^sub>1 = t\<^sub>2"
@@ -855,7 +870,7 @@ text \<open> Predicate @{term "\<Phi>(s,\<sigma>,t)"} states that if the initial
   the trace @{term t} is performed, then afterwards the state update @{term \<sigma>} is executed. \<close>
 
 lemma unrest_csp_do [unrest]: 
-  "\<lbrakk> x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<acute>)\<^sub>v; x \<bowtie> ($st)\<^sub>v; x \<bowtie> ($st\<acute>)\<^sub>v \<rbrakk> \<Longrightarrow> x \<sharp> \<Phi>(s,\<sigma>,t)"
+  "\<lbrakk> x \<bowtie> ($tr)\<^sub>v; x \<bowtie> ($tr\<^sup>>)\<^sub>v; x \<bowtie> ($st)\<^sub>v; x \<bowtie> ($st\<acute>)\<^sub>v \<rbrakk> \<Longrightarrow> x \<sharp> \<Phi>(s,\<sigma>,t)"
   by (simp_all add: csp_do_def alpha_in_var alpha_out_var prod_as_plus unrest lens_indep_sym)
     
 lemma csp_do_CRF [closure]: "\<Phi>(s,\<sigma>,t) is CRF"
@@ -870,7 +885,7 @@ lemma st_pred_conj_csp_do [rpred]:
   by (pred_auto)
 
 lemma trea_subst_csp_do [usubst]:
-  "(\<Phi>(s,\<sigma>,t\<^sub>2))\<lbrakk>t\<^sub>1\<rbrakk>\<^sub>t = \<Phi>(s,\<sigma>,t\<^sub>1 ^\<^sub>u t\<^sub>2)"
+  "(\<Phi>(s,\<sigma>,t\<^sub>2))\<lbrakk>t\<^sub>1\<rbrakk>\<^sub>t = \<Phi>(s,\<sigma>,t\<^sub>1 @ t\<^sub>2)"
   apply (pred_auto)
   apply (metis append.assoc less_eq_list_def prefix_concat_minus)
   apply (simp add: list_concat_minus_list_concat)
@@ -894,11 +909,11 @@ lemma subst_state_csp_enable [usubst]:
   by (pred_auto)
     
 lemma csp_do_assign_enable [rpred]: 
-  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<E>(s\<^sub>2,t\<^sub>2,e) = \<E>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1^\<^sub>u(\<sigma> \<dagger> t\<^sub>2), (\<sigma> \<dagger> e))"
+  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<E>(s\<^sub>2,t\<^sub>2,e) = \<E>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1@(\<sigma> \<dagger> t\<^sub>2), (\<sigma> \<dagger> e))"
   by (pred_auto)
 
 lemma csp_do_assign_do [rpred]: 
-  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<Phi>(s\<^sub>2,\<rho>,t\<^sub>2) = \<Phi>(s\<^sub>1 \<and> (\<sigma> \<dagger> s\<^sub>2), \<rho> \<circ>\<^sub>s \<sigma>, t\<^sub>1^\<^sub>u(\<sigma> \<dagger> t\<^sub>2))"
+  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) ;; \<Phi>(s\<^sub>2,\<rho>,t\<^sub>2) = \<Phi>(s\<^sub>1 \<and> (\<sigma> \<dagger> s\<^sub>2), \<rho> \<circ>\<^sub>s \<sigma>, t\<^sub>1@(\<sigma> \<dagger> t\<^sub>2))"
   by (pred_auto)
 
 lemma csp_do_cond [rpred]:
@@ -922,13 +937,13 @@ qed
 lemma wp_rea_csp_do_lemma:
   fixes P :: "('\<sigma>, '\<phi>) action"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
-  shows "(\<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> $tr\<acute> =\<^sub>u $tr ^\<^sub>u \<lceil>t\<rceil>\<^sub>S\<^sub><) ;; P = (\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P)\<lbrakk>$tr ^\<^sub>u \<lceil>t\<rceil>\<^sub>S\<^sub></tr\<^sup><\<rbrakk>"
+  shows "(\<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> $tr\<^sup>> =\<^sub>u $tr @ \<lceil>t\<rceil>\<^sub>S\<^sub><) ;; P = (\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P)\<lbrakk>$tr @ \<lceil>t\<rceil>\<^sub>S\<^sub></tr\<^sup><\<rbrakk>"
   using assms by (pred_auto, meson)
 
 text \<open> This operator sets an upper bound on the permissible traces, when starting from a particular state \<close>
 
 lemma wp_rea_csp_do [wp]:
-  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) wp\<^sub>r \<I>(s\<^sub>2,t\<^sub>2) = \<I>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1 ^\<^sub>u \<sigma> \<dagger> t\<^sub>2)"
+  "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) wp\<^sub>r \<I>(s\<^sub>2,t\<^sub>2) = \<I>(s\<^sub>1 \<and> \<sigma> \<dagger> s\<^sub>2, t\<^sub>1 @ \<sigma> \<dagger> t\<^sub>2)"
   by (pred_auto)
 
 lemma wp_rea_csp_do_false' [wp]:
@@ -1213,7 +1228,7 @@ subsection \<open> Renaming \<close>
 abbreviation "pre_image f B \<equiv> {x. f(x) \<in> B}"
 
 definition csp_rename :: "('s, 'e) action \<Rightarrow> ('e \<Rightarrow> 'f) \<Rightarrow> ('s, 'f) action" ("(_)\<lparr>_\<rparr>\<^sub>c" [999, 0] 999) where
-[pred]: "P\<lparr>f\<rparr>\<^sub>c = R2(($tr\<acute> =\<^sub>u \<guillemotleft>[]\<guillemotright> \<and> $st\<acute> =\<^sub>u $st) ;; P ;; ($tr\<acute> =\<^sub>u map\<^sub>u \<guillemotleft>f\<guillemotright> $tr \<and> $st\<acute> =\<^sub>u $st \<and> uop (pre_image f) $ref\<acute> \<subseteq>\<^sub>u $ref))"
+[pred]: "P\<lparr>f\<rparr>\<^sub>c = R2(($tr\<^sup>> =\<^sub>u \<guillemotleft>[]\<guillemotright> \<and> $st\<acute> =\<^sub>u $st) ;; P ;; ($tr\<^sup>> =\<^sub>u map\<^sub>u \<guillemotleft>f\<guillemotright> $tr \<and> $st\<acute> =\<^sub>u $st \<and> uop (pre_image f) $ref\<acute> \<subseteq>\<^sub>u $ref))"
 
 lemma csp_rename_CRR_closed [closure]: 
   assumes "P is CRR"

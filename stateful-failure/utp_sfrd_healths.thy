@@ -292,13 +292,12 @@ lemma CSP4_rdes:
   shows "CSP4(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R)) = \<^bold>R\<^sub>s (((\<not>\<^sub>r P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> Q) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> R)))"
   apply (simp add: CSP4_def Skip_right_lemma closure assms rdes)
   apply (rule cong[of "\<^bold>R\<^sub>s" "\<^bold>R\<^sub>s"], simp)      
-  apply pred_simp
-(**** PORTING GOT TO HERE ****)
-  oops
+  apply (pred_auto; blast)
+  done
 
 lemma CSP4_form:
   assumes "P is CSP"
-  shows "CSP4(P) =   \<^bold>R\<^sub>s (((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R P) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
+  shows "CSP4(P) = \<^bold>R\<^sub>s (((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R P) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
   by (simp add: CSP4_def Skip_right_tri_lemma assms)
 
 lemma Skip_srdes_right_unit:
@@ -382,7 +381,7 @@ lemma Skip_right_unit: "P is NCSP \<Longrightarrow> P ;; Skip = P"
   by (metis (full_types) CSP4_def Healthy_if NCSP_implies_CSP4)
 
 lemma NCSP_NSRD_intro:
-  assumes "P is NSRD" "$ref\<^sup>< \<sharp> pre\<^sub>R(P)" "$ref\<^sup>< \<sharp> peri\<^sub>R(P)" "$ref\<^sup>< \<sharp> post\<^sub>R(P)" "$ref\<acute> \<sharp> post\<^sub>R(P)"
+  assumes "P is NSRD" "$ref\<^sup>< \<sharp> pre\<^sub>R(P)" "$ref\<^sup>< \<sharp> peri\<^sub>R(P)" "$ref\<^sup>> \<sharp> post\<^sub>R(P)" "$ref\<^sup>< \<sharp> post\<^sub>R(P)"
   shows "P is NCSP"
   by (simp add: CSP3_SRD_intro CSP4_NSRD_intro NCSP_intro NSRD_is_SRD assms)
 
@@ -399,16 +398,24 @@ lemma NSRD_CSP4_intro:
 lemma NCSP_form: 
   "NCSP P = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(P)) wp\<^sub>r false) \<turnstile> ((\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
 proof -
-  have "NCSP P = CSP3 (CSP4 (NSRD P))"
-    by (metis (no_types, opaque_lifting) CSP4_def NCSP_def NSRD_alt_def RA1 RD3_def Skip_srdes_left_unit o_apply)
-  also 
-  have "... =  \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R (NSRD P)) wp\<^sub>r false) \<turnstile>
-                   (\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R (NSRD P)) \<diamondop>
-                   (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R (NSRD P)))"
-    by (simp add: CSP3_form CSP4_form closure unrest rdes, pred_auto)
+  obtain Q where Q_def: "Q = NSRD P" and Q_NSRD: "Q is NSRD"
+    by (simp add: Healthy_def' NSRD_idem)
+  
+  thm NSRD_form
+
+  have "NCSP P = CSP3 (CSP4 Q)"
+    by (metis (no_types, opaque_lifting) CSP4_def NCSP_def NSRD_alt_def RD3_def Skip_srdes_left_unit comp_eq_dest_lhs rel_RA1 Q_def)
+
+  have "... =  \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R Q) wp\<^sub>r false) \<turnstile>
+                   (\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R Q) \<diamondop>
+                   (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R Q))"
+    by (simp add: CSP3_form CSP4_form closure Q_NSRD unrest wp unrest_ssubst_expr usubst usubst_eval rdes, pred_auto)
   also have "... = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(P)) wp\<^sub>r false) \<turnstile> ((\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
-    by (simp add: NSRD_form rdes closure, rel_blast)
-  finally show ?thesis .
+    apply (simp add: Q_def NSRD_form rdes closure wp)
+    (*** PORTING GOT HERE ***)
+
+
+    finally show ?thesis .
 qed
 
 lemma CSP4_st'_unrest_peri [unrest]:
@@ -431,14 +438,14 @@ qed
 
 lemma CSP4_ref'_unrest_pre [unrest]:
   assumes "P is CSP" "P is CSP4"
-  shows "$ref\<acute> \<sharp> pre\<^sub>R(P)"
+  shows "$ref\<^sup>< \<sharp> pre\<^sub>R(P)"
 proof -
   have "pre\<^sub>R(P) = pre\<^sub>R(\<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
     using CSP4_healthy_form assms(1) assms(2) by fastforce
   also have "... = (\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false"
     by (simp add: rea_pre_RHS_design wp_rea_def usubst unrest
         CSP4_neg_pre_unit R1_rea_not R2c_preR R2c_rea_not assms)
-  also have "$ref\<acute> \<sharp> ..."
+  also have "$ref\<^sup>< \<sharp> ..."
     by (simp add: wp_rea_def unrest)
   finally show ?thesis .
 qed
@@ -469,13 +476,13 @@ qed
 
 lemma CSP4_ref'_unrest_post [unrest]:
   assumes "P is CSP" "P is CSP4"
-  shows "$ref\<acute> \<sharp> post\<^sub>R(P)"
+  shows "$ref\<^sup>< \<sharp> post\<^sub>R(P)"
 proof -
   have "post\<^sub>R(P) = post\<^sub>R(\<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
     using CSP4_healthy_form assms(1) assms(2) by fastforce
   also have "... = R1 (R2c ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<Rightarrow>\<^sub>r (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
     by (simp add: rea_post_RHS_design usubst unrest wp_rea_def)
-  also have "$ref\<acute> \<sharp> ..."
+  also have "$ref\<^sup>< \<sharp> ..."
     by (simp add: R1_def R2c_def wp_rea_def unrest)
   finally show ?thesis .
 qed
@@ -561,7 +568,7 @@ lemma postR_CRR [closure]: "P is NCSP \<Longrightarrow> post\<^sub>R(P) is CRR"
     
 lemma NCSP_rdes_intro [closure]:
   assumes "P is CRC" "Q is CRR" "R is CRR"
-          "$st\<^sup>> \<sharp> Q" "$ref\<acute> \<sharp> R"
+          "$st\<^sup>> \<sharp> Q" "$ref\<^sup>< \<sharp> R"
   shows "\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R) is NCSP"
   apply (rule NCSP_intro)
     apply (simp_all add: closure assms)

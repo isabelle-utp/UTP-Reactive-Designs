@@ -1003,11 +1003,7 @@ lemma csp_power_do_comp [rpred]:
   shows "\<Phi>(True, [\<leadsto>], t) \<^bold>^ i ;; P = \<Phi>(True, [\<leadsto>], tr_iter \<guillemotleft>i\<guillemotright> t) ;; P"
 proof -
   have "\<Phi>(True, [\<leadsto>], t) \<^bold>^ i ;; CRR P = \<Phi>(True, [\<leadsto>], tr_iter \<guillemotleft>i\<guillemotright> t) ;; CRR P"
-  apply (cases i)
-   apply (simp_all add: csp_do_comp rpred usubst assms closure)
-    apply pred_auto
-    apply blast
-    done
+    by (cases i, simp_all add: csp_do_comp rpred usubst assms closure)
   thus ?thesis
     by (simp add: Healthy_if assms)
 qed

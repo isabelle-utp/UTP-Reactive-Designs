@@ -82,13 +82,13 @@ lemma taut_eq_impl_property:
 
 lemma st_subst_refine:
   assumes "vwb_lens x" "$st:x\<^sup>< \<sharp> Q" "P is RR" "Q is RR"
-  shows "Q \<sqsubseteq> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<longleftrightarrow> Q \<sqsubseteq> ([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> P)" (is "?lhs = ?rhs")
+  shows "Q \<sqsubseteq> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P \<longleftrightarrow> Q \<sqsubseteq> ([$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> P)" (is "?lhs = ?rhs")
 proof -
   have "?lhs = (Q \<sqsubseteq> P\<lbrakk>\<guillemotleft>k\<guillemotright>/st:x\<^sup><\<rbrakk>)"
     by pred_simp
   also have "... = (RR(Q) \<sqsubseteq> (($st:x\<^sup>< = \<guillemotleft>k\<guillemotright>)\<^sub>e \<and> RR(P)))"
     by (simp add: Healthy_if assms taut_eq_refine_property)
-  also have "... \<longleftrightarrow> (RR(Q) \<sqsubseteq> ([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<and> RR(P)))"
+  also have "... \<longleftrightarrow> (RR(Q) \<sqsubseteq> ([$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<and> RR(P)))"
     by (pred_simp, blast)
   finally show ?thesis by (simp add: assms Healthy_if)
 qed
@@ -100,9 +100,9 @@ expr_constructor rea_st_cond
 
 lemma refine_st_eq_true:
   assumes "vwb_lens x" "P is RR"
-  shows "P \<sqsubseteq> [($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P = true\<^sub>r"
+  shows "P \<sqsubseteq> [$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S P = true\<^sub>r"
 proof -
-  from assms(1) have "RR P \<sqsubseteq> [($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S RR P = true\<^sub>r"
+  from assms(1) have "RR P \<sqsubseteq> [$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<longleftrightarrow> [x \<leadsto> \<guillemotleft>k\<guillemotright>] \<dagger>\<^sub>S RR P = true\<^sub>r"
     by (pred_auto, metis vwb_lens_wb wb_lens.get_put)
   thus ?thesis
     by (simp add: Healthy_if assms(2))
@@ -114,10 +114,10 @@ lemma AssignR_init_refine_intro:
   assumes 
     "vwb_lens x" "$st:x\<^sup>< \<sharp> P\<^sub>2" "$st:x\<^sup>< \<sharp> P\<^sub>3"
     "P\<^sub>2 is RR" "P\<^sub>3 is RR" "Q is NSRD"
-    "\<^bold>R\<^sub>s([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> Q"
+    "\<^bold>R\<^sub>s([$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> Q"
   shows "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> (x :=\<^sub>R \<guillemotleft>k\<guillemotright>) ;; Q"
 proof -
-  have "\<^bold>R\<^sub>s([($x = \<guillemotleft>k\<guillemotright>)\<^sub>e]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
+  have "\<^bold>R\<^sub>s([$x = \<guillemotleft>k\<guillemotright>]\<^sub>S\<^sub>< \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
     by (simp add: NSRD_is_SRD SRD_reactive_tri_design assms)
   hence "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<sqsubseteq> x :=\<^sub>R \<guillemotleft>k\<guillemotright> ;; \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> peri\<^sub>R(Q) \<diamondop> post\<^sub>R(Q))"
     by (clarsimp simp add: rdes_def assms closure unrest rpred wp RHS_tri_design_refine' st_subst_refine refine_st_eq_true)

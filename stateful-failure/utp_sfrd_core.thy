@@ -1,8 +1,10 @@
 section \<open> Stateful-Failure Core Types \<close>
 
 theory utp_sfrd_core
-  imports "UTP-Reactive-Designs.utp_rea_designs"
+  imports "HOL-Library.Function_Algebras" "UTP-Reactive-Designs.utp_rea_designs"
 begin
+
+unbundle UTP_Syntax 
 
 subsection \<open> SFRD Alphabet \<close>
 

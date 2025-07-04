@@ -1052,72 +1052,91 @@ text \<open> Iterated do relations \<close>
 
 fun titr :: "nat \<Rightarrow> 's subst \<Rightarrow> ('a list, 's) expr \<Rightarrow> ('a list, 's) expr" where
 "titr 0 \<sigma> t = 0" |
-"titr (Suc n) \<sigma> t = (titr n \<sigma> t) + (\<sigma> ^\<^sub>s n) \<dagger> t"
+"titr (Suc n) \<sigma> t = (titr n \<sigma> t) + ((\<sigma> ^^ n) \<dagger> t)"
 
-lemma titr_as_list_sum: "titr n \<sigma> t = list_sum (map (\<lambda> i. (\<sigma> ^\<^sub>s i) \<dagger> t) [0..<n])"
-  apply (induct n)
-   apply (auto simp add: usubst fold_plus_sum_list_rev foldr_conv_fold)
-  done
+expr_constructor titr (2)
+
+lemma titr_as_list_sum: "titr n \<sigma> t = list_sum (map (\<lambda> i. (\<sigma> ^^ i) \<dagger> t) [0..<n])"
+proof (induct n)
+  case 0
+  then show ?case by simp
+next
+  case (Suc n)
+  hence "titr (Suc n) \<sigma> t = list_sum (map (\<lambda>i. \<sigma> ^^ i \<dagger> t) [0..<n]) + (\<sigma> ^^ n \<dagger> t)"
+    by (metis titr.simps(2))
+  also have "... = list_sum (map (\<lambda>i. \<sigma> ^^ i \<dagger> t) [0..<Suc n])"
+    by (simp add: fold_plus_sum_list_rev foldr_conv_fold)
+  finally show ?case .
+qed
         
-lemma titr_as_foldr: "titr n \<sigma> t = foldr (\<lambda> i e. (\<sigma> ^\<^sub>s i) \<dagger> t + e) [0..<n] 0"
+lemma titr_as_foldr: "titr n \<sigma> t = foldr (\<lambda> i e. (\<sigma> ^^ i) \<dagger> t + e) [0..<n] 0"
   by (simp add: titr_as_list_sum foldr_map comp_def)
 
-lemma list_sum_uexpr_rep_eq: "\<lbrakk>list_sum xs\<rbrakk>\<^sub>e s = list_sum (map (\<lambda> e. \<lbrakk>e\<rbrakk>\<^sub>e s) xs)"
-  apply (induct xs)
-   apply (simp_all)
-   apply (pred_simp+)
-  done
+lemma list_sum_uexpr_rep_eq: "list_sum xs s = list_sum (map (\<lambda> e. e s) xs)"
+  by (induct xs, simp_all)
 
-lemma titr_rep_eq: "\<lbrakk>titr n \<sigma> t\<rbrakk>\<^sub>e s = foldr (@) (map (\<lambda>x. \<lbrakk>t\<rbrakk>\<^sub>e ((\<lbrakk>\<sigma>\<rbrakk>\<^sub>e ^^ x) s)) [0..<n]) []"
-  by (simp add: titr_as_list_sum list_sum_uexpr_rep_eq comp_def, rel_simp)
-
-update_uexpr_rep_eq_thms
+lemma titr_rep_eq: "titr n \<sigma> t s = foldr (@) (map (\<lambda>x. t ((\<sigma> ^^ x) s)) [0..<n]) []"
+  by (simp add: titr_as_list_sum list_sum_uexpr_rep_eq comp_def, pred_simp)
 
 lemma titr_lemma:
-  "t + (\<sigma> \<dagger> titr n \<sigma> t) + (\<sigma> ^\<^sub>s n \<circ>\<^sub>s \<sigma>) \<dagger> t = (titr n \<sigma> t + (\<sigma> ^\<^sub>s n) \<dagger> t) + (\<sigma> \<circ>\<^sub>s \<sigma> ^\<^sub>s n) \<dagger> t"
-  by (induct n, simp_all add: usubst add.assoc, metis subst_monoid.power_Suc subst_monoid.power_Suc2)
+  "t + (\<sigma> \<dagger> titr n \<sigma> t) + ((\<sigma> ^^ n \<circ>\<^sub>s \<sigma>) \<dagger> t) = (titr n \<sigma> t + ((\<sigma> ^^ n) \<dagger> t)) + ((\<sigma> \<circ>\<^sub>s \<sigma> ^^ n) \<dagger> t)"
+  by (induct n, simp_all add: usubst add.assoc plus_list_def subst_app_def subst_comp_def funpow_swap1)
 
 lemma csp_do_power [rpred]:
-  "\<Phi>(s, \<sigma>, t)\<^bold>^(Suc n) = \<Phi>(\<And> i\<in>{0..n} \<bullet> (\<sigma>^\<^sub>si) \<dagger> s, \<sigma>^\<^sub>sSuc n, titr (Suc n) \<sigma> t)"
+  "\<Phi>(s, \<sigma>, t)\<^bold>^(Suc n) = \<Phi>(\<forall> i\<in>{0..\<guillemotleft>n\<guillemotright>}. (\<sigma>^^i) \<dagger> s, \<sigma>^^Suc n, titr (Suc n) \<sigma> t)"
   apply (induct n)
-   apply (pred_auto)
-  apply (simp add: power.power.power_Suc rpred usubst)
+   apply (pred_simp)
+   apply (simp add: power.power.power_0 power.power.power_Suc)
+  apply (simp del:SEXP_apply add: power.power.power_Suc rpred usubst)
   apply (thin_tac "_")
   apply (rule csp_do_eq_intro)
     apply (pred_auto)
-     apply (case_tac "x=0")
-  apply (simp_all add: titr_lemma)
-  apply (metis Suc_le_mono funpow_simps_right(2) gr0_implies_Suc o_def)
-  apply force
-  apply (metis Suc_leI funpow_simps_right(2) less_Suc_eq_le o_apply)
-  apply (metis subst_monoid.power_Suc subst_monoid.power_Suc2)
-  apply (metis add.assoc plus_list_def plus_uexpr_def titr_lemma)
+  apply (metis (mono_tags, opaque_lifting) atLeastAtMost_iff funpow.simps(2) funpow_0 funpow_swap1 least_zero not_less_eq_eq o_apply
+      old.nat.exhaust)
+  apply (simp add: atLeast0_atMost_Suc_eq_insert_0)
+  apply (metis Suc_le_mono atLeastAtMost_iff bot_nat_0.extremum funpow_Suc_right o_def)
+  apply (metis comp_apply funpow_swap1 subst_comp_def)
+  apply (metis (mono_tags, lifting) SEXP_def append_eq_appendI comp_apply plus_fun_apply plus_list_def subst_app_def subst_comp_def
+      titr_lemma)
   done
 
 lemma csp_do_rea_star [rpred]:
-  "\<Phi>(s, \<sigma>, t)\<^sup>\<star>\<^sup>r = II\<^sub>r \<sqinter> (\<Sqinter> n \<bullet> \<Phi>(\<And> i\<in>{0..n} \<bullet> (\<sigma>^\<^sub>si) \<dagger> s, \<sigma>^\<^sub>sSuc n, titr (Suc n) \<sigma> t))"
+  "\<Phi>(s, \<sigma>, t)\<^sup>\<star>\<^sup>r = II\<^sub>r \<sqinter> (\<Sqinter> n. \<Phi>(\<forall> i\<in>{0..\<guillemotleft>n\<guillemotright>}. (\<sigma>^^i) \<dagger> s, \<sigma>^^Suc n, titr (Suc n) \<sigma> t))"
   by (simp add: rrel_theory.Star_alt_def closure uplus_power_def rpred)
 
-lemma csp_do_csp_star [rpred]:
-  "\<Phi>(s, \<sigma>, t)\<^sup>\<star>\<^sup>c = (\<Sqinter> n \<bullet> \<Phi>(\<Squnion> i \<in> {0..<n} \<bullet> (\<sigma> ^\<^sub>s i) \<dagger> s,\<sigma> ^\<^sub>s n,titr n \<sigma> t))"
-  (is "?lhs = (\<Sqinter> n \<bullet> ?G(n))")
+lemma SUP_atLeast_Suc:
+  "(\<Sqinter> i \<in> {Suc m..}. P(i)) = (\<Sqinter> i \<in> {m..}. P(Suc i))"
 proof -
-  have "?lhs = II\<^sub>c \<sqinter> (\<Sqinter> n \<bullet> \<Phi>(\<And> i\<in>{0..n} \<bullet> (\<sigma>^\<^sub>si) \<dagger> s, \<sigma>^\<^sub>sSuc n, titr (Suc n) \<sigma> t))"
-    (is "_ = II\<^sub>c \<sqinter> (\<Sqinter> n \<bullet> ?F(n))")
+  have "(\<Sqinter> i \<in> {m..}. P(Suc i)) = \<Sqinter> (P ` Suc ` {m..})"
+    by (simp add: image_image)
+  also have "... = \<Sqinter> (P ` {Suc m..})"
+    by (metis image_add_atLeast plus_1_eq_Suc)
+  finally show ?thesis
+    by simp
+qed
+
+lemma csp_do_csp_star [rpred]:
+  "\<Phi>(s, \<sigma>, t)\<^sup>\<star>\<^sup>c = (\<Sqinter> n. \<Phi>(\<forall> i \<in> {0..<\<guillemotleft>n\<guillemotright>}. (\<sigma> ^^ i) \<dagger> s,\<sigma> ^^ n,titr n \<sigma> t))"
+  (is "?lhs = (\<Sqinter> n. ?G(n))")
+proof -
+  have "?lhs = II\<^sub>c \<sqinter> (\<Sqinter> n. \<Phi>(\<forall> i \<in> {0..\<guillemotleft>n\<guillemotright>}. (\<sigma>^^i) \<dagger> s, \<sigma>^^Suc n, titr (Suc n) \<sigma> t))"
+    (is "_ = II\<^sub>c \<sqinter> (\<Sqinter> n. ?F(n))")
     by (simp add: crf_theory.Star_alt_def closure uplus_power_def rpred)
-  also have "... = II\<^sub>c \<sqinter> (\<Sqinter> n\<in>{1..} \<bullet> ?F(n - 1))"
-    by (simp add: UINF_atLeast_Suc)
-  also have "... = II\<^sub>c \<sqinter> (\<Sqinter> n \<in> {1..} \<bullet> \<Phi>(\<Squnion> i \<in> {0..<n} \<bullet> (\<sigma> ^\<^sub>s i) \<dagger> s,\<sigma> ^\<^sub>s n,titr n \<sigma> t))"
+  also have "... = II\<^sub>c \<sqinter> (\<Sqinter> n\<in>{1..}. ?F(n - 1))"
+    by (simp add: SUP_atLeast_Suc, pred_simp)
+  also have "... = II\<^sub>c \<sqinter> (\<Sqinter> n \<in> {1..}. \<Phi>(\<forall> i \<in> {0..<\<guillemotleft>n\<guillemotright>}. (\<sigma> ^^ i) \<dagger> s,\<sigma> ^^ n,titr n \<sigma> t))"
   proof -
-    have "(\<Sqinter> n\<in>{1..} \<bullet> ?F(n - 1)) = (\<Sqinter> n \<in> {1..} \<bullet> ?G(n))"
-      by (rule UINF_cong, simp, metis (no_types, lifting) Suc_diff_le atLeastLessThanSuc_atLeastAtMost cancel_comm_monoid_add_class.diff_zero diff_Suc_Suc)
+    have "(\<Sqinter> n\<in>{1..}. ?F(n - 1)) = (\<Sqinter> n \<in> {1..}. ?G(n))"
+      by (rule SUP_cong, simp)
+         (metis (no_types, lifting) ext Suc_diff_le atLeastLessThanSuc_atLeastAtMost atLeast_iff diff_Suc_1)
     thus ?thesis by simp
   qed
-  also have "... = ?G(0) \<sqinter> (\<Sqinter> n \<in> {1..} \<bullet> ?G(n))"
-    by (simp add: usubst csp_do_nothing_0)
-  also have "... = (\<Sqinter> n \<in> insert 0 {1..} \<bullet> ?G(n))"
-    by (simp)
-  also have "... = (\<Sqinter> n \<bullet> ?G(n))"
+  also have "... = ?G(0) \<sqinter> (\<Sqinter> n \<in> {1..}. ?G(n))"
+    by (simp add: usubst)
+       (metis SEXP_def csp_do_nothing_0 eq_id_iff subst_app_def subst_id_apply zero_list_def)
+  also have "... = (\<Sqinter> n \<in> insert 0 {1..}. ?G(n))"
+    by (simp add: zero_fun_def)
+  also have "... = (\<Sqinter> n. ?G(n))"
   proof -                                     
     have "insert (0::nat) {1..} = {0..}" by auto
     thus ?thesis
@@ -1128,10 +1147,10 @@ qed
 
 subsection \<open> Assumptions \<close>
 
-abbreviation crf_assume :: "'s upred \<Rightarrow> ('s, 'e) action" ("[_]\<^sub>c") where
-"[b]\<^sub>c \<equiv> \<Phi>(b, [\<leadsto>], \<guillemotleft>[]\<guillemotright>)"
+syntax "_crf_assume" :: "logic \<Rightarrow> logic" ("[_]\<^sub>c")
+translations "_crf_assume b" == "\<Phi>(b, [\<leadsto>], [])"
 
-lemma crf_assume_true [rpred]: "P is CRR \<Longrightarrow> [true]\<^sub>c ;; P = P"
+lemma crf_assume_true [rpred]: "P is CRR \<Longrightarrow> [True]\<^sub>c ;; P = P"
   by (simp add: crel_skip_left_unit csp_do_nothing)
 
 subsection \<open> Downward closure of refusals \<close>
@@ -1139,7 +1158,7 @@ subsection \<open> Downward closure of refusals \<close>
 text \<open> We define downward closure of the pericondition by the following healthiness condition \<close>
 
 definition CDC :: "('s, 'e) action \<Rightarrow> ('s, 'e) action" where
-[pred]: "CDC(P) = (\<^bold>\<exists> ref\<^sub>0 \<bullet> P\<lbrakk>\<guillemotleft>ref\<^sub>0\<guillemotright>/$ref\<acute>\<rbrakk> \<and> $ref\<acute> \<subseteq>\<^sub>u \<guillemotleft>ref\<^sub>0\<guillemotright>)"
+[pred]: "CDC(P) = (\<Sqinter> ref\<^sub>0. P\<lbrakk>\<guillemotleft>ref\<^sub>0\<guillemotright>/ref\<^sup>>\<rbrakk> \<and> ($ref\<^sup>> \<subseteq> \<guillemotleft>ref\<^sub>0\<guillemotright>)\<^sub>e)"
 
 lemma CDC_idem: "CDC(CDC(P)) = CDC(P)"
   by (pred_auto)
@@ -1148,21 +1167,21 @@ lemma CDC_Continuous [closure]: "Continuous CDC"
   by (pred_auto)
 
 lemma CDC_RR_commute: "CDC(RR(P)) = RR(CDC(P))"
-  by (rel_blast)
+  by (pred_auto; blast)
 
 lemma CDC_RR_closed [closure]: "P is RR \<Longrightarrow> CDC(P) is RR"
   by (metis CDC_RR_commute Healthy_def)
 
 lemma CDC_CRR_commute: "CDC (CRR P) = CRR (CDC P)"
-  by (rel_blast)
+  by (pred_auto; blast)
 
 lemma CDC_CRR_closed [closure]:
   assumes "P is CRR"
   shows "CDC(P) is CRR"
-  by (rule CRR_intro, simp add: CDC_def unrest assms closure, simp add: unrest assms closure)
+  by (rule CRR_intro, simp add: CDC_def unrest unrest_ssubst_expr var_alpha_combine usubst usubst_eval assms closure, simp add: unrest assms closure)
 
-lemma CDC_unrest [unrest]: "\<lbrakk> vwb_lens x; ($ref\<acute>)\<^sub>v \<bowtie> x; x \<sharp> P \<rbrakk> \<Longrightarrow> x \<sharp> CDC(P)"
-  by (simp add: CDC_def unrest usubst lens_indep_sym)
+lemma CDC_unrest [unrest]: "\<lbrakk> vwb_lens x; (ref\<^sup>>)\<^sub>v \<bowtie> x; $x \<sharp> P \<rbrakk> \<Longrightarrow> $x \<sharp> CDC(P)"
+  by (simp add: CDC_def unrest unrest_ssubst_expr var_alpha_combine usubst usubst_eval lens_indep_sym)
 
 lemma CDC_R4_commute: "CDC(R4(P)) = R4(CDC(P))"
   by (pred_auto)
@@ -1184,8 +1203,8 @@ lemma false_CDC [closure]: "false is CDC"
 
 lemma CDC_UINF_closed [closure]:
   assumes "\<And> i. i \<in> I \<Longrightarrow> P i is CDC"
-  shows "(\<Sqinter> i \<in> I \<bullet> P i) is CDC"
-  using assms by (rel_blast)
+  shows "(\<Sqinter> i \<in> I. P i) is CDC"
+  using assms by (pred_auto; blast)
 
 lemma CDC_disj_closed [closure]:
   assumes "P is CDC" "Q is CDC"
@@ -1199,8 +1218,8 @@ qed
 
 lemma CDC_USUP_closed [closure]:
   assumes "\<And> i. i \<in> I \<Longrightarrow> P i is CDC"
-  shows "(\<Squnion> i \<in> I \<bullet> P i) is CDC"
-  using assms by (rel_blast)
+  shows "(\<Squnion> i \<in> I. P i) is CDC"
+  using assms by (pred_auto; blast)
 
 lemma CDC_conj_closed [closure]:
   assumes "P is CDC" "Q is CDC"
@@ -1209,7 +1228,7 @@ lemma CDC_conj_closed [closure]:
 
 lemma CDC_rea_impl [rpred]:
   "$ref\<^sup>> \<sharp> P \<Longrightarrow> CDC(P \<longrightarrow>\<^sub>r Q) = (P \<longrightarrow>\<^sub>r CDC(Q))"
-  by (pred_auto)
+  by (pred_auto; blast)
 
 lemma rea_impl_CDC_closed [closure]:
   assumes "$ref\<^sup>> \<sharp> P" "Q is CDC"
@@ -1221,7 +1240,7 @@ lemma seq_CDC_closed [closure]:
   shows "(P ;; Q) is CDC"
 proof -
   have "CDC(P ;; Q) = P ;; CDC(Q)"
-    by (rel_blast)
+    by (pred_auto; blast)
   thus ?thesis
     by (metis Healthy_def assms)
 qed
@@ -1247,7 +1266,7 @@ lemma state_srea_CDC_closed [closure]:
   shows "state 'a \<bullet> P is CDC"
 proof -
   have "state 'a \<bullet> CDC(P) is CDC"
-    by (rel_blast)
+    by (pred_auto; blast)
   thus ?thesis
     by (simp add: Healthy_if assms)
 qed
@@ -1257,7 +1276,7 @@ subsection \<open> Renaming \<close>
 abbreviation "pre_image f B \<equiv> {x. f(x) \<in> B}"
 
 definition csp_rename :: "('s, 'e) action \<Rightarrow> ('e \<Rightarrow> 'f) \<Rightarrow> ('s, 'f) action" ("(_)\<lparr>_\<rparr>\<^sub>c" [999, 0] 999) where
-[pred]: "P\<lparr>f\<rparr>\<^sub>c = R2(($tr\<^sup>> =\<^sub>u \<guillemotleft>[]\<guillemotright> \<and> $st\<acute> =\<^sub>u $st) ;; P ;; ($tr\<^sup>> =\<^sub>u map\<^sub>u \<guillemotleft>f\<guillemotright> $tr \<and> $st\<acute> =\<^sub>u $st \<and> uop (pre_image f) $ref\<acute> \<subseteq>\<^sub>u $ref))"
+[pred]: "P\<lparr>f\<rparr>\<^sub>c = R2(($tr\<^sup>> = [] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P ;; ($tr\<^sup>> = map \<guillemotleft>f\<guillemotright> ($tr\<^sup><) \<and> $st\<^sup>> = $st\<^sup>< \<and> pre_image \<guillemotleft>f\<guillemotright> ($ref\<^sup>>) \<subseteq> ($ref\<^sup><))\<^sub>e)"
 
 lemma csp_rename_CRR_closed [closure]: 
   assumes "P is CRR"
@@ -1269,13 +1288,13 @@ proof -
 qed
 
 lemma csp_rename_disj [rpred]: "(P \<or> Q)\<lparr>f\<rparr>\<^sub>c = (P\<lparr>f\<rparr>\<^sub>c \<or> Q\<lparr>f\<rparr>\<^sub>c)"
-  by (rel_blast)
+  by (pred_auto; blast)
 
-lemma csp_rename_UINF_ind [rpred]: "(\<Sqinter> i \<bullet> P i)\<lparr>f\<rparr>\<^sub>c = (\<Sqinter> i \<bullet> (P i)\<lparr>f\<rparr>\<^sub>c)"
-  by (rel_blast)
+lemma csp_rename_UINF_ind [rpred]: "(\<Sqinter> i. P i)\<lparr>f\<rparr>\<^sub>c = (\<Sqinter> i. (P i)\<lparr>f\<rparr>\<^sub>c)"
+  by (pred_auto; blast)
 
-lemma csp_rename_UINF_mem [rpred]: "(\<Sqinter> i \<in> A \<bullet> P i)\<lparr>f\<rparr>\<^sub>c = (\<Sqinter> i \<in> A \<bullet> (P i)\<lparr>f\<rparr>\<^sub>c)"
-  by (rel_blast)
+lemma csp_rename_UINF_mem [rpred]: "(\<Sqinter> i \<in> A. P i)\<lparr>f\<rparr>\<^sub>c = (\<Sqinter> i \<in> A. (P i)\<lparr>f\<rparr>\<^sub>c)"
+  by (pred_auto; blast)
 
 text \<open> Renaming distributes through conjunction only when both sides are downward closed \<close>
 
@@ -1311,23 +1330,23 @@ lemma csp_rename_R5 [rpred]:
   using less_le apply fastforce
   done
 
-lemma csp_rename_do [rpred]: "\<Phi>(s,\<sigma>,t)\<lparr>f\<rparr>\<^sub>c = \<Phi>(s,\<sigma>,map\<^sub>u \<guillemotleft>f\<guillemotright> t)"
+lemma csp_rename_do [rpred]: "\<Phi>(s,\<sigma>,t)\<lparr>f\<rparr>\<^sub>c = \<Phi>(s,\<sigma>,map \<guillemotleft>f\<guillemotright> t)"
   by (pred_auto)
 
-lemma csp_rename_enable [rpred]: "\<E>(s,t,E)\<lparr>f\<rparr>\<^sub>c = \<E>(s,map\<^sub>u \<guillemotleft>f\<guillemotright> t, uop (image f) E)"
+lemma csp_rename_enable [rpred]: "\<E>(s,t,E)\<lparr>f\<rparr>\<^sub>c = \<E>(s,map \<guillemotleft>f\<guillemotright> t, image \<guillemotleft>f\<guillemotright> E)"
   by (pred_auto)
 
-lemma st'_unrest_csp_rename [unrest]: "$st\<acute> \<sharp> P \<Longrightarrow> $st\<acute> \<sharp> P\<lparr>f\<rparr>\<^sub>c"
-  by (rel_blast)
+lemma st'_unrest_csp_rename [unrest]: "$st\<^sup>> \<sharp> P \<Longrightarrow> $st\<^sup>> \<sharp> P\<lparr>f\<rparr>\<^sub>c"
+  by (pred_auto; blast)
 
 lemma ref'_unrest_csp_rename [unrest]: "$ref\<^sup>> \<sharp> P \<Longrightarrow> $ref\<^sup>> \<sharp> P\<lparr>f\<rparr>\<^sub>c"
-  by (rel_blast)
+  by (pred_auto; blast)
 
 lemma csp_rename_CDC_closed [closure]:
   "P is CDC \<Longrightarrow> P\<lparr>f\<rparr>\<^sub>c is CDC"
-  by (rel_blast)
+  by (pred_auto; blast)
 
 lemma csp_do_CDC [closure]: "\<Phi>(s,\<sigma>,t) is CDC"
-  by (pred_auto)
+  by (pred_auto; blast)
 
 end

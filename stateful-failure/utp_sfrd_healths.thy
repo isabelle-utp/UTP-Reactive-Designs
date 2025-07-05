@@ -395,14 +395,32 @@ lemma NSRD_CSP4_intro:
   shows "P is NSRD"
   by (simp add: CSP4_implies_RD3 SRD_RD3_implies_NSRD assms(1) assms(2))
 
+(*** THE FOLLOWING USEFUL THEOREM SHOULD BE IN REACTIVE DESIGNS ***)
+
+lemma srdes_tri_eq_R1_R2c_intro:
+  assumes "R1 (R2c P\<^sub>1) = R1 (R2c Q\<^sub>1)" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>2)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>2))" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>3)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>3))"
+  shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
+proof -
+  have "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(R2c P\<^sub>1 \<turnstile> R2c P\<^sub>2 \<diamondop> R2c P\<^sub>3)"
+    by (metis (no_types, opaque_lifting) R1_R2s_R2c RHS_design_R2c_pre RHS_design_peri_R2c RHS_design_post_R1
+        RHS_design_post_R2s)
+  also have "... = \<^bold>R\<^sub>s(R1 (R2c P\<^sub>1) \<turnstile> R1 (R2c P\<^sub>2) \<diamondop> R1 (R2c P\<^sub>3))"
+    by (simp add: R1_design_R1_pre RHS_design_peri_R1 RHS_design_post_R1)
+  also have "... = \<^bold>R\<^sub>s(R1 (R2c Q\<^sub>1) \<turnstile> R1 (R2c Q\<^sub>2) \<diamondop> R1 (R2c Q\<^sub>3))"
+    by (metis (no_types, lifting) R1_extend_conj R2c_conj RHS_design_peri_R1 RHS_design_post_R1 assms(1,2,3)
+        srdes_tri_eq_intro)
+  also have "... = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
+    by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_design_R1_pre RHS_design_R2c_pre RHS_design_peri_R1 RHS_design_peri_R2s
+        RHS_design_post_R1 RHS_design_post_R2s)
+  finally show ?thesis .
+qed
+
 lemma NCSP_form: 
   "NCSP P = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(P)) wp\<^sub>r false) \<turnstile> ((\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
 proof -
   obtain Q where Q_def: "Q = NSRD P" and Q_NSRD: "Q is NSRD"
     by (simp add: Healthy_def' NSRD_idem)
   
-  thm NSRD_form
-
   have "NCSP P = CSP3 (CSP4 Q)"
     by (metis (no_types, opaque_lifting) CSP4_def NCSP_def NSRD_alt_def RD3_def Skip_srdes_left_unit comp_eq_dest_lhs rel_RA1 Q_def)
 
@@ -411,9 +429,10 @@ proof -
                    (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R Q))"
     by (simp add: CSP3_form CSP4_form closure Q_NSRD unrest wp unrest_ssubst_expr usubst usubst_eval rdes, pred_auto)
   also have "... = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(P)) wp\<^sub>r false) \<turnstile> ((\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
-    apply (simp add: Q_def NSRD_form rdes closure wp)
-    (*** PORTING GOT HERE ***)
-
+    apply (simp add: Q_def NSRD_form rdes closure wp rea_pre_RHS_design rea_peri_RHS_design rea_post_RHS_design)
+    apply (rule srdes_tri_eq_R1_R2c_intro)
+    apply (pred_auto; blast)+
+    done
 
     finally show ?thesis .
 qed
@@ -425,13 +444,13 @@ lemma CSP4_st'_unrest_peri [unrest]:
 
 lemma CSP4_healthy_form:
   assumes "P is CSP" "P is CSP4"
-  shows "P = \<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
+  shows "P = \<^bold>R\<^sub>s(((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
 proof -
-  have "P = \<^bold>R\<^sub>s ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> cmt\<^sub>R P) \<triangleleft> $wait\<^sup>> \<triangleright> (\<exists> ref\<^sup>> \<Zspot> cmt\<^sub>R P)))"
+  have "P = \<^bold>R\<^sub>s (((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> cmt\<^sub>R P) \<triangleleft> $wait\<^sup>> \<triangleright> (\<exists> ref\<^sup>> \<Zspot> cmt\<^sub>R P)))"
     by (metis CSP4_def Healthy_def Skip_right_lemma assms(1) assms(2))
-  also have "... = \<^bold>R\<^sub>s ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> cmt\<^sub>R P)\<lbrakk>true/$wait\<^sup>>\<rbrakk> \<triangleleft> $wait\<^sup>> \<triangleright> (\<exists> ref\<^sup>> \<Zspot> cmt\<^sub>R P)\<lbrakk>false/$wait\<^sup>>\<rbrakk>))"
-    by (metis (no_types, opaque_lifting) subst_wait'_left_subst subst_wait'_right_subst wait'_cond_def)
-  also have "... = \<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
+  also have "... = \<^bold>R\<^sub>s (((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> cmt\<^sub>R P)\<lbrakk>True/wait\<^sup>>\<rbrakk> \<triangleleft> $wait\<^sup>> \<triangleright> (\<exists> ref\<^sup>> \<Zspot> cmt\<^sub>R P)\<lbrakk>False/wait\<^sup>>\<rbrakk>))"
+    by (simp add: expr_if_bool_var_left expr_if_bool_var_right)
+  also have "... = \<^bold>R\<^sub>s(((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
     by (simp add: wait'_cond_def usubst peri\<^sub>R_def post\<^sub>R_def cmt\<^sub>R_def unrest)
   finally show ?thesis .
 qed
@@ -440,7 +459,7 @@ lemma CSP4_ref'_unrest_pre [unrest]:
   assumes "P is CSP" "P is CSP4"
   shows "$ref\<^sup>< \<sharp> pre\<^sub>R(P)"
 proof -
-  have "pre\<^sub>R(P) = pre\<^sub>R(\<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
+  have "pre\<^sub>R(P) = pre\<^sub>R(\<^bold>R\<^sub>s(((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
     using CSP4_healthy_form assms(1) assms(2) by fastforce
   also have "... = (\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false"
     by (simp add: rea_pre_RHS_design wp_rea_def usubst unrest
@@ -480,7 +499,7 @@ lemma CSP4_ref'_unrest_post [unrest]:
 proof -
   have "post\<^sub>R(P) = post\<^sub>R(\<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
     using CSP4_healthy_form assms(1) assms(2) by fastforce
-  also have "... = R1 (R2c ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<Rightarrow>\<^sub>r (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
+  also have "... = R1 (R2c ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<longrightarrow>\<^sub>r (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
     by (simp add: rea_post_RHS_design usubst unrest wp_rea_def)
   also have "$ref\<^sup>< \<sharp> ..."
     by (simp add: R1_def R2c_def wp_rea_def unrest)

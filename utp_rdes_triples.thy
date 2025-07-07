@@ -1219,6 +1219,24 @@ lemma rdes_tri_eq_intro':
   shows "\<^bold>R(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
   using assms by (simp)
 
+lemma srdes_tri_eq_R1_R2c_intro:
+  assumes "R1 (R2c P\<^sub>1) = R1 (R2c Q\<^sub>1)" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>2)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>2))" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>3)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>3))"
+  shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
+proof -
+  have "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(R2c P\<^sub>1 \<turnstile> R2c P\<^sub>2 \<diamondop> R2c P\<^sub>3)"
+    by (metis (no_types, opaque_lifting) R1_R2s_R2c RHS_design_R2c_pre RHS_design_peri_R2c RHS_design_post_R1
+        RHS_design_post_R2s)
+  also have "... = \<^bold>R\<^sub>s(R1 (R2c P\<^sub>1) \<turnstile> R1 (R2c P\<^sub>2) \<diamondop> R1 (R2c P\<^sub>3))"
+    by (simp add: R1_design_R1_pre RHS_design_peri_R1 RHS_design_post_R1)
+  also have "... = \<^bold>R\<^sub>s(R1 (R2c Q\<^sub>1) \<turnstile> R1 (R2c Q\<^sub>2) \<diamondop> R1 (R2c Q\<^sub>3))"
+    by (metis (no_types, lifting) R1_extend_conj R2c_conj RHS_design_peri_R1 RHS_design_post_R1 assms(1,2,3)
+        srdes_tri_eq_intro)
+  also have "... = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
+    by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_design_R1_pre RHS_design_R2c_pre RHS_design_peri_R1 RHS_design_peri_R2s
+        RHS_design_post_R1 RHS_design_post_R2s)
+  finally show ?thesis .
+qed
+
 lemma srdes_tri_eq_intro':
   assumes "P\<^sub>1 = Q\<^sub>1" "P\<^sub>2 = Q\<^sub>2" "P\<^sub>3 = Q\<^sub>3"
   shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"

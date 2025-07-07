@@ -129,8 +129,18 @@ proof -
   finally show ?thesis .
 qed
 
+(*** THESE THEOREMS SHOULD BE IN SHALLOW EXPRESSIONS ***)
+
 lemma all_unrest: "\<lbrakk> mwb_lens x; $x \<sharp> P \<rbrakk> \<Longrightarrow> (\<forall> x \<Zspot> P) = P"
   by expr_simp
+
+lemma unrest_all_in [unrest]:
+  "\<lbrakk> mwb_lens y; x \<subseteq>\<^sub>L y \<rbrakk> \<Longrightarrow> $x \<sharp> (\<forall> y \<Zspot> P)"
+  by (simp add: all_as_ex unrest_ex_in unrest_uop)
+
+lemma unrest_all_out [unrest]:
+  "\<lbrakk> mwb_lens x; $x \<sharp> P; x \<bowtie> y \<rbrakk> \<Longrightarrow> $x \<sharp> (\<forall> y \<Zspot> P)"
+  by (simp add: all_expr_def unrest_lens, metis lens_indep.lens_put_comm)
 
 lemma Skip_left_unit_ref_unrest:
   assumes "P is CSP" "$ref\<^sup>< \<sharp> P\<lbrakk>False/wait\<^sup><\<rbrakk>"
@@ -395,26 +405,6 @@ lemma NSRD_CSP4_intro:
   shows "P is NSRD"
   by (simp add: CSP4_implies_RD3 SRD_RD3_implies_NSRD assms(1) assms(2))
 
-(*** THE FOLLOWING USEFUL THEOREM SHOULD BE IN REACTIVE DESIGNS ***)
-
-lemma srdes_tri_eq_R1_R2c_intro:
-  assumes "R1 (R2c P\<^sub>1) = R1 (R2c Q\<^sub>1)" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>2)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>2))" "R1 (R2c (P\<^sub>1 \<and> Q\<^sub>3)) = R1 (R2c (Q\<^sub>1 \<and> P\<^sub>3))"
-  shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
-proof -
-  have "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) = \<^bold>R\<^sub>s(R2c P\<^sub>1 \<turnstile> R2c P\<^sub>2 \<diamondop> R2c P\<^sub>3)"
-    by (metis (no_types, opaque_lifting) R1_R2s_R2c RHS_design_R2c_pre RHS_design_peri_R2c RHS_design_post_R1
-        RHS_design_post_R2s)
-  also have "... = \<^bold>R\<^sub>s(R1 (R2c P\<^sub>1) \<turnstile> R1 (R2c P\<^sub>2) \<diamondop> R1 (R2c P\<^sub>3))"
-    by (simp add: R1_design_R1_pre RHS_design_peri_R1 RHS_design_post_R1)
-  also have "... = \<^bold>R\<^sub>s(R1 (R2c Q\<^sub>1) \<turnstile> R1 (R2c Q\<^sub>2) \<diamondop> R1 (R2c Q\<^sub>3))"
-    by (metis (no_types, lifting) R1_extend_conj R2c_conj RHS_design_peri_R1 RHS_design_post_R1 assms(1,2,3)
-        srdes_tri_eq_intro)
-  also have "... = \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3)"
-    by (metis (no_types, opaque_lifting) R1_R2s_R2c R1_design_R1_pre RHS_design_R2c_pre RHS_design_peri_R1 RHS_design_peri_R2s
-        RHS_design_post_R1 RHS_design_post_R2s)
-  finally show ?thesis .
-qed
-
 lemma NCSP_form: 
   "NCSP P = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(P)) wp\<^sub>r false) \<turnstile> ((\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P))))"
 proof -
@@ -424,7 +414,7 @@ proof -
   have "NCSP P = CSP3 (CSP4 Q)"
     by (metis (no_types, opaque_lifting) CSP4_def NCSP_def NSRD_alt_def RD3_def Skip_srdes_left_unit comp_eq_dest_lhs rel_RA1 Q_def)
 
-  have "... =  \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R Q) wp\<^sub>r false) \<turnstile>
+  also have "... =  \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R Q) wp\<^sub>r false) \<turnstile>
                    (\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R Q) \<diamondop>
                    (\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R Q))"
     by (simp add: CSP3_form CSP4_form closure Q_NSRD unrest wp unrest_ssubst_expr usubst usubst_eval rdes, pred_auto)
@@ -457,17 +447,8 @@ qed
 
 lemma CSP4_ref'_unrest_pre [unrest]:
   assumes "P is CSP" "P is CSP4"
-  shows "$ref\<^sup>< \<sharp> pre\<^sub>R(P)"
-proof -
-  have "pre\<^sub>R(P) = pre\<^sub>R(\<^bold>R\<^sub>s(((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
-    using CSP4_healthy_form assms(1) assms(2) by fastforce
-  also have "... = (\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false"
-    by (simp add: rea_pre_RHS_design wp_rea_def usubst unrest
-        CSP4_neg_pre_unit R1_rea_not R2c_preR R2c_rea_not assms)
-  also have "$ref\<^sup>< \<sharp> ..."
-    by (simp add: wp_rea_def unrest)
-  finally show ?thesis .
-qed
+  shows "$ref\<^sup>> \<sharp> pre\<^sub>R(P)"
+  by (simp add: NSRD_CSP4_intro NSRD_neg_pre_RC RC_implies_RR assms(1,2) unrest_ref'_neg_RC)
 
 lemma NCSP_set_unrest_pre_wait':
   assumes "A \<subseteq> \<lbrakk>NCSP\<rbrakk>\<^sub>H"
@@ -493,17 +474,22 @@ proof -
     using NSRD_st'_unrest_pre by blast
 qed
 
+find_theorems R2s unrest
+
+thm R2s_unrest
+
 lemma CSP4_ref'_unrest_post [unrest]:
   assumes "P is CSP" "P is CSP4"
-  shows "$ref\<^sup>< \<sharp> post\<^sub>R(P)"
+  shows "$ref\<^sup>> \<sharp> post\<^sub>R(P)"
 proof -
-  have "post\<^sub>R(P) = post\<^sub>R(\<^bold>R\<^sub>s((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
+  have "post\<^sub>R(P) = post\<^sub>R(\<^bold>R\<^sub>s(((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false) \<turnstile> ((\<exists> st\<^sup>> \<Zspot> peri\<^sub>R(P)) \<diamondop> (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R(P)))))"
     using CSP4_healthy_form assms(1) assms(2) by fastforce
   also have "... = R1 (R2c ((\<not>\<^sub>r pre\<^sub>R P) wp\<^sub>r false \<longrightarrow>\<^sub>r (\<exists> ref\<^sup>> \<Zspot> post\<^sub>R P)))"
     by (simp add: rea_post_RHS_design usubst unrest wp_rea_def)
-  also have "$ref\<^sup>< \<sharp> ..."
-    by (simp add: R1_def R2c_def wp_rea_def unrest)
-  finally show ?thesis .
+  also have "$ref\<^sup>> \<sharp> ..."
+    by (simp add: R1_def R2c_def wp_rea_def unrest unrest_ssubst_expr usubst usubst_eval)
+  thus ?thesis
+    using calculation by auto
 qed
 
 lemma CSP3_Chaos [closure]: "Chaos is CSP3"
@@ -532,7 +518,7 @@ lemma NCSP_seqr_closure [closure]:
 
 lemma CSP4_Skip [closure]: "Skip is CSP4"
   apply (rule CSP4_intro, simp_all add: Skip_is_CSP)
-  apply (simp_all add: Skip_def rea_pre_RHS_design rea_cmt_RHS_design usubst unrest R2c_true)
+  apply (simp_all add: Skip_def rea_pre_RHS_design rea_cmt_RHS_design usubst unrest unrest_ssubst_expr usubst_eval R2c_true)
 done
 
 lemma NCSP_Skip [closure]: "Skip is NCSP"
@@ -540,7 +526,7 @@ lemma NCSP_Skip [closure]: "Skip is NCSP"
 
 lemma CSP4_Stop [closure]: "Stop is CSP4"
   apply (rule CSP4_intro, simp_all add: Stop_is_CSP)
-  apply (simp_all add: Stop_def rea_pre_RHS_design rea_cmt_RHS_design usubst unrest R2c_true)
+  apply (simp_all add: Stop_def rea_pre_RHS_design rea_cmt_RHS_design usubst unrest unrest_ssubst_expr usubst_eval R2c_true)
 done
 
 lemma NCSP_Stop [closure]: "Stop is NCSP"
@@ -552,21 +538,23 @@ lemma CSP4_Idempotent: "Idempotent CSP4"
 lemma CSP4_Continuous: "Continuous CSP4"
   by (simp add: Continuous_def CSP4_def seq_Sup_distr)
 
+(*
 lemma rdes_frame_ext_NCSP_closed [closure]:
   assumes "vwb_lens a" "P is NCSP"
   shows "a:[P]\<^sub>R\<^sup>+ is NCSP"
   by (metis (no_types, lifting) CSP3_def CSP4_def Healthy_intro NCSP_Skip NCSP_implies_NSRD NCSP_intro NSRD_is_SRD Skip_frame Skip_left_unit Skip_right_unit assms(1) assms(2) rdes_frame_ext_NSRD_closed seq_srea_frame)
+*)
 
 lemma preR_Stop [rdes]: "pre\<^sub>R(Stop) = true\<^sub>r"
   by (simp add: Stop_def Stop_is_CSP rea_pre_RHS_design unrest usubst R2c_true)
 
-lemma periR_Stop [rdes]: "peri\<^sub>R(Stop) = \<E>(true,\<guillemotleft>[]\<guillemotright>,{}\<^sub>u)"
+lemma periR_Stop [rdes]: "peri\<^sub>R(Stop) = \<E>(True,[],{})"
   by (pred_auto)
 
 lemma postR_Stop [rdes]: "post\<^sub>R(Stop) = false"
   by (pred_auto)
 
-lemma cmtR_Stop [rdes]: "cmt\<^sub>R(Stop) = ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>)"
+lemma cmtR_Stop [rdes]: "cmt\<^sub>R(Stop) = ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>)\<^sub>e"
   by (pred_auto)
 
 lemma NCSP_Idempotent [closure]: "Idempotent NCSP"
@@ -587,14 +575,14 @@ lemma postR_CRR [closure]: "P is NCSP \<Longrightarrow> post\<^sub>R(P) is CRR"
     
 lemma NCSP_rdes_intro [closure]:
   assumes "P is CRC" "Q is CRR" "R is CRR"
-          "$st\<^sup>> \<sharp> Q" "$ref\<^sup>< \<sharp> R"
+          "$st\<^sup>> \<sharp> Q" "$ref\<^sup>> \<sharp> R"
   shows "\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R) is NCSP"
   apply (rule NCSP_intro)
     apply (simp_all add: closure assms)
    apply (rule CSP3_SRD_intro)
       apply (simp_all add: rdes closure assms unrest)
   apply (rule CSP4_tri_intro)
-     apply (simp_all add: rdes closure assms unrest)
+     apply (simp_all add: rdes closure assms unrest unrest_ssubst_expr usubst usubst_eval)
   apply (metis (no_types, lifting) CRC_implies_RC R1_seqr_closure assms(1) rea_not_R1 rea_not_false rea_not_not wp_rea_RC_false wp_rea_def)
   done
     
@@ -610,7 +598,7 @@ lemma CSP3_Sup_closure [closure]:
   "A \<subseteq> \<lbrakk>CSP3\<rbrakk>\<^sub>H \<Longrightarrow> (\<Sqinter> A) is CSP3"
   apply (auto simp add: CSP3_def Healthy_def seq_Sup_distl)
   apply (rule cong[of Sup])
-   apply (simp)
+   apply (rule refl)
   using image_iff apply force
   done
 
@@ -618,7 +606,7 @@ lemma CSP4_Sup_closure [closure]:
   "A \<subseteq> \<lbrakk>CSP4\<rbrakk>\<^sub>H \<Longrightarrow> (\<Sqinter> A) is CSP4"
   apply (auto simp add: CSP4_def Healthy_def seq_Sup_distr)
   apply (rule cong[of Sup])
-   apply (simp)
+   apply (rule refl)
   using image_iff apply force
   done
   
@@ -640,22 +628,38 @@ proof -
     
   also have "... = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(NCSP P)) wp\<^sub>r false) \<turnstile> 
                        (\<exists> ref\<^sup>< \<Zspot> \<exists> st\<^sup>> \<Zspot> peri\<^sub>R(NCSP P)) \<diamondop> 
-                       ((\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R (NCSP P)) \<and> $tr <\<^sub>u $tr\<acute>))"
-    by (simp add: NCSP_form Productive_RHS_design_form unrest closure)
+                       ((\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R (NCSP P)) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e))"
+    by (simp add: NCSP_form Productive_RHS_design_form unrest unrest_ssubst_expr usubst usubst_eval closure)
   also have "... is NCSP"
     apply (rule NCSP_rdes_intro)
         apply (rule CRC_intro)
-         apply (simp_all add: unrest ex_unrest all_unrest closure)
+         apply (simp_all add: unrest unrest_ssubst_expr usubst usubst_eval ex_unrest all_unrest closure)
     done
-  finally show ?thesis .
+  thus ?thesis
+    using calculation by force
 qed
 
 lemma PCSP_elim [RD_elim]: 
   assumes "X is PCSP" "P (\<^bold>R\<^sub>s ((pre\<^sub>R X) \<turnstile> peri\<^sub>R X \<diamondop> (R4(post\<^sub>R X))))"
   shows "P X"
-  by (metis R4_def Healthy_if NCSP_implies_CSP PCSP_implies_NCSP Productive_form assms comp_apply)
+proof -
+  from assms(1) have X_NSRD: "X is NSRD" by (simp add: PCSP_implies_NCSP NCSP_implies_NSRD)
+  have X_form: "X = \<^bold>R\<^sub>s (pre\<^sub>R X \<turnstile> peri\<^sub>R X \<diamondop> post\<^sub>R X)"
+    by (simp add: NSRD_is_SRD SRD_reactive_tri_design X_NSRD)
+  show ?thesis
+  proof -
+    have f1: "X is NCSP"
+      using PCSP_implies_NCSP assms(1) by blast
+    then have f2: "Productive X = X"
+      by (metis Healthy_def assms(1) comp_apply)
+    have "(peri\<^sub>R X is RR) \<and> (pre\<^sub>R X is RR)"
+      using f1 by (simp add: CRR_implies_RR X_NSRD periR_CRR preR_RR)
+    then show ?thesis
+      using f2 f1 by (metis (no_types) CRR_implies_RR Productive_RHS_R4_design_form X_form assms(2) postR_CRR)
+  qed
+qed
 
-lemma R5_alt_def: "R5(P) = (P \<and> $tr\<^sup>> = $tr\<^sup><)"
+lemma R5_alt_def: "R5(P) = (P \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e)"
   by pred_auto
 
 lemma ICSP_implies_NCSP [closure]:
@@ -670,14 +674,14 @@ proof -
     by (simp add: NCSP_form)
   also have "... = \<^bold>R\<^sub>s ((\<forall> ref\<^sup>< \<Zspot> (\<not>\<^sub>r pre\<^sub>R(NCSP P)) wp\<^sub>r false) \<turnstile> 
                        false \<diamondop> 
-                       ((\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R (NCSP P)) \<and> $tr\<^sup>> = $tr\<^sup><))"
+                       ((\<exists> ref\<^sup>< \<Zspot> \<exists> ref\<^sup>> \<Zspot> post\<^sub>R (NCSP P)) \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e))"
     by (simp_all add: ISRD1_RHS_design_form R5_alt_def closure rdes unrest)
   also have "... is NCSP"
     apply (rule NCSP_rdes_intro)
         apply (rule CRC_intro)
-         apply (simp_all add: unrest ex_unrest all_unrest closure)
+         apply (simp_all add: unrest unrest_ssubst_expr usubst usubst_eval ex_unrest all_unrest closure)
     done
-  finally show ?thesis .
+  thus ?thesis using calculation by auto
 qed
 
 lemma ICSP_implies_ISRD [closure]:
@@ -691,15 +695,15 @@ lemma ICSP_elim [RD_elim]:
   by (metis Healthy_if NCSP_implies_CSP ICSP_implies_NCSP ISRD1_form assms comp_apply)
 
 lemma ICSP_Stop_right_zero_lemma:
-  "(P \<and> ($tr\<^sup>> = $tr\<^sup><)) ;; true\<^sub>r = true\<^sub>r \<Longrightarrow> (P \<and> ($tr\<^sup>> = $tr\<^sup><)) ;; ($tr\<^sup>> = $tr\<^sup><) = ($tr\<^sup>> = $tr\<^sup><)"
-  by (rel_blast)
+  "(P \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) ;; true\<^sub>r = true\<^sub>r \<Longrightarrow> (P \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) ;; ($tr\<^sup>> = $tr\<^sup><)\<^sub>e = ($tr\<^sup>> = $tr\<^sup><)\<^sub>e"
+  by (pred_auto, blast)
 
 lemma ICSP_Stop_right_zero:
   assumes "P is ICSP" "pre\<^sub>R(P) = true\<^sub>r" "post\<^sub>R(P) ;; true\<^sub>r = true\<^sub>r"
   shows "P ;; Stop = Stop"
 proof -
-  from assms(3) have 1:"(post\<^sub>R P \<and> $tr\<^sup>> = $tr\<^sup><) ;; true\<^sub>r = true\<^sub>r"
-    by (pred_auto, metis (full_types, opaque_lifting) dual_order.antisym order_refl)
+  from assms(3) have 1:"(post\<^sub>R P \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) ;; true\<^sub>r = true\<^sub>r"
+    by (pred_auto, metis (no_types, opaque_lifting) dual_order.eq_iff)
   show ?thesis
     by (rdes_simp cls: assms(1), simp add: R5_alt_def csp_enable_nothing assms(2) ICSP_Stop_right_zero_lemma[OF 1])
 qed
@@ -752,7 +756,7 @@ lemma StarC_unfold: "P is NCSP \<Longrightarrow> P\<^sup>\<star>\<^sup>C = Skip 
 
 lemma sfrd_star_as_rdes_star:
   "P is NCSP \<Longrightarrow> P\<^sup>\<star>\<^sup>R ;; Skip = P\<^sup>\<star>\<^sup>C"
-  by (simp add: csp_theory.Star_alt_def nsrdes_theory.Star_alt_def StarC_def StarR_def closure unrest Skip_srdes_left_unit csp_theory.Unit_Right)
+  by (simp add: upred_semiring.distrib_right csp_theory.Star_alt_def nsrdes_theory.Star_alt_def StarC_def StarR_def closure unrest unrest_ssubst_expr usubst usubst_eval Skip_srdes_left_unit csp_theory.Unit_Right)
 
 lemma sfrd_star_as_rdes_star':
   "P is NCSP \<Longrightarrow> Skip ;; P\<^sup>\<star>\<^sup>R = P\<^sup>\<star>\<^sup>C"
@@ -760,7 +764,7 @@ lemma sfrd_star_as_rdes_star':
 
 theorem csp_star_rdes_def [rdes_def]:
   assumes "P is CRC" "Q is CRR" "R is CRF" "$st\<^sup>> \<sharp> Q"
-  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^sup>\<star>\<^sup>C = \<^bold>R\<^sub>s(R\<^sup>\<star>\<^sup>c wp\<^sub>r P \<turnstile> (R\<^sup>\<star>\<^sup>c ;; Q) \<diamondop> R\<^sup>\<star>\<^sup>c)"
+  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<^sup>\<star>\<^sup>C = \<^bold>R\<^sub>s((R\<^sup>\<star>\<^sup>c wp\<^sub>r P) \<turnstile> (R\<^sup>\<star>\<^sup>c ;; Q) \<diamondop> R\<^sup>\<star>\<^sup>c)"
   apply (simp add: wp_rea_def sfrd_star_as_rdes_star[THEN sym] crf_star_as_rea_star assms seqr_assoc rpred closure unrest StarR_rdes_def)
   apply (simp add: rdes_def assms closure unrest wp_rea_def[THEN sym])
   apply (simp add: wp rpred assms closure)

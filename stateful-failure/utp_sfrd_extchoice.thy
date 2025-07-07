@@ -228,11 +228,16 @@ lemma extChoice_rdes_def' [rdes_def]:
   assumes "P\<^sub>1 is RR" "Q\<^sub>1 is RR"
   shows "\<^bold>R\<^sub>s(P\<^sub>1 \<turnstile> P\<^sub>2 \<diamondop> P\<^sub>3) \<box> \<^bold>R\<^sub>s(Q\<^sub>1 \<turnstile> Q\<^sub>2 \<diamondop> Q\<^sub>3) =
          \<^bold>R\<^sub>s ((P\<^sub>1 \<and> Q\<^sub>1) \<turnstile> ((R5(P\<^sub>2 \<and> Q\<^sub>2) \<or> R4(P\<^sub>2 \<or> Q\<^sub>2)) \<diamondop> (P\<^sub>3 \<or> Q\<^sub>3)))"
-  by (simp add: extChoice_rdes_def assms, pred_auto, simp_all add: less_le)
+proof -
+  have "R1((P\<^sub>2 \<and> Q\<^sub>2) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (P\<^sub>2 \<or> Q\<^sub>2)) = R1(R5 (P\<^sub>2 \<and> Q\<^sub>2) \<or> R4 (P\<^sub>2 \<or> Q\<^sub>2))"
+    by (pred_auto)
+  thus ?thesis
+    by (simp add: extChoice_rdes_def assms, metis (lifting) RHS_design_peri_R1)
+qed
 
 lemma CSP_ExtChoice [closure]:
   "EXTCHOICE A F is CSP"
-  by (simp add: ExtChoice_def RHS_design_is_SRD unrest)
+  by (simp add: ExtChoice_def RHS_design_is_SRD unrest unrest_ssubst_expr usubst_eval usubst)
 
 lemma CSP_extChoice [closure]:
   "P \<box> Q is CSP"
@@ -250,24 +255,24 @@ lemma preR_ExtChoice:
 
 lemma periR_ExtChoice [rdes]:
   assumes "A \<noteq> {}" "\<And> i. i\<in>A \<Longrightarrow> F i is NCSP"
-  shows "peri\<^sub>R(EXTCHOICE A F) = (((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P))) \<triangleleft> \<^U>($tr\<acute> = $tr) \<triangleright> (\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
+  shows "peri\<^sub>R(EXTCHOICE A F) = (((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P))) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
   (is "?lhs = ?rhs")
 proof -
-  have "?lhs = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P)) \<triangleleft> \<^U>($tr\<acute> = $tr) \<triangleright> (\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
+  have "?lhs = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P)) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
     by (simp add: ExtChoice_tri_rdes_def closure rdes assms)
-  also have "... = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. pre\<^sub>R (F P) \<Rightarrow>\<^sub>r peri\<^sub>R (F P)) \<triangleleft> \<^U>($tr\<acute> = $tr) \<triangleright> (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<Rightarrow>\<^sub>r peri\<^sub>R (F P)))"
-    by (simp add: NSRD_peri_under_pre assms closure cong: UINF_cong USUP_cong)
-  also have "... = ((\<Squnion> P\<in>A. RR(pre\<^sub>R (F P))) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. RR(pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r RR(peri\<^sub>R (F P))) \<triangleleft> \<^U>($tr\<acute> = $tr) \<triangleright> (\<Sqinter> P\<in>A. RR(pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r RR(peri\<^sub>R (F P))))"
-    by (simp add: Healthy_if assms closure cong: UINF_cong USUP_cong)
-  also from assms(1) have "... = ((\<Squnion> P\<in>A. RR(pre\<^sub>R (F P))) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. RR(pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r RR(peri\<^sub>R (F P)))) \<triangleleft> \<^U>($tr\<acute> = $tr) \<triangleright> ((\<Sqinter> P\<in>A. RR(pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r RR(peri\<^sub>R (F P))))"
-    by (pred_auto)
+  also have "... = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. pre\<^sub>R (F P) \<longrightarrow>\<^sub>r peri\<^sub>R (F P)) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<longrightarrow>\<^sub>r peri\<^sub>R (F P)))"
+    by (simp add: NSRD_peri_under_pre assms closure cong: SUP_cong INF_cong)
+  also have "... = ((\<Squnion> P\<in>A. RR(pre\<^sub>R (F P))) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. RR(pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r RR(peri\<^sub>R (F P))) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (\<Sqinter> P\<in>A. RR(pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r RR(peri\<^sub>R (F P))))"
+    by (simp add: Healthy_if assms closure cong: INF_cong SUP_cong)
+  also from assms(1) have "... = ((\<Squnion> P\<in>A. RR(pre\<^sub>R (F P))) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. RR(pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r RR(peri\<^sub>R (F P)))) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> ((\<Sqinter> P\<in>A. RR(pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r RR(peri\<^sub>R (F P))))"
+    by (pred_auto; blast)
   finally show ?thesis
-    by (simp add: Healthy_if NSRD_peri_under_pre assms closure cong: UINF_cong USUP_cong)
+    by (simp add: Healthy_if NSRD_peri_under_pre assms closure cong: INF_cong SUP_cong)
 qed
 
 lemma periR_ExtChoice':
   assumes "A \<noteq> {}" "\<And> i. i\<in>A \<Longrightarrow> F i is NCSP"
-  shows "peri\<^sub>R(EXTCHOICE A F) = (R5((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P))) \<or> R4(\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
+  shows "peri\<^sub>R(EXTCHOICE A F) = (R5((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Squnion> P\<in>A. peri\<^sub>R (F P))) \<or> R4(\<Sqinter> P\<in>A. peri\<^sub>R (F P)))"
   by (simp add: periR_ExtChoice assms, pred_auto)
 
 lemma postR_ExtChoice [rdes]:
@@ -275,48 +280,48 @@ lemma postR_ExtChoice [rdes]:
   shows "post\<^sub>R(EXTCHOICE A F) = (\<Sqinter> P\<in>A. post\<^sub>R (F P))"
   (is "?lhs = ?rhs")
 proof -
-  have "?lhs = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Sqinter> P\<in>A. post\<^sub>R (F P)))"
+  have "?lhs = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Sqinter> P\<in>A. post\<^sub>R (F P)))"
     by (simp add: ExtChoice_tri_rdes_def closure rdes assms)
-  also have "... = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<Rightarrow>\<^sub>r (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<Rightarrow>\<^sub>r post\<^sub>R (F P)))"
-    by (simp add: NSRD_post_under_pre assms closure cong: UINF_cong)
-  also have "... = (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<Rightarrow>\<^sub>r post\<^sub>R (F P))"
+  also have "... = ((\<Squnion> P\<in>A. pre\<^sub>R (F P)) \<longrightarrow>\<^sub>r (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<longrightarrow>\<^sub>r post\<^sub>R (F P)))"
+    by (simp add: NSRD_post_under_pre assms closure cong: SUP_cong)
+  also have "... = (\<Sqinter> P\<in>A. pre\<^sub>R (F P) \<longrightarrow>\<^sub>r post\<^sub>R (F P))"
     by (pred_auto)
   finally show ?thesis
-    by (simp add: NSRD_post_under_pre assms closure cong: UINF_cong)
+    by (simp add: NSRD_post_under_pre assms closure cong: SUP_cong)
 qed
 
 lemma preR_extChoice' [rdes]:
   assumes "P is NCSP" "Q is NCSP"  
   shows "pre\<^sub>R(P \<box> Q) = (pre\<^sub>R(P) \<and> pre\<^sub>R(Q))"  
-  by (simp add: extChoice_def preR_ExtChoice assms closure usup_and)
+  by (simp add: extChoice_def preR_ExtChoice assms closure conj_pred_def)
     
 lemma periR_extChoice [rdes]:
   assumes "P is NCSP" "Q is NCSP"
-  shows "peri\<^sub>R(P \<box> Q) = ((pre\<^sub>R(P) \<and> pre\<^sub>R(Q) \<Rightarrow>\<^sub>r peri\<^sub>R(P) \<and> peri\<^sub>R(Q)) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (peri\<^sub>R(P) \<or> peri\<^sub>R(Q)))"
+  shows "peri\<^sub>R(P \<box> Q) = ((pre\<^sub>R(P) \<and> pre\<^sub>R(Q) \<longrightarrow>\<^sub>r peri\<^sub>R(P) \<and> peri\<^sub>R(Q)) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (peri\<^sub>R(P) \<or> peri\<^sub>R(Q)))"
   using assms
-  by (simp add: extChoice_def, subst periR_ExtChoice, auto simp add: usup_and uinf_or)
+  by (simp add: extChoice_def, subst periR_ExtChoice, auto simp add: conj_pred_def disj_pred_def)
   
 lemma postR_extChoice [rdes]:
   assumes "P is NCSP" "Q is NCSP"
   shows "post\<^sub>R(P \<box> Q) = (post\<^sub>R(P) \<or> post\<^sub>R(Q))"
   using assms
-  by (simp add: extChoice_def, subst postR_ExtChoice, auto simp add: usup_and uinf_or)
+  by (simp add: extChoice_def, subst postR_ExtChoice, auto simp add: conj_pred_def disj_pred_def)
     
 lemma ExtChoice_cong:
   assumes "\<And> P. P \<in> A \<Longrightarrow> F(P) = G(P)"
-  shows "(\<box> P\<in>A \<bullet> F(P)) = (\<box> P\<in>A \<bullet> G(P))"
-  by (simp add: ExtChoice_def assms cong: UINF_cong USUP_cong)
+  shows "(\<box> P\<in>A. F(P)) = (\<box> P\<in>A. G(P))"
+  by (simp add: ExtChoice_def assms cong: SUP_cong INF_cong)
 
 lemma ref_unrest_ExtChoice:
   assumes
-    "\<And> P. P \<in> A \<Longrightarrow> $ref \<sharp> pre\<^sub>R(P)"
-    "\<And> P. P \<in> A \<Longrightarrow> $ref \<sharp> cmt\<^sub>R(P)"
-  shows "$ref \<sharp> (ExtChoice A)\<lbrakk>false/$wait\<rbrakk>"
+    "\<And> P. P \<in> A \<Longrightarrow> $ref\<^sup>< \<sharp> pre\<^sub>R(P)"
+    "\<And> P. P \<in> A \<Longrightarrow> $ref\<^sup>< \<sharp> cmt\<^sub>R(P)"
+  shows "$ref\<^sup>< \<sharp> (ExtChoice A)\<lbrakk>False/wait\<^sup><\<rbrakk>"
 proof -
-  have "\<And> P. P \<in> A \<Longrightarrow> $ref \<sharp> pre\<^sub>R(P\<lbrakk>0/$tr\<rbrakk>)"
-    using assms by (rel_blast)
+  have "\<And> P. P \<in> A \<Longrightarrow> $ref\<^sup>< \<sharp> pre\<^sub>R(P\<lbrakk>0/tr\<^sup><\<rbrakk>)"
+    using assms by (pred_auto; blast)
   with assms show ?thesis
-    by (simp add: ExtChoice_def RHS_def R1_def R2c_def R2s_def R3h_def design_def usubst unrest)
+    by (simp add: ExtChoice_def RHS_def R1_def R2c_def R2s_def R3h_def design_def usubst unrest unrest_ssubst_expr usubst_eval)
 qed
 
 lemma CSP4_ExtChoice:
@@ -332,27 +337,27 @@ next
     have "\<And> P. P \<in> A \<Longrightarrow> (\<not>\<^sub>r pre\<^sub>R(F P)) ;; R1 true = (\<not>\<^sub>r pre\<^sub>R(F P))"
       by (simp add: NCSP_Healthy_subset_member NCSP_implies_NSRD NSRD_neg_pre_unit assms)
     thus ?thesis
-      apply (simp add: False preR_EXTCHOICE closure NCSP_set_unrest_pre_wait' assms not_UINF seq_UINF_distr not_USUP)
-      apply (rule USUP_cong)
-      apply (simp add: rpred assms closure)
+      apply (simp add: False preR_EXTCHOICE closure NCSP_set_unrest_pre_wait' assms not_SUP seq_SUP_distr not_INF)
+      apply (rule INF_cong)
+      apply (simp_all add: rpred assms closure)
       done
   qed
-  have 2: "$st\<acute> \<sharp> peri\<^sub>R (EXTCHOICE A F)"
+  have 2: "$st\<^sup>> \<sharp> peri\<^sub>R (EXTCHOICE A F)"
   proof -
-    have a: "\<And> P. P \<in> A \<Longrightarrow> $st\<acute> \<sharp> pre\<^sub>R(F P)"
+    have a: "\<And> P. P \<in> A \<Longrightarrow> $st\<^sup>> \<sharp> pre\<^sub>R(F P)"
       by (simp add: NCSP_Healthy_subset_member NCSP_implies_NSRD NSRD_st'_unrest_pre assms)
-    have b: "\<And> P. P \<in> A \<Longrightarrow> $st\<acute> \<sharp> peri\<^sub>R(F P)"
+    have b: "\<And> P. P \<in> A \<Longrightarrow> $st\<^sup>> \<sharp> peri\<^sub>R(F P)"
       by (simp add: NCSP_Healthy_subset_member NCSP_implies_NSRD NSRD_st'_unrest_peri assms)
     from a b show ?thesis
       apply (subst periR_ExtChoice)
-        apply (simp_all add: assms closure unrest CSP4_set_unrest_pre_st' NCSP_set_unrest_pre_wait' False) 
+        apply (simp_all add: assms closure unrest unrest_ssubst_expr usubst_eval CSP4_set_unrest_pre_st' NCSP_set_unrest_pre_wait' False) 
       done
   qed
-  have 3: "$ref\<acute> \<sharp> post\<^sub>R (EXTCHOICE A F)"
+  have 3: "$ref\<^sup>> \<sharp> post\<^sub>R (EXTCHOICE A F)"
   proof -
-    have a: "\<And> P. P \<in> A \<Longrightarrow> $ref\<acute> \<sharp> pre\<^sub>R(F P)"
+    have a: "\<And> P. P \<in> A \<Longrightarrow> $ref\<^sup>> \<sharp> pre\<^sub>R(F P)"
       by (simp add: CSP4_ref'_unrest_pre assms closure)
-    have b: "\<And> P. P \<in> A \<Longrightarrow> $ref\<acute> \<sharp> post\<^sub>R(F P)"
+    have b: "\<And> P. P \<in> A \<Longrightarrow> $ref\<^sup>> \<sharp> post\<^sub>R(F P)"
       by (simp add: CSP4_ref'_unrest_post assms closure)
     from a b show ?thesis
       by (subst postR_ExtChoice, simp_all add: assms CSP4_set_unrest_pre_st' NCSP_set_unrest_pre_wait' unrest False)
@@ -380,7 +385,7 @@ next
     show 1:"EXTCHOICE A F is CSP"
       by (metis (mono_tags) CSP_ExtChoice)
     show "EXTCHOICE A F is CSP3"
-      by (rule_tac CSP3_SRD_intro, simp_all add: CSP_Healthy_subset_member CSP3_Healthy_subset_member closure rdes unrest assms 1 False) 
+      by (rule_tac CSP3_SRD_intro, simp_all add: CSP_Healthy_subset_member CSP3_Healthy_subset_member closure rdes unrest unrest_ssubst_expr usubst_eval assms 1 False) 
     show "EXTCHOICE A F is CSP4"
       by (simp add: CSP4_ExtChoice assms)
   qed
@@ -388,7 +393,7 @@ qed
 
 lemma ExtChoice_NCSP_closed [closure]:
   assumes "\<And> i. i \<in> I \<Longrightarrow> P(i) is NCSP"
-  shows "(\<box> i\<in>I \<bullet> P(i)) is NCSP"
+  shows "(\<box> i\<in>I. P(i)) is NCSP"
   by (simp add: NCSP_ExtChoice assms image_subset_iff)
 
 lemma NCSP_extChoice [closure]:
@@ -408,18 +413,26 @@ proof (cases "I = {}")
     by (simp add: ExtChoice_empty Productive_Stop)
 next
   case False
-  have 1: "\<And> i. i \<in> I \<Longrightarrow> $wait\<acute> \<sharp> pre\<^sub>R(P i)"
+  have 1: "\<And> i. i \<in> I \<Longrightarrow> $wait\<^sup>> \<sharp> pre\<^sub>R(P i)"
     using NCSP_implies_NSRD NSRD_wait'_unrest_pre assms(1) by blast
 
   show ?thesis
   proof (rule Productive_intro, simp_all add: assms closure rdes unrest 1 False)
-    have "((\<Squnion> i\<in>I \<bullet> pre\<^sub>R (P i)) \<and> (\<Sqinter> i\<in>I \<bullet> post\<^sub>R (P i))) =
-          ((\<Squnion> i\<in>I \<bullet> pre\<^sub>R (P i)) \<and> (\<Sqinter> i\<in>I \<bullet> (pre\<^sub>R (P i) \<and> post\<^sub>R (P i))))"
+    have "((\<Squnion> i\<in>I. pre\<^sub>R (P i)) \<and> (\<Sqinter> i\<in>I. post\<^sub>R (P i))) =
+          ((\<Squnion> i\<in>I. pre\<^sub>R (P i)) \<and> (\<Sqinter> i\<in>I. (pre\<^sub>R (P i) \<and> post\<^sub>R (P i))))"
       by (pred_auto)
-    moreover have "(\<Sqinter> i\<in>I \<bullet> (pre\<^sub>R (P i) \<and> post\<^sub>R (P i))) = (\<Sqinter> i\<in>I \<bullet> ((pre\<^sub>R (P i) \<and> post\<^sub>R (P i)) \<and> $tr <\<^sub>u $tr\<acute>))"
-      by (rule UINF_cong, metis (no_types, lifting) "1" NCSP_implies_CSP Productive_post_refines_tr_increase assms utp_pred_laws.inf.absorb1)
-
-    ultimately show "U($tr < $tr\<acute>) \<sqsubseteq> ((\<Squnion> i\<in>I \<bullet> pre\<^sub>R (P i)) \<and> ((\<Sqinter> i\<in>I \<bullet> post\<^sub>R (P i))))"
+    moreover have "(\<Sqinter> i\<in>I. (pre\<^sub>R (P i) \<and> post\<^sub>R (P i))) = (\<Sqinter> i\<in>I. ((pre\<^sub>R (P i) \<and> post\<^sub>R (P i)) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e))"
+    proof (rule SUP_cong, simp)
+      fix x
+      assume xI: "x \<in> I"
+      hence P_unrest: "$wait\<^sup>> \<sharp> pre\<^sub>R(P x)"
+        by (simp add: 1)
+      have "(($tr\<^sup>< < $tr\<^sup>>)\<^sub>e) \<sqsubseteq> (pre\<^sub>R(P x) \<and> post\<^sub>R(P x))"
+        by (simp add: NCSP_implies_NSRD NSRD_is_SRD P_unrest Productive_post_refines_tr_increase assms(1,2) xI)
+      thus "(pre\<^sub>R (P x) \<and> post\<^sub>R (P x)) = ((pre\<^sub>R (P x) \<and> post\<^sub>R (P x)) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e)"
+        by (simp add: pred_ba.inf.order_iff)
+    qed
+    ultimately show "($tr\<^sup>< < $tr\<^sup>>)\<^sub>e \<sqsubseteq> ((\<Squnion> i\<in>I. pre\<^sub>R (P i)) \<and> ((\<Sqinter> i\<in>I. post\<^sub>R (P i))))"
       by (pred_auto)
   qed
 qed
@@ -432,26 +445,26 @@ lemma Productive_extChoice [closure]:
 
 lemma ExtChoice_Guarded [closure]:
   assumes  "\<And> P. P \<in> A \<Longrightarrow> Guarded P"
-  shows "Guarded (\<lambda> X. \<box>P\<in>A \<bullet> P(X))"
+  shows "Guarded (\<lambda> X. \<box>P\<in>A. P(X))"
 proof (rule GuardedI)
   fix X n
-  have "\<And> Y. ((\<box>P\<in>A \<bullet> P Y) \<and> gvrt(n+1)) = ((\<box>P\<in>A \<bullet> (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
+  have "\<And> Y. ((\<box>P\<in>A. P Y) \<and> gvrt(n+1)) = ((\<box>P\<in>A. (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
   proof -
     fix Y
-    let ?lhs = "((\<box>P\<in>A \<bullet> P Y) \<and> gvrt(n+1))" and ?rhs = "((\<box>P\<in>A \<bullet> (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
-    have a:"?lhs\<lbrakk>false/$ok\<rbrakk> = ?rhs\<lbrakk>false/$ok\<rbrakk>"
+    let ?lhs = "((\<box>P\<in>A. P Y) \<and> gvrt(n+1))" and ?rhs = "((\<box>P\<in>A. (P Y \<and> gvrt(n+1))) \<and> gvrt(n+1))"
+    have a:"?lhs\<lbrakk>False/ok\<^sup><\<rbrakk> = ?rhs\<lbrakk>False/ok\<^sup><\<rbrakk>"
       by (pred_auto)
-    have b:"?lhs\<lbrakk>true/$ok\<rbrakk>\<lbrakk>true/$wait\<rbrakk> = ?rhs\<lbrakk>true/$ok\<rbrakk>\<lbrakk>true/$wait\<rbrakk>"
+    have b:"?lhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>True/wait\<^sup><\<rbrakk> = ?rhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>True/wait\<^sup><\<rbrakk>"
       by (pred_auto)
-    have c:"?lhs\<lbrakk>true/$ok\<rbrakk>\<lbrakk>false/$wait\<rbrakk> = ?rhs\<lbrakk>true/$ok\<rbrakk>\<lbrakk>false/$wait\<rbrakk>"
-      by (simp add: ExtChoice_def RHS_def R1_def R2c_def R2s_def R3h_def design_def usubst unrest, rel_blast)
+    have c:"?lhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>False/wait\<^sup><\<rbrakk> = ?rhs\<lbrakk>True/ok\<^sup><\<rbrakk>\<lbrakk>False/wait\<^sup><\<rbrakk>"
+      apply (simp add: ExtChoice_def RHS_def R1_def R2c_def R2s_def R3h_def gvrt_def design_def usubst unrest unrest_ssubst_expr usubst_eval)
     show "?lhs = ?rhs"
       using a b c
       by (rule_tac bool_eq_splitI[of "in_var ok"], simp, rule_tac bool_eq_splitI[of "in_var wait"], simp_all)
   qed
-  moreover have "((\<box>P\<in>A \<bullet> (P X \<and> gvrt(n+1))) \<and> gvrt(n+1)) =  ((\<box>P\<in>A \<bullet> (P (X \<and> gvrt(n)) \<and> gvrt(n+1))) \<and> gvrt(n+1))"
+  moreover have "((\<box>P\<in>A. (P X \<and> gvrt(n+1))) \<and> gvrt(n+1)) =  ((\<box>P\<in>A. (P (X \<and> gvrt(n)) \<and> gvrt(n+1))) \<and> gvrt(n+1))"
   proof -
-    have "(\<box>P\<in>A \<bullet> (P X \<and> gvrt(n+1))) = (\<box>P\<in>A \<bullet> (P (X \<and> gvrt(n)) \<and> gvrt(n+1)))"
+    have "(\<box>P\<in>A. (P X \<and> gvrt(n+1))) = (\<box>P\<in>A. (P (X \<and> gvrt(n)) \<and> gvrt(n+1)))"
     proof (rule ExtChoice_cong)
       fix P assume "P \<in> A"
       thus "(P X \<and> gvrt(n+1)) = (P (X \<and> gvrt(n)) \<and> gvrt(n+1))"
@@ -459,7 +472,7 @@ proof (rule GuardedI)
     qed
     thus ?thesis by simp
   qed
-  ultimately show "((\<box>P\<in>A \<bullet> P X) \<and> gvrt(n+1)) = ((\<box>P\<in>A \<bullet> (P (X \<and> gvrt(n)))) \<and> gvrt(n+1))"
+  ultimately show "((\<box>P\<in>A. P X) \<and> gvrt(n+1)) = ((\<box>P\<in>A. (P (X \<and> gvrt(n)))) \<and> gvrt(n+1))"
     by simp
 qed
 
@@ -470,7 +483,7 @@ lemma extChoice_Guarded [closure]:
   assumes "Guarded P" "Guarded Q"
   shows "Guarded (\<lambda> X. P(X) \<box> Q(X))"
 proof -
-  have "Guarded (\<lambda> X. \<box>F\<in>{P,Q} \<bullet> F(X))"
+  have "Guarded (\<lambda> X. \<box>F\<in>{P,Q}. F(X))"
     by (rule ExtChoice_Guarded, auto simp add: assms)
   thus ?thesis
     by (subst (asm) ExtChoice_image[THEN sym], simp add: extChoice_def)
@@ -528,9 +541,9 @@ lemma extChoice_Stop:
   shows "Stop \<box> Q = Q"
   using assms
 proof -
-  have "Stop \<box> Q = \<^bold>R\<^sub>s (true \<turnstile> ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>)) \<box> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q))"
+  have "Stop \<box> Q = \<^bold>R\<^sub>s (true \<turnstile> ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>)\<^sub>e) \<box> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q))"
     by (simp add: Stop_def SRD_reactive_design_alt assms)
-  also have "... = \<^bold>R\<^sub>s (pre\<^sub>R Q \<turnstile> ((($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>) \<and> cmt\<^sub>R Q) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<or> cmt\<^sub>R Q)))"
+  also have "... = \<^bold>R\<^sub>s (pre\<^sub>R Q \<turnstile> ((($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>>)\<^sub>e \<and> cmt\<^sub>R Q) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> ($tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<or> cmt\<^sub>R Q)))"
     by (simp add: extChoice_rdes unrest)
   also have "... = \<^bold>R\<^sub>s (pre\<^sub>R Q \<turnstile> (cmt\<^sub>R Q \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> cmt\<^sub>R Q))"
     by (metis (no_types, lifting) cond_def eq_upred_sym neg_conj_cancel1 utp_pred_laws.inf.left_idem)
@@ -561,7 +574,7 @@ lemma extChoice_Dist:
   shows "P \<box> (\<Sqinter> S) = (\<Sqinter> Q\<in>S. P \<box> Q)"
 proof -
   let ?S1 = "pre\<^sub>R ` S" and ?S2 = "cmt\<^sub>R ` S"
-  have "P \<box> (\<Sqinter> S) = P \<box> (\<Sqinter> Q\<in>S \<bullet> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q)))"
+  have "P \<box> (\<Sqinter> S) = P \<box> (\<Sqinter> Q\<in>S. \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q)))"
     by (simp add: SRD_as_reactive_design[THEN sym] Healthy_SUPREMUM UINF_as_Sup_collect assms)
   also have "... = \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> cmt\<^sub>R(P)) \<box> \<^bold>R\<^sub>s((\<Squnion> Q \<in> S \<bullet> pre\<^sub>R(Q)) \<turnstile> (\<Sqinter> Q \<in> S \<bullet> cmt\<^sub>R(Q)))"
     by (simp add: RHS_design_USUP SRD_reactive_design_alt assms)
@@ -570,13 +583,13 @@ proof -
                          \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright>
                         (cmt\<^sub>R(P) \<or> (\<Sqinter> Q \<in> S \<bullet> cmt\<^sub>R(Q)))))"
     by (simp add: extChoice_rdes unrest)
-  also have "... = \<^bold>R\<^sub>s ((\<Squnion> Q\<in>S \<bullet> pre\<^sub>R P \<and> pre\<^sub>R Q) \<turnstile>
-                       (\<Sqinter> Q\<in>S \<bullet> (cmt\<^sub>R P \<and> cmt\<^sub>R Q) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> (cmt\<^sub>R P \<or> cmt\<^sub>R Q)))"
+  also have "... = \<^bold>R\<^sub>s ((\<Squnion> Q\<in>S. pre\<^sub>R P \<and> pre\<^sub>R Q) \<turnstile>
+                       (\<Sqinter> Q\<in>S. (cmt\<^sub>R P \<and> cmt\<^sub>R Q) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> (cmt\<^sub>R P \<or> cmt\<^sub>R Q)))"
     by (simp add: conj_USUP_dist conj_UINF_dist disj_UINF_dist cond_UINF_dist assms)
   also have "... = (\<Sqinter> Q \<in> S \<bullet> \<^bold>R\<^sub>s ((pre\<^sub>R P \<and> pre\<^sub>R Q) \<turnstile>
                                   ((cmt\<^sub>R P \<and> cmt\<^sub>R Q) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> (cmt\<^sub>R P \<or> cmt\<^sub>R Q))))"
     by (simp add: assms RHS_design_USUP)
-  also have "... = (\<Sqinter> Q\<in>S \<bullet> \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> cmt\<^sub>R(P)) \<box> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q)))"
+  also have "... = (\<Sqinter> Q\<in>S. \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> cmt\<^sub>R(P)) \<box> \<^bold>R\<^sub>s(pre\<^sub>R(Q) \<turnstile> cmt\<^sub>R(Q)))"
     by (simp add: extChoice_rdes unrest)
   also have "... = (\<Sqinter> Q\<in>S. P \<box> CSP(Q))"
     by (simp add: UINF_as_Sup_collect, metis (no_types, lifting) Healthy_if SRD_as_reactive_design assms(1))
@@ -608,7 +621,7 @@ next
       (is "?X = ?Y")
       by (rule ExtChoice_cong, metis (no_types, opaque_lifting) R4_def Healthy_if NCSP_implies_CSP PCSP_implies_NCSP Productive_form assms(1) comp_apply)
     show ?thesis
-      by (simp add: 1 2, rdes_eq cls: assms False cong: ExtChoice_cong USUP_cong)
+      by (simp add: 1 2, rdes_eq cls: assms False cong: ExtChoice_cong INF_cong)
   qed
 qed
 

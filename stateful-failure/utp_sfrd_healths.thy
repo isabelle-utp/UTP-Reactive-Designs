@@ -129,19 +129,6 @@ proof -
   finally show ?thesis .
 qed
 
-(*** THESE THEOREMS SHOULD BE IN SHALLOW EXPRESSIONS ***)
-
-lemma all_unrest: "\<lbrakk> mwb_lens x; $x \<sharp> P \<rbrakk> \<Longrightarrow> (\<forall> x \<Zspot> P) = P"
-  by expr_simp
-
-lemma unrest_all_in [unrest]:
-  "\<lbrakk> mwb_lens y; x \<subseteq>\<^sub>L y \<rbrakk> \<Longrightarrow> $x \<sharp> (\<forall> y \<Zspot> P)"
-  by (simp add: all_as_ex unrest_ex_in unrest_uop)
-
-lemma unrest_all_out [unrest]:
-  "\<lbrakk> mwb_lens x; $x \<sharp> P; x \<bowtie> y \<rbrakk> \<Longrightarrow> $x \<sharp> (\<forall> y \<Zspot> P)"
-  by (simp add: all_expr_def unrest_lens, metis lens_indep.lens_put_comm)
-
 lemma Skip_left_unit_ref_unrest:
   assumes "P is CSP" "$ref\<^sup>< \<sharp> P\<lbrakk>False/wait\<^sup><\<rbrakk>"
   shows "Skip ;; P = P"

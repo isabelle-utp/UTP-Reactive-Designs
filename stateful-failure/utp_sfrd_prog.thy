@@ -383,14 +383,14 @@ syntax
   "_GuardCSP" :: "logic \<Rightarrow> logic \<Rightarrow> logic" (infixr "&\<^sub>C" 60)
 
 translations
-  "_GuardCSP b P" == "CONST GuardCSP b P"
+  "_GuardCSP b P" == "CONST GuardCSP (b)\<^sub>e P"
 
 lemma Guard_tri_design:
   "g &\<^sub>C P = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<turnstile> (peri\<^sub>R(P) \<triangleleft> \<lceil>g\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R(P)))"
 proof -
   have "(\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> cmt\<^sub>R P \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>) = (peri\<^sub>R(P) \<triangleleft> \<lceil>g\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R(P))"
     by (pred_auto, (metis (full_types))+)
-  thus ?thesis by (simp add: GuardCSP_def)
+  thus ?thesis by (simp add: GuardCSP_def, pred_simp)
 qed
 
 lemma csp_do_cond_conj:
@@ -422,7 +422,7 @@ lemma Guard_rdes_def':
   shows "g &\<^sub>C (\<^bold>R\<^sub>s(P \<turnstile> Q)) = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r P) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> Q \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
 proof -
   have "g &\<^sub>C (\<^bold>R\<^sub>s(P \<turnstile> Q)) = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R (\<^bold>R\<^sub>s (P \<turnstile> Q))) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> cmt\<^sub>R (\<^bold>R\<^sub>s (P \<turnstile> Q)) \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
-    by (simp add: GuardCSP_def)
+    by (simp add: GuardCSP_def, pred_simp)
   also have "... = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r R1(R2c(pre\<^sub>s \<dagger> P))) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> R1(R2c(cmt\<^sub>s \<dagger> (P \<longrightarrow> Q))) \<or>  \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
     by (simp add: rea_pre_RHS_design rea_cmt_RHS_design)
   also have "... = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r R1(R2c(pre\<^sub>s \<dagger> P))) \<turnstile> R1(R2c(\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> R1(R2c(cmt\<^sub>s \<dagger> (P \<longrightarrow> Q))) \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>)))"
@@ -591,8 +591,11 @@ definition do\<^sub>u ::
   "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
 [pred]: "do\<^sub>u e = (($tr\<^sup>> = $tr\<^sup>< \<and> \<lceil>e\<rceil>\<^sub>S\<^sub>< \<notin> $ref\<^sup>>)\<^sub>e \<triangleleft> wait\<^sup>> \<triangleright> ($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>e\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e)"
 
-definition DoCSP :: "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" ("do\<^sub>C") where
+definition DoCSP :: "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
 [pred]: "DoCSP a = \<^bold>R\<^sub>s(true \<turnstile> do\<^sub>u a)"
+
+syntax "_DoCSP" :: "logic \<Rightarrow> logic" ("do\<^sub>C")
+translations "_DoCSP a" == "CONST DoCSP (a)\<^sup>e"
 
 lemma R1_DoAct: "R1(do\<^sub>u(a)) = do\<^sub>u(a)"
   by (pred_auto)
@@ -834,7 +837,7 @@ lemma PrefixCSP_rdes_def_2:
 subsection \<open> Guarded external choice \<close>
 
 abbreviation GuardedChoiceCSP :: "'\<theta> set \<Rightarrow> ('\<theta> \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
-"GuardedChoiceCSP A P \<equiv> (\<box> x\<in>A \<bullet> PrefixCSP \<guillemotleft>x\<guillemotright> (P(x)))"
+"GuardedChoiceCSP A P \<equiv> (\<box> x\<in>A. PrefixCSP (\<guillemotleft>x\<guillemotright>)\<^sub>e (P(x)))"
 
 syntax
   "_GuardedChoiceCSP" :: "logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("\<box> _ \<in> _ \<^bold>\<rightarrow> _" [0,0,85] 86)
@@ -845,19 +848,24 @@ translations
 lemma GuardedChoiceCSP [rdes_def]:
   assumes "\<And> x. P(x) is NCSP" "A \<noteq> {}"
   shows "(\<box> x\<in>A \<^bold>\<rightarrow> P(x)) =
-             \<^bold>R\<^sub>s ((\<Squnion> x \<in> A \<bullet> \<Phi>(true,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) wp\<^sub>r pre\<^sub>R (P x)) \<turnstile>
-                 ((\<Squnion> x \<in> A \<bullet> \<E>(true,\<guillemotleft>[]\<guillemotright>, {\<guillemotleft>x\<guillemotright>}\<^sub>u)) \<triangleleft> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<triangleright> (\<Sqinter> x \<in> A \<bullet> \<Phi>(true,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) ;; peri\<^sub>R (P x))) \<diamondop>
-                  (\<Sqinter> x \<in> A \<bullet> \<Phi>(true,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) ;; post\<^sub>R (P x)))"
-  by (simp add: PrefixCSP_RHS_tri assms ExtChoice_tri_rdes closure unrest, pred_auto)
+             \<^bold>R\<^sub>s ((\<Squnion> x\<in>A. \<Phi>(True,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) wp\<^sub>r pre\<^sub>R (P x)) \<turnstile>
+                 ((\<Squnion> x\<in>A. \<E>(True,[], {\<guillemotleft>x\<guillemotright>})) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<triangleright> (\<Sqinter> x\<in>A. \<Phi>(True,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) ;; peri\<^sub>R (P x))) \<diamondop>
+                  (\<Sqinter> x\<in>A. \<Phi>(True,[\<leadsto>],\<guillemotleft>[x]\<guillemotright>) ;; post\<^sub>R (P x)))"
+  apply (simp add: PrefixCSP_RHS_tri assms ExtChoice_tri_rdes closure unrest)
+  apply (rule srdes_tri_eq_intro)
+    apply (pred_auto)+
+  done
 
 subsection \<open> Input prefix \<close>
 
 definition InputCSP ::
   "('a, '\<theta>) chan \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('a \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
-[pred]: "InputCSP c A P = (\<box> x\<in>UNIV \<bullet> A(x) &\<^sub>C PrefixCSP (c\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u (P x))"
+[pred]: "InputCSP c A P = (\<box> x\<in>UNIV. @(A x) &\<^sub>C PrefixCSP (c\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u (P x))"
 
 definition InputVarCSP :: "('a, '\<theta>) chan \<Rightarrow> ('a \<Longrightarrow> '\<sigma>) \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
 [pred, rdes_def]: "InputVarCSP c x A = InputCSP c A (\<lambda> v. \<langle>[x \<leadsto> \<guillemotleft>v\<guillemotright>]\<rangle>\<^sub>C)"
+
+expr_constructor chan_apply
 
 definition do\<^sub>I :: "
   ('a, '\<theta>) chan \<Rightarrow>
@@ -865,9 +873,9 @@ definition do\<^sub>I :: "
   ('a \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow>
   ('\<sigma>, '\<theta>) action" where
 "do\<^sub>I c x P = (
-  (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> {e | P(e) \<bullet> (c\<cdot>\<guillemotleft>e\<guillemotright>)\<^sub>u} \<inter>\<^sub>u $ref\<acute> =\<^sub>u {}\<^sub>u)
+  (($tr\<^sup>> = $tr\<^sup>< \<and> {(c\<cdot>\<guillemotleft>v\<guillemotright>)\<^sub>u | v. @(P v)} \<inter> $ref\<^sup>> = {})\<^sub>e
     \<triangleleft> wait\<^sup>> \<triangleright>
-  (($tr\<acute> - $tr) \<in>\<^sub>u {e | P(e) \<bullet> U([(c\<cdot>\<guillemotleft>e\<guillemotright>)\<^sub>u])} \<and> (c\<cdot>$x\<acute>)\<^sub>u =\<^sub>u last\<^sub>u($tr\<acute>)))"
+  (($tr\<^sup>> - $tr\<^sup><) \<in> {[(c\<cdot>\<guillemotleft>v\<guillemotright>)\<^sub>u] | v. @(P v)} \<and> (c\<cdot>$x\<^sup>>)\<^sub>u = last($tr\<^sup>>))\<^sub>e))"
 
 lemma InputCSP_CSP [closure]: "InputCSP c A P is CSP"
   by (simp add: CSP_ExtChoice InputCSP_def)
@@ -913,8 +921,8 @@ lemma R4_st_pred_conj_do [rpred]:
   "((R4 [s\<^sub>1]\<^sub>S\<^sub><) \<and> \<Phi>(s\<^sub>2,\<sigma>,t) ;; P) = R4(\<Phi>(s\<^sub>1 \<and> s\<^sub>2,\<sigma>,t) ;; P) "
   by (pred_auto)
 
-lemma unrest_ref'_R4 [unrest]: "$ref\<acute> \<sharp> P \<Longrightarrow> $ref\<acute> \<sharp> R4(P)"
-  by (simp add: R4_def unrest)
+lemma unrest_ref'_R4 [unrest]: "$ref\<^sup>> \<sharp> P \<Longrightarrow> $ref\<^sup>> \<sharp> R4(P)"
+  by (simp add: R4_def unrest unrest_ssubst_expr usubst_eval usubst)
 
 lemma st_pred_conj_seq [rpred]:
   "\<lbrakk> P is RR; Q is RR \<rbrakk> \<Longrightarrow> ([s]\<^sub>S\<^sub>< \<and> P ;; Q) = (([s]\<^sub>S\<^sub>< \<and> P) ;; Q)"
@@ -922,12 +930,12 @@ lemma st_pred_conj_seq [rpred]:
   
 lemma InputCSP_rdes_def [rdes_def]:
   assumes "\<And> v. P(v) is CRC" "\<And> v. Q(v) is CRR" "\<And> v. R(v) is CRR"
-          "\<And> v. $st\<^sup>> \<sharp> Q(v)" "\<And> v. $ref\<acute> \<sharp> R(v)"
+          "\<And> v. $st\<^sup>> \<sharp> Q(v)" "\<And> v. $ref\<^sup>> \<sharp> R(v)"
   shows "InputCSP a A (\<lambda> v. \<^bold>R\<^sub>s(P(v) \<turnstile> Q(v) \<diamondop> R(v))) = 
-           \<^bold>R\<^sub>s((\<Squnion> x \<bullet> \<Phi>(A x,[\<leadsto>],U([(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u])) wp\<^sub>r P x) \<turnstile>
-             ((\<Squnion> x \<bullet> \<E>(A x,\<guillemotleft>[]\<guillemotright>, {(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u}\<^sub>u) \<or> \<E>(\<not> A x,\<guillemotleft>[]\<guillemotright>, {}\<^sub>u)) \<or> (\<Sqinter> x \<bullet> \<Phi>(A x,[\<leadsto>],U([(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u])) ;; Q x)) \<diamondop> 
-             (\<Sqinter> x \<bullet> \<Phi>(A x,[\<leadsto>],U([(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u])) ;; R x))"
-  by (simp add: InputCSP_def, rdes_simp cls: assms)
+           \<^bold>R\<^sub>s((\<Squnion> x. \<Phi>(@(A x),[\<leadsto>],[(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u]) wp\<^sub>r P x) \<turnstile>
+             ((\<Squnion> x. \<E>(@(A x),\<guillemotleft>[]\<guillemotright>, {(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u}) \<or> \<E>(\<not> @(A x),[], {})) \<or> (\<Sqinter> x. \<Phi>(@(A x),[\<leadsto>],[(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u]) ;; Q x)) \<diamondop> 
+             (\<Sqinter> x. \<Phi>(@(A x),[\<leadsto>],[(a\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u]) ;; R x))"
+  by (simp add: InputCSP_def, rdes_simp cls: assms, pred_simp)
 
 (*
 lemma InputCSP_rdes_def [rdes_def]:
@@ -970,7 +978,10 @@ proof -
   also have "... = \<^bold>R\<^sub>s ((\<not>\<^sub>r (\<not>\<^sub>r CRC(P))\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> (CRC(P) \<longrightarrow>\<^sub>r CRR(Q))\<lparr>f\<rparr>\<^sub>c \<diamondop> (CRC(P) \<longrightarrow>\<^sub>r CRR(R))\<lparr>f\<rparr>\<^sub>c)"
     by (simp add: Healthy_if assms)
   also have "... = \<^bold>R\<^sub>s ((\<not>\<^sub>r (\<not>\<^sub>r CRC(P))\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> (CRR(Q))\<lparr>f\<rparr>\<^sub>c \<diamondop> (CRR(R))\<lparr>f\<rparr>\<^sub>c)"
-    by (pred_auto, (metis order_refl)+)
+    apply (rule srdes_tri_eq_intro)
+      apply pred_simp
+    apply (pred_simp, meson dual_order.refl)+
+    done
   also have "... = ?rhs"
     by (simp add: Healthy_if assms)
   finally show ?thesis .
@@ -993,19 +1004,16 @@ lemma csp_rename_false [rpred]:
   "false\<lparr>f\<rparr>\<^sub>c = false"
   by (pred_auto)
 
-lemma umap_nil [simp]: "map\<^sub>u f \<guillemotleft>[]\<guillemotright> = \<guillemotleft>[]\<guillemotright>"
-  by (pred_auto)
-
 lemma rename_Skip: "Skip\<lparr>f\<rparr>\<^sub>C = Skip"
   by (rdes_eq)
 
 lemma rename_Chaos: "Chaos\<lparr>f\<rparr>\<^sub>C = Chaos"
-  by (rdes_eq_split; rel_simp; force)
+  by (rdes_eq, metis list.map(1) minus_cancel verit_comp_simplify1(2))
 
 lemma rename_Miracle: "Miracle\<lparr>f\<rparr>\<^sub>C = Miracle"
   by (rdes_eq)
 
-lemma rename_DoCSP: "(do\<^sub>C(a))\<lparr>f\<rparr>\<^sub>C = do\<^sub>C(\<guillemotleft>f\<guillemotright>(a)\<^sub>a)"
+lemma rename_DoCSP: "(do\<^sub>C(a))\<lparr>f\<rparr>\<^sub>C = do\<^sub>C(\<guillemotleft>f\<guillemotright> a)"
   by (rdes_eq)
   
 subsection \<open> Algebraic laws \<close>
@@ -1020,9 +1028,9 @@ lemma AssignsCSP_id: "\<langle>[\<leadsto>]\<rangle>\<^sub>C = Skip"
 
 lemma Guard_comp:
   "g &\<^sub>C h &\<^sub>C P = (g \<and> h) &\<^sub>C P"
-  by (rule antisym, rel_blast, rel_blast)
+  by pred_auto
 
-lemma Guard_false [simp]: "false &\<^sub>C P = Stop"
+lemma Guard_false [simp]: "False &\<^sub>C P = Stop"
   by (simp add: GuardCSP_def Stop_def rpred closure alpha R1_design_R1_pre)
 
 lemma Guard_true [simp]:

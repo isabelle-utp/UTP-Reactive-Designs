@@ -390,7 +390,7 @@ lemma Guard_tri_design:
 proof -
   have "(\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> cmt\<^sub>R P \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>) = (peri\<^sub>R(P) \<triangleleft> \<lceil>g\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R(P))"
     by (pred_auto, (metis (full_types))+)
-  thus ?thesis by (simp add: GuardCSP_def, pred_simp)
+  thus ?thesis by (simp add: GuardCSP_def)
 qed
 
 lemma csp_do_cond_conj:
@@ -422,7 +422,7 @@ lemma Guard_rdes_def':
   shows "g &\<^sub>C (\<^bold>R\<^sub>s(P \<turnstile> Q)) = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r P) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> Q \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
 proof -
   have "g &\<^sub>C (\<^bold>R\<^sub>s(P \<turnstile> Q)) = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R (\<^bold>R\<^sub>s (P \<turnstile> Q))) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> cmt\<^sub>R (\<^bold>R\<^sub>s (P \<turnstile> Q)) \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
-    by (simp add: GuardCSP_def, pred_simp)
+    by (simp add: GuardCSP_def)
   also have "... = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r R1(R2c(pre\<^sub>s \<dagger> P))) \<turnstile> (\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> R1(R2c(cmt\<^sub>s \<dagger> (P \<longrightarrow> Q))) \<or>  \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
     by (simp add: rea_pre_RHS_design rea_cmt_RHS_design)
   also have "... = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r R1(R2c(pre\<^sub>s \<dagger> P))) \<turnstile> R1(R2c(\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> R1(R2c(cmt\<^sub>s \<dagger> (P \<longrightarrow> Q))) \<or> \<lceil>\<not>g\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>)))"
@@ -1031,10 +1031,11 @@ lemma Guard_comp:
   by pred_auto
 
 lemma Guard_false [simp]: "False &\<^sub>C P = Stop"
-  by (simp add: GuardCSP_def Stop_def rpred closure alpha R1_design_R1_pre)
+  unfolding GuardCSP_def
+  apply (simp add: GuardCSP_def Stop_def rpred closure alpha R1_design_R1_pre)
 
 lemma Guard_true [simp]:
-  "P is CSP \<Longrightarrow> true &\<^sub>C P = P"
+  "P is CSP \<Longrightarrow> True &\<^sub>C P = P"
   by (simp add: GuardCSP_def alpha SRD_reactive_design_alt closure rpred)
 
 lemma Guard_conditional:
@@ -1046,9 +1047,9 @@ lemma Guard_expansion:
   assumes "P is NCSP"
   shows "(g\<^sub>1 \<or> g\<^sub>2) &\<^sub>C P = (g\<^sub>1 &\<^sub>C P) \<box> (g\<^sub>2 &\<^sub>C P)"
   apply (rdes_eq_split cls: assms) 
-    apply (rel_simp', fastforce simp add: dual_order.order_iff_strict)
-   apply (rel_simp', simp add: dual_order.order_iff_strict, fastforce)
-  apply (rel_simp', simp add: dual_order.order_iff_strict, fastforce)
+    apply (pred_simp, fastforce simp add: dual_order.order_iff_strict)
+   apply (pred_simp, simp add: dual_order.order_iff_strict, fastforce)
+  apply (pred_simp, simp add: dual_order.order_iff_strict, fastforce)
   done
 
 lemma Conditional_as_Guard:

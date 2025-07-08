@@ -469,7 +469,7 @@ proof -
   have "peri\<^sub>R(b &\<^sub>C P) = ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<longrightarrow>\<^sub>r (peri\<^sub>R P \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e))"
     by (simp add: assms Guard_tri_design rea_peri_RHS_design usubst unrest R1_rea_impl R2c_rea_not 
         R2c_rea_impl R2c_preR R2c_periR R2c_tr'_minus_tr R2c_lift_state_pre R2c_condr closure
-        Healthy_if R1_cond R1_tr'_eq_tr unrest_ssubst_expr usubst_eval)
+        Healthy_if R1_cond R1_tr'_eq_tr unrest_ssubst_expr usubst_eval, pred_simp, meson)
   also have "... = ((pre\<^sub>R P \<longrightarrow>\<^sub>r peri\<^sub>R P) \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e)"
     by (pred_auto)
   also have "... = (peri\<^sub>R P \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e)"      
@@ -485,13 +485,13 @@ proof -
   have "post\<^sub>R(b &\<^sub>C P) = ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<longrightarrow>\<^sub>r (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R P))"
     by (simp add: Guard_tri_design rea_post_RHS_design usubst unrest R2c_rea_not R2c_and R2c_rea_impl
         R2c_preR R2c_postR R2c_tr'_minus_tr R2c_lift_state_pre R2c_condr R1_rea_impl R1_extend_conj'
-        R1_post_SRD closure assms unrest_ssubst_expr usubst_eval)
+        R1_post_SRD closure assms unrest_ssubst_expr usubst_eval, pred_simp)
   also have "... = (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> (pre\<^sub>R P \<longrightarrow>\<^sub>r post\<^sub>R P))"
     by (pred_auto)
   also have "... = (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R P)"
     by (simp add: SRD_post_under_pre add: unrest closure assms)
   also have "... = ([b]\<^sub>S\<^sub>< \<and> post\<^sub>R P)"
-    by (metis CSP_Guard R1_extend_conj R1_post_SRD calculation rea_st_cond_def)      
+    by (simp add: assms csp_do_cond_conj csp_do_id postR_CRR)      
   finally show ?thesis .
 qed
         
@@ -504,7 +504,10 @@ proof -
   hence "$ref\<^sup>< \<sharp> pre\<^sub>R (P\<lbrakk>0/tr\<^sup><\<rbrakk>)" "$ref\<^sup>< \<sharp> pre\<^sub>R P" "$ref\<^sup>< \<sharp> cmt\<^sub>R P"
     by (pred_auto; blast)+
   hence "$ref\<^sup>< \<sharp> (b &\<^sub>C P)\<lbrakk>False/wait\<^sup><\<rbrakk>"
-    by (simp add: CSP3_iff GuardCSP_def RHS_def R1_def R2c_def R2s_def R3h_def design_def unrest usubst)
+    apply (simp add: CSP3_iff GuardCSP_def)
+    apply (rule RHS_design_ref_unrest)
+     apply pred_auto+
+    done
   thus ?thesis
     by (metis CSP3_intro CSP_Guard)
 qed
@@ -532,7 +535,7 @@ proof (rule CSP4_tri_intro[OF CSP_Guard])
   qed
   show "$st\<^sup>> \<sharp> peri\<^sub>R (b &\<^sub>C P)"
     by (simp add: preR_Guard periR_Guard NSRD_CSP4_intro closure assms unrest)
-  show "$ref\<acute> \<sharp> post\<^sub>R (b &\<^sub>C P)"
+  show "$ref\<^sup>> \<sharp> post\<^sub>R (b &\<^sub>C P)"
     by (simp add: preR_Guard postR_Guard NSRD_CSP4_intro closure assms unrest)
 qed
 
@@ -547,18 +550,18 @@ proof -
 qed
 
 lemma Productive_Guard [closure]:
-  assumes "P is CSP" "P is Productive" "wait\<^sup>> \<sharp> pre\<^sub>R(P)"
+  assumes "P is CSP" "P is Productive" "$wait\<^sup>> \<sharp> pre\<^sub>R(P)"
   shows "b &\<^sub>C P is Productive"
 proof -
-  have "b &\<^sub>C P = b &\<^sub>C \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> (post\<^sub>R(P) \<and> $tr <\<^sub>u $tr\<acute>))"
-    by (metis Healthy_def Productive_form assms(1) assms(2))
+  have "b &\<^sub>C P = b &\<^sub>C \<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> (post\<^sub>R(P) \<and> ($tr\<^sup>< < $tr\<^sup>>)\<^sub>e))"
+    by (simp add: Productive_form[THEN sym] assms Healthy_if)
   also have "... =
         \<^bold>R\<^sub>s ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<turnstile>
-          ((pre\<^sub>R P \<longrightarrow>\<^sub>r peri\<^sub>R P) \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> (pre\<^sub>R P \<longrightarrow>\<^sub>r post\<^sub>R P \<and> $tr\<acute> >\<^sub>u $tr)))"
+          ((pre\<^sub>R P \<longrightarrow>\<^sub>r peri\<^sub>R P) \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> (\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> (pre\<^sub>R P \<longrightarrow>\<^sub>r post\<^sub>R P \<and> ($tr\<^sup>> > $tr\<^sup><)\<^sub>e)))"
     by (simp add: Guard_tri_design rea_pre_RHS_design rea_peri_RHS_design rea_post_RHS_design unrest assms
         usubst R1_preR Healthy_if R1_rea_impl R1_peri_SRD R1_extend_conj' R2c_preR R2c_not R2c_rea_impl 
         R2c_periR R2c_postR R2c_and R2c_tr_less_tr' R1_tr_less_tr')             
-  also have "... = \<^bold>R\<^sub>s ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<turnstile> (peri\<^sub>R P \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R P) \<and> $tr\<acute> >\<^sub>u $tr))"
+  also have "... = \<^bold>R\<^sub>s ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R P) \<turnstile> (peri\<^sub>R P \<triangleleft> \<lceil>b\<rceil>\<^sub>S\<^sub>< \<triangleright> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e) \<diamondop> ((\<lceil>b\<rceil>\<^sub>S\<^sub>< \<and> post\<^sub>R P) \<and> ($tr\<^sup>> > $tr\<^sup><)\<^sub>e))"
     by (pred_auto)
   also have "... = Productive(b &\<^sub>C P)"
     by (simp add: Productive_def Guard_tri_design RHS_tri_design_par unrest)
@@ -566,6 +569,7 @@ proof -
     by (simp add: Healthy_def')
 qed
 
+(*
 lemma Guard_refines_sinv: 
   assumes "P is NCSP" "sinv\<^sub>R(b) \<sqsubseteq> P"
   shows "sinv\<^sub>R(b) \<sqsubseteq> g &\<^sub>C P"
@@ -579,14 +583,15 @@ proof -
     apply (rdes_refine cls: assms(1))
     done
 qed
+*)
 
 subsection \<open> Basic events\<close>
 
 definition do\<^sub>u ::
-  "('\<phi>, '\<sigma>) uexpr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
-[pred]: "do\<^sub>u e = ((($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<lceil>e\<rceil>\<^sub>S\<^sub>< \<notin>\<^sub>u $ref\<acute>) \<triangleleft> wait\<^sup>> \<triangleright> U($tr\<acute> = $tr @ [\<lceil>e\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st))"
+  "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
+[pred]: "do\<^sub>u e = (($tr\<^sup>> = $tr\<^sup>< \<and> \<lceil>e\<rceil>\<^sub>S\<^sub>< \<notin> $ref\<^sup>>)\<^sub>e \<triangleleft> wait\<^sup>> \<triangleright> ($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>e\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e)"
 
-definition DoCSP :: "('\<phi>, '\<sigma>) uexpr \<Rightarrow> ('\<sigma>, '\<phi>) action" ("do\<^sub>C") where
+definition DoCSP :: "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" ("do\<^sub>C") where
 [pred]: "DoCSP a = \<^bold>R\<^sub>s(true \<turnstile> do\<^sub>u a)"
 
 lemma R1_DoAct: "R1(do\<^sub>u(a)) = do\<^sub>u(a)"
@@ -595,35 +600,41 @@ lemma R1_DoAct: "R1(do\<^sub>u(a)) = do\<^sub>u(a)"
 lemma R2c_DoAct: "R2c(do\<^sub>u(a)) = do\<^sub>u(a)"
   by (pred_auto)
 
-lemma DoCSP_alt_def: "do\<^sub>C(a) = R3h(CSP1($ok\<acute> \<and> do\<^sub>u(a)))"
-  apply (simp add: DoCSP_def RHS_def design_def impl_alt_def  R1_R3h_commute R2c_R3h_commute R2c_disj
+lemma DoCSP_alt_def: "do\<^sub>C(a) = R3h(CSP1(ok\<^sup>> \<and> do\<^sub>u(a)))"
+  apply (simp add: DoCSP_def RHS_def design_def  R1_R3h_commute R2c_R3h_commute R2c_disj
                    R2c_not R2c_ok R2c_ok' R2c_and R2c_DoAct R1_disj R1_extend_conj' R1_DoAct)
   apply (pred_auto)
 done
 
 lemma DoAct_unrests [unrest]:
-  "$ok \<sharp> do\<^sub>u(a)" "$wait \<sharp> do\<^sub>u(a)"
+  "$ok\<^sup>< \<sharp> do\<^sub>u(a)" "$wait\<^sup>< \<sharp> do\<^sub>u(a)"
   by (pred_auto)+
 
 lemma DoCSP_RHS_tri [rdes_def]:
-  "do\<^sub>C(a) = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> (\<E>(true,\<guillemotleft>[]\<guillemotright>,{a}\<^sub>u) \<diamondop> \<Phi>(true,[\<leadsto>],U([a]))))"
+  "do\<^sub>C(a) = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> (\<E>(True,[],{a}) \<diamondop> \<Phi>(True,[\<leadsto>],[a])))"
   by (simp add: DoCSP_def do\<^sub>u_def wait'_cond_def, pred_auto)
 
 lemma CSP_DoCSP [closure]: "do\<^sub>C(a) is CSP"
-  by (simp add: DoCSP_def do\<^sub>u_def RHS_design_is_SRD unrest)
+  apply (simp add: DoCSP_def do\<^sub>u_def RHS_design_is_SRD unrest unrest_ssubst_expr usubst_eval usubst)
+  apply (rule RHS_design_is_SRD)
+   apply (simp_all add:unrest)
+  apply pred_auto
+  done
 
 lemma preR_DoCSP [rdes]: "pre\<^sub>R(do\<^sub>C(a)) = true\<^sub>r"
   by (simp add: DoCSP_def rea_pre_RHS_design unrest usubst R2c_true)
 
-lemma periR_DoCSP [rdes]: "peri\<^sub>R(do\<^sub>C(a)) = \<E>(true,\<guillemotleft>[]\<guillemotright>,{a}\<^sub>u)"
+lemma periR_DoCSP [rdes]: "peri\<^sub>R(do\<^sub>C(a)) = \<E>(True,\<guillemotleft>[]\<guillemotright>,{a})"
   by (pred_auto) 
 
-lemma postR_DoCSP [rdes]: "post\<^sub>R(do\<^sub>C(a)) = \<Phi>(true,[\<leadsto>],U([a]))"
+lemma postR_DoCSP [rdes]: "post\<^sub>R(do\<^sub>C(a)) = \<Phi>(True,[\<leadsto>],[a])"
   by (pred_auto)
 
 lemma CSP3_DoCSP [closure]: "do\<^sub>C(a) is CSP3"
-  by (rule CSP3_intro[OF CSP_DoCSP])
-     (simp add: DoCSP_def do\<^sub>u_def RHS_def design_def R1_def R2c_def R2s_def R3h_def unrest usubst)
+  apply (rule CSP3_intro[OF CSP_DoCSP])
+  apply (simp add: DoCSP_def do\<^sub>u_def RHS_def design_def R1_def R2c_def R2s_def R3h_def unrest usubst unrest_ssubst_expr usubst_eval)
+  apply (pred_simp)
+  done
 
 lemma CSP4_DoCSP [closure]: "do\<^sub>C(a) is CSP4"
   by (rule CSP4_tri_intro[OF CSP_DoCSP], simp_all add: preR_DoCSP periR_DoCSP postR_DoCSP unrest)
@@ -634,8 +645,8 @@ lemma NCSP_DoCSP [closure]: "do\<^sub>C(a) is NCSP"
 lemma Productive_DoCSP [closure]:
   "(do\<^sub>C a :: ('\<sigma>, '\<psi>) action) is Productive"
 proof -
-  have "((\<Phi>(true,[\<leadsto>],U([a])) \<and> $tr\<acute> >\<^sub>u $tr) :: ('\<sigma>, '\<psi>) action)
-        = (\<Phi>(true,[\<leadsto>],U([a])))"
+  have "((\<Phi>(True,[\<leadsto>],[a]) \<and> ($tr\<^sup>> > $tr\<^sup><)\<^sub>e) :: ('\<sigma>, '\<psi>) action)
+        = (\<Phi>(True,[\<leadsto>],[a]))"
     by (pred_auto, simp add: Prefix_Order.strict_prefixI')
   hence "Productive(do\<^sub>C a) = do\<^sub>C a"
     by (simp add: Productive_RHS_design_form DoCSP_RHS_tri unrest)
@@ -649,30 +660,43 @@ lemma PCSP_DoCSP [closure]:
 
 lemma wp_rea_DoCSP_lemma:
   fixes P :: "('\<sigma>, '\<phi>) action"
-  assumes "$ok \<sharp> P" "$wait \<sharp> P"
-  shows "U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st) ;; P = (\<exists> $ref \<bullet> P\<lbrakk>U($tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])/$tr\<rbrakk>)"
+  assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P"
+  shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P = (\<exists> ref\<^sup>< \<Zspot> P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"
   using assms
   by (pred_auto, meson)
 
 lemma wp_rea_DoCSP:
   assumes "P is NCSP"
-  shows "U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st) wp\<^sub>r pre\<^sub>R P = 
-         (\<not>\<^sub>r (\<not>\<^sub>r pre\<^sub>R P)\<lbrakk>U($tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])/$tr\<rbrakk>)"
-  by (simp add: wp_rea_def wp_rea_DoCSP_lemma unrest usubst ex_unrest assms closure)     
+  shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e wp\<^sub>r pre\<^sub>R P = 
+         (\<not>\<^sub>r (\<not>\<^sub>r pre\<^sub>R P)\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"
+proof -
+  have "$ref\<^sup>< \<sharp>\<^sub>s [tr\<^sup>< \<leadsto> $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]]"
+    by pred_auto
+
+  hence "$ref\<^sup>< \<sharp> (\<not>\<^sub>r pre\<^sub>R P)\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>"
+    using CRR_unrest_ref assms preR_CRR rea_not_CRR_closed unrest_subst_apply by blast
+  thus ?thesis
+    by (simp add: wp_rea_def wp_rea_DoCSP_lemma unrest assms closure ex_unrest)
+qed
 
 lemma wp_rea_DoCSP_alt:
   assumes "P is NCSP"
-  shows "U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st) wp\<^sub>r pre\<^sub>R P = 
-         U($tr\<acute> \<ge> $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<longrightarrow>\<^sub>r (pre\<^sub>R P)\<lbrakk>$tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/$tr\<rbrakk>)"  
-  by (simp add: wp_rea_DoCSP assms rea_not_def R1_def usubst unrest, pred_auto)
+  shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e wp\<^sub>r pre\<^sub>R P = 
+         (($tr\<^sup>> \<ge> $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])\<^sub>e \<longrightarrow>\<^sub>r (pre\<^sub>R P)\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"  
+  apply (simp add: wp_rea_DoCSP assms)
+  apply (simp add: rea_not_def R1_def usubst unrest)
+  apply (pred_auto)
+  done
 
+(*
 lemma DoCSP_refine_sinv: "sinv\<^sub>R(b) \<sqsubseteq> do\<^sub>C(a)"
   by (rdes_refine)
+*)
 
 subsection \<open> Event prefix \<close>
 
 definition PrefixCSP ::
-  "('\<phi>, '\<sigma>) uexpr \<Rightarrow>
+  "('\<phi>, '\<sigma>) expr \<Rightarrow>
   ('\<sigma>, '\<phi>) action \<Rightarrow>
   ('\<sigma>, '\<phi>) action" ("_ \<rightarrow>\<^sub>C _" [81, 80] 80) where
 [pred]: "PrefixCSP a P = (do\<^sub>C(a) ;; CSP(P))"
@@ -715,31 +739,32 @@ lemma PrefixCSP_type [closure]: "PrefixCSP a \<in> \<lbrakk>H\<rbrakk>\<^sub>H \
   using CSP_PrefixCSP by blast
 
 lemma PrefixCSP_Continuous [closure]: "Continuous (PrefixCSP a)"
-  by (simp add: Continuous_def PrefixCSP_def ContinuousD[OF SRD_Continuous] seq_Sup_distl)
+  by (simp add: Continuous_def PrefixCSP_def ContinuousD[OF SRD_Continuous] image_image seq_Sup_distl)
 
 lemma PrefixCSP_RHS_tri_lemma1:
-  "R1 (R2s (U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]) \<and> \<lceil>II\<rceil>\<^sub>R)) = (U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]) \<and> \<lceil>II\<rceil>\<^sub>R)"
+  "R1 (R2s (($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])\<^sub>e \<and> \<lceil>II\<rceil>\<^sub>R)) = (($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])\<^sub>e \<and> \<lceil>II\<rceil>\<^sub>R)"
   by (pred_auto)
 
 lemma PrefixCSP_RHS_tri_lemma2:
   fixes P :: "('\<sigma>, '\<phi>) action"
-  assumes "$ok \<sharp> P" "$wait \<sharp> P"
-  shows "(U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st) \<and> \<not> wait\<^sup>>) ;; P = (\<exists> $ref \<bullet> P\<lbrakk>U($tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])/$tr\<rbrakk>)"
+  assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P"
+  shows "(($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e \<and> \<not> wait\<^sup>>) ;; P = (\<exists> ref\<^sup>< \<Zspot> P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"
   using assms
   by (pred_auto, meson, fastforce)
 
 lemma tr_extend_seqr:
   fixes P :: "('\<sigma>, '\<phi>) action"
-  assumes "$ok \<sharp> P" "$wait \<sharp> P" "$ref\<^sup>< \<sharp> P"
-  shows "U($tr\<acute> = $tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<acute> = $st) ;; P = P\<lbrakk>U($tr @ [\<lceil>a\<rceil>\<^sub>S\<^sub><])/$tr\<rbrakk>"
-  using assms by (simp add: wp_rea_DoCSP_lemma assms unrest ex_unrest)
+  assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
+  shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P = P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>"
+  using assms 
+  by (simp add: wp_rea_DoCSP_lemma, pred_auto, meson)
           
-lemma trace_ext_R1_closed [closure]: "P is R1 \<Longrightarrow> P\<lbrakk>$tr ^\<^sub>u e/$tr\<rbrakk> is R1"
-  by (rel_blast)
+lemma trace_ext_R1_closed [closure]: "P is R1 \<Longrightarrow> P\<lbrakk>$tr\<^sup>< @ e/tr\<^sup><\<rbrakk> is R1"
+  by (pred_auto; blast)
     
 lemma preR_PrefixCSP_NCSP [rdes]:
   assumes "P is NCSP"
-  shows "pre\<^sub>R(PrefixCSP a P) = (\<Phi>(true,[\<leadsto>],U([a])) wp\<^sub>r pre\<^sub>R P)"
+  shows "pre\<^sub>R(PrefixCSP a P) = (\<Phi>(True,[\<leadsto>],[a]) wp\<^sub>r pre\<^sub>R P)"
   by (simp add: PrefixCSP_def assms closure rdes rpred Healthy_if wp usubst unrest)
 
 (*
@@ -781,17 +806,17 @@ qed
     
 lemma PrefixCSP_RHS_tri:
   assumes "P is NCSP"
-  shows "PrefixCSP a P = \<^bold>R\<^sub>s (\<Phi>(true,[\<leadsto>],U([a])) wp\<^sub>r pre\<^sub>R P \<turnstile> (\<E>(true,\<guillemotleft>[]\<guillemotright>, {a}\<^sub>u) \<or> \<Phi>(true,[\<leadsto>],U([a])) ;; peri\<^sub>R P) \<diamondop> \<Phi>(true,[\<leadsto>],U([a])) ;; post\<^sub>R P)"
-  by (simp add: PrefixCSP_def Healthy_if unrest assms closure NSRD_composition_wp rdes rpred usubst wp)
+  shows "PrefixCSP a P = \<^bold>R\<^sub>s ((\<Phi>(True,[\<leadsto>],[a]) wp\<^sub>r pre\<^sub>R P) \<turnstile> (\<E>(True,[], {a}) \<or> \<Phi>(True,[\<leadsto>],[a]) ;; peri\<^sub>R P) \<diamondop> (\<Phi>(True,[\<leadsto>],[a]) ;; post\<^sub>R P))"
+  by (simp add: PrefixCSP_def Healthy_if unrest assms closure NSRD_composition_wp rdes rpred usubst wp unrest_ssubst_expr usubst_eval)
 
 text \<open> For prefix, we can chose whether to propagate the assumptions or not, hence there
   are two laws. \<close>
     
 lemma PrefixCSP_rdes_def_1 [rdes_def]:
   assumes "P is CRC" "Q is CRR" "R is CRR"
-          "$st\<^sup>> \<sharp> Q" "$ref\<acute> \<sharp> R"
+          "$st\<^sup>> \<sharp> Q" "$ref\<^sup>> \<sharp> R"
         shows "PrefixCSP a (\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R)) = 
-               \<^bold>R\<^sub>s (\<Phi>(true,[\<leadsto>],U([a])) wp\<^sub>r P \<turnstile> (\<E>(true,\<guillemotleft>[]\<guillemotright>, {a}\<^sub>u) \<or> \<Phi>(true,[\<leadsto>],U([a])) ;; Q) \<diamondop> \<Phi>(true,[\<leadsto>],U([a])) ;; R)"
+               \<^bold>R\<^sub>s ((\<Phi>(True,[\<leadsto>],[a]) wp\<^sub>r P) \<turnstile> (\<E>(True,[], {a}) \<or> \<Phi>(True,[\<leadsto>],[a]) ;; Q) \<diamondop> (\<Phi>(True,[\<leadsto>],[a]) ;; R))"
   by (simp add: PrefixCSP_def Healthy_if assms closure, rdes_simp cls: assms)
 
 (*

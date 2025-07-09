@@ -10,8 +10,16 @@ definition ISRD1 :: "('s,'t::trace,'\<alpha>) rsp_hrel \<Rightarrow> ('s,'t,'\<a
 definition ISRD :: "('s,'t::trace,'\<alpha>) rsp_hrel \<Rightarrow> ('s,'t,'\<alpha>) rsp_hrel" where
 [pred]: "ISRD = ISRD1 \<circ> NSRD"
 
+lemma ISRD1_idem_lemma: "\<^bold>R\<^sub>s(true\<^sub>r \<turnstile> false \<diamondop> ($tr\<^sup>< = $tr\<^sup>>)\<^sub>e) \<parallel>\<^sub>R \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> false \<diamondop> ($tr\<^sup>< = $tr\<^sup>>)\<^sub>e) = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> false \<diamondop> ($tr\<^sup>< = $tr\<^sup>>)\<^sub>e)"
+proof -
+  have [closure]: "($tr\<^sup>< = $tr\<^sup>>)\<^sub>e is RR" 
+    by (pred_simp, metis dual_order.refl minus_zero_eq trace_class.diff_cancel)
+  show ?thesis 
+    by (simp add: rea_design_par_def rdes closure rpred)
+qed
+
 lemma ISRD1_idem: "ISRD1(ISRD1(P)) = ISRD1(P)"
-  by (pred_auto)
+  by (simp add: ISRD1_def ISRD1_idem_lemma RHS_comp_assoc)
 
 lemma ISRD1_monotonic: "P \<sqsubseteq> Q \<Longrightarrow> ISRD1(P) \<sqsubseteq> ISRD1(Q)"
   by (simp add: ISRD1_def rea_design_par_mono)

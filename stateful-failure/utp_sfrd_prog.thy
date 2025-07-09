@@ -1032,11 +1032,20 @@ lemma Guard_comp:
 
 lemma Guard_false [simp]: "False &\<^sub>C P = Stop"
   unfolding GuardCSP_def
-  apply (simp add: GuardCSP_def Stop_def rpred closure alpha R1_design_R1_pre)
+  by (simp add: GuardCSP_def Stop_def rpred closure alpha R1_design_R1_pre, pred_auto)
 
 lemma Guard_true [simp]:
-  "P is CSP \<Longrightarrow> True &\<^sub>C P = P"
-  by (simp add: GuardCSP_def alpha SRD_reactive_design_alt closure rpred)
+  assumes "P is CSP"
+  shows "True &\<^sub>C P = P"
+proof -
+  have "True &\<^sub>C P = \<^bold>R\<^sub>s (((True)\<^sub>e \<longrightarrow>\<^sub>r pre\<^sub>R P) \<turnstile> (cmt\<^sub>R P \<or> (False)\<^sub>e \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> ($wait\<^sup>>)\<^sub>e))"
+    by (simp add: GuardCSP_def alpha closure usubst rpred)
+  also have "... = \<^bold>R\<^sub>s (pre\<^sub>R P \<turnstile> cmt\<^sub>R P)"
+    by pred_auto
+  also have "... = P"
+    by (simp add: SRD_reactive_design_alt assms)
+  finally show ?thesis .
+qed
 
 lemma Guard_conditional:
   assumes "P is NCSP"
@@ -1054,12 +1063,15 @@ lemma Guard_expansion:
 
 lemma Conditional_as_Guard:
   assumes "P is NCSP" "Q is NCSP"
-  shows "P \<triangleleft> b \<triangleright>\<^sub>R Q = b &\<^sub>C P \<box> (\<not> b) &\<^sub>C Q"  
-  by (rdes_eq' cls: assms; simp add: le_less)
+  shows "P \<triangleleft> b \<triangleright>\<^sub>R Q = (b &\<^sub>C P) \<box> ((\<not> b) &\<^sub>C Q)"
+  apply (rdes_eq_split cls: assms)
+    apply (pred_auto)
+   apply (pred_simp, simp add: le_less, meson)+
+  done
 
 lemma PrefixCSP_dist:
   "PrefixCSP a (P \<sqinter> Q) = (PrefixCSP a P) \<sqinter> (PrefixCSP a Q)"
-  using Continuous_Disjunctous Disjunctuous_def PrefixCSP_Continuous by auto
+  by (meson Continuous_choice_dist PrefixCSP_Continuous)
 
 lemma DoCSP_is_Prefix:
   "do\<^sub>C(a) = PrefixCSP a Skip"
@@ -1088,6 +1100,7 @@ declare ExtChoice_tri_rdes' [rdes_def del]
 declare extChoice_rdes_def [rdes_def]
 declare extChoice_rdes_def' [rdes_def del]
 
+(*
 lemma AlternateR_as_ExtChoice:
   assumes 
     "\<And> i. i \<in> A \<Longrightarrow> P(i) is NCSP" "Q is NCSP"
@@ -1111,6 +1124,7 @@ next
          (rdes_eq' cls: assms(1-2) simps: False cong: UINF_cong USUP_cong ExtChoice_cong)
   qed
 qed
+*)
 
 declare ExtChoice_tri_rdes [rdes_def del]
 declare ExtChoice_tri_rdes' [rdes_def]

@@ -11,6 +11,8 @@ text \<open> CSP Reactive Relations \<close>
 definition CRR :: "('s,'e) action \<Rightarrow> ('s,'e) action" where
 [pred]: "CRR(P) = (\<exists> ref\<^sup>< \<Zspot> RR(P))"
 
+expr_constructor CRR
+
 lemma CRR_idem: "CRR(CRR(P)) = CRR(P)"
   by (pred_auto)
 
@@ -95,7 +97,9 @@ text \<open> CSP Reactive Conditions \<close>
 
 definition CRC :: "('s,'e) action \<Rightarrow> ('s,'e) action" where
 [pred]: "CRC(P) = (\<exists> ref\<^sup>< \<Zspot> RC(P))"
-    
+
+expr_constructor CRC
+
 lemma CRC_intro:
   assumes "$ref\<^sup>< \<sharp> P" "P is RC"
   shows "P is CRC"
@@ -464,6 +468,21 @@ proof -
     by (metis Healthy_if assms(1) assms(2))
 qed
 
+lemma CRC_refine_ext:
+  assumes 
+    "P is CRC" "Q is CRC"
+    "\<And> t s s' r'. P\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk> \<sqsubseteq> Q\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk>"
+  shows "P \<sqsubseteq> Q"
+proof -
+  have "\<And> t s s' r'. (CRC P)\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk>
+                    \<sqsubseteq> (CRC Q)\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk>"
+    using assms by (simp add: Healthy_if)
+  hence "CRC P \<sqsubseteq> CRC Q"
+    by (pred_auto, metis (no_types, opaque_lifting) Healthy_def assms(1,2))
+  thus ?thesis
+    by (metis Healthy_if assms(1) assms(2))
+qed
+
 lemma CRR_eq_ext:
   assumes 
     "P is CRR" "Q is CRR"
@@ -491,6 +510,16 @@ lemma CRR_refine_impl_prop:
   using assms
   apply (rule_tac CRR_refine_ext, simp_all add: closure unrest usubst)
   apply (rule refine_prop_intro, simp_all add: unrest unrest_all_circus_vars closure)
+  apply (simp add: SEXP_def)
+  done
+
+lemma CRC_refine_impl_prop:
+  assumes "P is CRC" "Q is CRC" 
+    "\<And> t s s' r'. `Q\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk>` \<Longrightarrow> `P\<lbrakk>\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>,\<guillemotleft>s\<guillemotright>/tr\<^sup><,tr\<^sup>>,st\<^sup><\<rbrakk>`"
+  shows "P \<sqsubseteq> Q"
+  using assms
+  apply (rule_tac CRC_refine_ext, simp_all add: closure unrest usubst)
+  apply (rule refine_prop_intro, simp_all add: unrest unrest_pre_circus_vars closure)
   apply (simp add: SEXP_def)
   done
 

@@ -33,19 +33,19 @@ lemma trace_divergence_disj:
 lemma preR_refine_divergences:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. dv\<lbrakk>P\<rbrakk>s \<subseteq> dv\<lbrakk>Q\<rbrakk>s"
   shows "pre\<^sub>R(P) \<sqsubseteq> pre\<^sub>R(Q)"
-proof (rule CRR_refine_impl_prop, simp_all add: assms closure usubst unrest)
+proof (rule CRC_refine_impl_prop, simp_all add: assms closure usubst unrest)
   fix t s
   assume a: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
   with a show "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`"
   proof (rule_tac ccontr)
     from assms(3)[of s] have b: "t \<in> dv\<lbrakk>P\<rbrakk>s \<Longrightarrow> t \<in> dv\<lbrakk>Q\<rbrakk>s"
       by (auto)
-    assume "\<not> `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`"
-    hence "\<not> `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> CRC(pre\<^sub>R P)`"
+    assume "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`"
+    hence "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> CRC(pre\<^sub>R P)`"
       by (simp add: assms closure Healthy_if)
-    hence "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r CRC(pre\<^sub>R P))`"
+    hence "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r CRC(pre\<^sub>R P))`"
       by (pred_auto)
-    hence "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
+    hence "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
       by (simp add: assms closure Healthy_if)
     with a b show False
       by (pred_auto)
@@ -55,61 +55,83 @@ qed
 lemma preR_eq_divergences:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. dv\<lbrakk>P\<rbrakk>s = dv\<lbrakk>Q\<rbrakk>s"
   shows "pre\<^sub>R(P) = pre\<^sub>R(Q)"
-  by (metis assms dual_order.antisym order_refl preR_refine_divergences)
+  by (metis assms order_refl preR_refine_divergences pred_ba.order_antisym)
+
+lemma subst_unrest_2: 
+  assumes "mwb_lens x" "$x \<sharp> P" "x \<bowtie> y"
+  shows "\<sigma>(x \<leadsto> u,y \<leadsto> v) \<dagger> P = \<sigma>(y \<leadsto> v) \<dagger> P"
+  using assms by (expr_simp, metis lens_indep.lens_put_comm)
+
+lemma subst_unrest_3: 
+  assumes "mwb_lens x" "$x \<sharp> P" "x \<bowtie> y" "x \<bowtie> z"
+  shows "\<sigma>(x \<leadsto> u, y \<leadsto> v, z \<leadsto> w) \<dagger> P = \<sigma>(y \<leadsto> v, z \<leadsto> w) \<dagger> P"
+  using assms by (expr_simp, metis lens_indep.lens_put_comm)
+
+lemma subst_unrest_4: 
+  assumes "vwb_lens x" "$x \<sharp> P" "x \<bowtie> y" "x \<bowtie> z" "x \<bowtie> u"
+  shows "\<sigma>(x \<leadsto> e, y \<leadsto> f, z \<leadsto> g, u \<leadsto> h) \<dagger> P = \<sigma>(y \<leadsto> f, z \<leadsto> g, u \<leadsto> h) \<dagger> P"
+  using assms by (expr_simp, metis lens_indep.lens_put_comm)
+
+lemma subst_unrest_5: 
+  assumes "vwb_lens x" "$x \<sharp> P" "x \<bowtie> y" "x \<bowtie> z" "x \<bowtie> u" "x \<bowtie> v"
+  shows "\<sigma>(x \<leadsto> e, y \<leadsto> f, z \<leadsto> g, u \<leadsto> h, v \<leadsto> i) \<dagger> P = \<sigma>(y \<leadsto> f, z \<leadsto> g, u \<leadsto> h, v \<leadsto> i) \<dagger> P"
+  using assms by (expr_simp, metis lens_indep.lens_put_comm)
 
 lemma periR_refine_failures:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. fl\<lbrakk>Q\<rbrakk>s \<subseteq> fl\<lbrakk>P\<rbrakk>s"
   shows "(pre\<^sub>R(P) \<and> peri\<^sub>R(P)) \<sqsubseteq> (pre\<^sub>R(Q) \<and> peri\<^sub>R(Q))"
-proof (rule CRR_refine_impl_prop, simp_all add: assms closure unrest subst_unrest_3)
-  fix t s r'
-  assume a: "`[$ref\<acute> \<leadsto> \<guillemotleft>r'\<guillemotright>, $st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R Q \<and> peri\<^sub>R Q)`"
+proof (rule CRR_refine_impl_prop, simp_all add: assms closure unrest subst_unrest_3, simp add: conj_pred_def inf_fun_def)
+  fix t::"'a list" and s::"'b" and r'::"'a set"
+  assume a: "`[ref\<^sup>> \<leadsto> \<guillemotleft>r'\<guillemotright>, st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R Q \<and> peri\<^sub>R Q)`"
   from assms(3)[of s] have b: "(t, r') \<in> fl\<lbrakk>Q\<rbrakk>s \<Longrightarrow> (t, r') \<in> fl\<lbrakk>P\<rbrakk>s"
     by (auto)
-  with a show "`[$ref\<acute> \<leadsto> \<guillemotleft>r'\<guillemotright>, $st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R P \<and> peri\<^sub>R P)`"
+  with a show "`[ref\<^sup>> \<leadsto> \<guillemotleft>r'\<guillemotright>, st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R P \<and> peri\<^sub>R P)`"
     by (simp add: failures_def)
 qed
 
 lemma periR_eq_failures:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. fl\<lbrakk>P\<rbrakk>s = fl\<lbrakk>Q\<rbrakk>s"
   shows "(pre\<^sub>R(P) \<and> peri\<^sub>R(P)) = (pre\<^sub>R(Q) \<and> peri\<^sub>R(Q))"
-  by (metis (full_types) assms dual_order.antisym order_refl periR_refine_failures)
+  by (metis assms(1,2,3) dual_order.refl periR_refine_failures pred_ba.inf.commute
+      pred_ba.inf.order_iff)
 
 lemma postR_refine_traces:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. tr\<lbrakk>Q\<rbrakk>s \<subseteq> tr\<lbrakk>P\<rbrakk>s"
   shows "(pre\<^sub>R(P) \<and> post\<^sub>R(P)) \<sqsubseteq> (pre\<^sub>R(Q) \<and> post\<^sub>R(Q))"
-proof (rule CRR_refine_impl_prop, simp_all add: assms closure unrest subst_unrest_5)
+proof (rule CRR_refine_impl_prop, simp_all add: assms closure unrest subst_unrest_5, simp add: conj_pred_def inf_fun_def)
   fix t s s'
-  assume a: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R Q \<and> post\<^sub>R Q)`"
+  assume a: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R Q \<and> post\<^sub>R Q)`"
   from assms(3)[of s] have b: "(t, s') \<in> tr\<lbrakk>Q\<rbrakk>s \<Longrightarrow> (t, s') \<in> tr\<lbrakk>P\<rbrakk>s"
     by (auto)
-  with a show "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R P \<and> post\<^sub>R P)`"
+  with a show "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (pre\<^sub>R P \<and> post\<^sub>R P)`"
     by (simp add: traces_def)
 qed
 
 lemma postR_eq_traces:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. tr\<lbrakk>P\<rbrakk>s = tr\<lbrakk>Q\<rbrakk>s"
   shows "(pre\<^sub>R(P) \<and> post\<^sub>R(P)) = (pre\<^sub>R(Q) \<and> post\<^sub>R(Q))"
-  by (metis assms dual_order.antisym order_refl postR_refine_traces)
+  by (metis assms dual_order.refl postR_refine_traces pred_ba.antisym_conv)
 
 lemma circus_fd_refine_intro:
   assumes "P is NCSP" "Q is NCSP" "\<And> s. dv\<lbrakk>Q\<rbrakk>s \<subseteq> dv\<lbrakk>P\<rbrakk>s" "\<And> s. fl\<lbrakk>Q\<rbrakk>s \<subseteq> fl\<lbrakk>P\<rbrakk>s" "\<And> s. tr\<lbrakk>Q\<rbrakk>s \<subseteq> tr\<lbrakk>P\<rbrakk>s"
   shows "P \<sqsubseteq> Q"
 proof (rule SRD_refine_intro', simp_all add: closure assms)
-  show a: "`pre\<^sub>R P \<Rightarrow> pre\<^sub>R Q`"
-    using assms(1) assms(2) assms(3) preR_refine_divergences refBy_order by blast
+  show a: "`pre\<^sub>R P \<longrightarrow> pre\<^sub>R Q`"
+    using assms(1,2,3) preR_refine_divergences pred_refine_as_impl by blast
   show "peri\<^sub>R P \<sqsubseteq> (pre\<^sub>R P \<and> peri\<^sub>R Q)"
   proof -
     have "peri\<^sub>R P \<sqsubseteq> (pre\<^sub>R Q \<and> peri\<^sub>R Q)"
-      by (metis (no_types) assms(1) assms(2) assms(4) periR_refine_failures utp_pred_laws.le_inf_iff)
+      by (meson assms(1,2,4) periR_refine_failures pred_ba.le_inf_iff)
     then show ?thesis
-      by (metis a refBy_order utp_pred_laws.inf.order_iff utp_pred_laws.inf_assoc)
+      by (meson a pred_ba.inf_mono pred_ba.order_refl pred_refine_as_impl ref_by_trans)
   qed
   show "post\<^sub>R P \<sqsubseteq> (pre\<^sub>R P \<and> post\<^sub>R Q)"
   proof -
     have "post\<^sub>R P \<sqsubseteq> (pre\<^sub>R Q \<and> post\<^sub>R Q)"
-      by (meson assms(1) assms(2) assms(5) postR_refine_traces utp_pred_laws.le_inf_iff)
+      by (meson assms(1,2,5) postR_refine_traces pred_ba.le_inf_iff)
     then show ?thesis
-      by (metis a refBy_order utp_pred_laws.inf.absorb_iff1 utp_pred_laws.inf_assoc)
+      by (meson assms(1,2,3) preR_refine_divergences pred_ba.inf_mono ref_by_trans
+          ref_preorder.order_refl)
   qed
 qed
 
@@ -117,19 +139,19 @@ subsection \<open> Circus Operators \<close>
 
 lemma traces_Skip:
   "tr\<lbrakk>Skip\<rbrakk>s = {([], s)}"
-  by (simp add: traces_def rdes alpha closure, rel_simp)
+  by (simp add: traces_def rdes alpha closure, pred_simp)
 
 lemma failures_Skip:
   "fl\<lbrakk>Skip\<rbrakk>s = {}"
-  by (simp add: failures_def, rdes_calc)
+  by (simp add: failures_def, rdes_calc, pred_simp)
 
 lemma divergences_Skip:
   "dv\<lbrakk>Skip\<rbrakk>s = {}"
-  by (simp add: divergences_def, rdes_calc)
+  by (simp add: divergences_def, rdes_calc, pred_simp)
 
 lemma traces_Stop:
   "tr\<lbrakk>Stop\<rbrakk>s = {}"
-  by (simp add: traces_def, rdes_calc)
+  by (simp add: traces_def, rdes_calc, pred_simp)
 
 lemma failures_Stop:
   "fl\<lbrakk>Stop\<rbrakk>s = {([], E) | E. True}"
@@ -137,25 +159,25 @@ lemma failures_Stop:
 
 lemma divergences_Stop:
   "dv\<lbrakk>Stop\<rbrakk>s = {}"
-  by (simp add: divergences_def, rdes_calc)
+  by (simp add: divergences_def, rdes_calc, pred_simp)
 
 lemma traces_AssignsCSP:
-  "tr\<lbrakk>\<langle>\<sigma>\<rangle>\<^sub>C\<rbrakk>s = {([], \<lbrakk>\<sigma>\<rbrakk>\<^sub>e s)}"
+  "tr\<lbrakk>\<langle>\<sigma>\<rangle>\<^sub>C\<rbrakk>s = {([], \<sigma> s)}"
   by (simp add: traces_def rdes closure usubst alpha, pred_auto)
 
 lemma failures_AssignsCSP:
   "fl\<lbrakk>\<langle>\<sigma>\<rangle>\<^sub>C\<rbrakk>s = {}"
-  by (simp add: failures_def, rdes_calc)
+  by (simp add: failures_def, rdes_calc, pred_simp)
 
 lemma divergences_AssignsCSP:
   "dv\<lbrakk>\<langle>\<sigma>\<rangle>\<^sub>C\<rbrakk>s = {}"
-  by (simp add: divergences_def, rdes_calc)
+  by (simp add: divergences_def, rdes_calc, pred_simp)
 
 lemma failures_Miracle: "fl\<lbrakk>Miracle\<rbrakk>s = {}"
-  by (simp add: failures_def rdes closure usubst)
+  by (simp add: failures_def rdes closure usubst, pred_simp)
 
 lemma divergences_Miracle: "dv\<lbrakk>Miracle\<rbrakk>s = {}"
-  by (simp add: divergences_def rdes closure usubst)
+  by (simp add: divergences_def rdes closure usubst, pred_simp)
 
 lemma failures_Chaos: "fl\<lbrakk>Chaos\<rbrakk>s = {}"
   by (simp add: failures_def rdes, pred_auto)
@@ -164,32 +186,32 @@ lemma divergences_Chaos: "dv\<lbrakk>Chaos\<rbrakk>s = UNIV"
   by (simp add: divergences_def rdes, pred_auto)
 
 lemma traces_Chaos: "tr\<lbrakk>Chaos\<rbrakk>s = {}"
-  by (simp add: traces_def rdes closure usubst)
+  by (simp add: traces_def rdes closure usubst, pred_simp)
 
 lemma divergences_cond:
   assumes "P is NCSP" "Q is NCSP"
-  shows "dv\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if (\<lbrakk>b\<rbrakk>\<^sub>es) then dv\<lbrakk>P\<rbrakk>s else dv\<lbrakk>Q\<rbrakk>s)"
+  shows "dv\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if (b s) then dv\<lbrakk>P\<rbrakk>s else dv\<lbrakk>Q\<rbrakk>s)"
   by (rdes_simp cls: assms, simp add: divergences_def traces_def rdes closure rpred assms, pred_auto)
 
 lemma traces_cond:
   assumes "P is NCSP" "Q is NCSP"
-  shows "tr\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if (\<lbrakk>b\<rbrakk>\<^sub>es) then tr\<lbrakk>P\<rbrakk>s else tr\<lbrakk>Q\<rbrakk>s)"
+  shows "tr\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if b s then tr\<lbrakk>P\<rbrakk>s else tr\<lbrakk>Q\<rbrakk>s)"
   by (rdes_simp cls: assms, simp add: divergences_def traces_def rdes closure rpred assms, pred_auto)
 
 lemma failures_cond:
   assumes "P is NCSP" "Q is NCSP"
-  shows "fl\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if (\<lbrakk>b\<rbrakk>\<^sub>es) then fl\<lbrakk>P\<rbrakk>s else fl\<lbrakk>Q\<rbrakk>s)"
+  shows "fl\<lbrakk>P \<triangleleft> b \<triangleright>\<^sub>R Q\<rbrakk>s = (if b s then fl\<lbrakk>P\<rbrakk>s else fl\<lbrakk>Q\<rbrakk>s)"
   by (rdes_simp cls: assms, simp add: divergences_def failures_def rdes closure rpred assms, pred_auto)
 
 lemma divergences_guard: 
   assumes "P is NCSP"
-  shows "dv\<lbrakk>g &\<^sub>C P\<rbrakk>s = (if (\<lbrakk>g\<rbrakk>\<^sub>es) then dv\<lbrakk>g &\<^sub>C P\<rbrakk>s else {})"
+  shows "dv\<lbrakk>g &\<^sub>C P\<rbrakk>s = (if g s then dv\<lbrakk>g &\<^sub>C P\<rbrakk>s else {})"
   by (rdes_simp cls: assms, simp add: divergences_def traces_def rdes closure rpred assms, pred_auto)
 
-lemma traces_do: "tr\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {([\<lbrakk>e\<rbrakk>\<^sub>es], s)}"
+lemma traces_do: "tr\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {([e s], s)}"
   by (rdes_simp, simp add: traces_def rdes closure rpred, pred_auto)
 
-lemma failures_do: "fl\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {([], E) | E. \<lbrakk>e\<rbrakk>\<^sub>es \<notin> E}"
+lemma failures_do: "fl\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {([], E) | E. e s \<notin> E}"
   by (rdes_simp, simp add: failures_def rdes closure rpred usubst, pred_auto)
 
 lemma divergences_do: "dv\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {}"
@@ -217,8 +239,8 @@ proof
     let ?\<sigma> = "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>]"
     assume 
       a1: "`?\<sigma> \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`" and
-      a2: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`" and
-      a3: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
+      a2: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`" and
+      a3: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
     from a1 have "`?\<sigma> \<dagger> (\<^bold>\<exists> tr\<^sub>0 \<bullet> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>) \<and> \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute>)`"
       by (simp add: R2_tr_middle assms closure)
     then obtain tr\<^sub>0 where p1:"`?\<sigma> \<dagger> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>)`" and tr0: "tr\<^sub>0 \<le> t"
@@ -254,7 +276,7 @@ proof
     proof -
       have "(pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr,$tr\<acute>\<rbrakk> \<sqsubseteq> (pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<guillemotright>/$tr,$tr\<acute>\<rbrakk>"
         by (simp add: RC_prefix_refine closure assms tr0)
-      hence "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P"
+      hence "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P"
         by (pred_auto)
       thus ?thesis
         by (simp add: taut_refine_impl a2)
@@ -276,7 +298,7 @@ proof
         by (pred_auto)
     qed
 
-    from a2 have ndiv: "\<not> `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
+    from a2 have ndiv: "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
       by (pred_auto)
 
     have t_minus_tr0: "tr\<^sub>0 @ (t - tr\<^sub>0) = t"
@@ -299,7 +321,7 @@ proof
                                 \<and> [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P 
                                 \<Rightarrow> [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
         by (simp add: wp_rea_circus_form_alt[of "post\<^sub>R P" "pre\<^sub>R Q"] closure assms unrest usubst)
-           (rel_simp)
+           (pred_simp)
 
       from c b(2-4) show False
         by (pred_auto)
@@ -333,7 +355,7 @@ proof
       a3: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> post\<^sub>R P`" and
       a4: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q`" and
       a5: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q`" and
-      a6: "\<forall>t s\<^sub>1. `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
+      a6: "\<forall>t s\<^sub>1. `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
                   [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<longrightarrow>
                   t \<le> t\<^sub>1 @ t\<^sub>2 \<longrightarrow> \<not> `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`"
     
@@ -366,7 +388,7 @@ proof
     qed
 
     from a6 
-    have a6': "\<And> t s\<^sub>1. \<lbrakk> t \<le> t\<^sub>1 @ t\<^sub>2; `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`; `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk> \<Longrightarrow>
+    have a6': "\<And> t s\<^sub>1. \<lbrakk> t \<le> t\<^sub>1 @ t\<^sub>2; `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`; `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk> \<Longrightarrow>
                          `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
       apply (subst (asm) taut_not)
       apply (simp add: unrest_all_circus_vars_st assms closure unrest)
@@ -402,7 +424,7 @@ proof
         apply (auto intro!: taut_shAll_intro_2)
         apply (rule taut_impl_intro)
         apply (simp add: unrest_all_circus_vars_st_st' unrest closure assms)
-        apply (rel_simp)
+        apply (pred_simp)
       done
     qed
     show "`([$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R P \<and>

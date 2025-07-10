@@ -130,6 +130,14 @@ lemma unrest_all_circus_vars:
   using assms
   by (simp add: bij_lens_unrest_all_eq[OF circus_alpha_bij_lens] unrest_pair_split unrest unrest_subst_upd_diff)
 
+lemma unrest_pre_circus_vars:
+  fixes P :: "('s, 'e) action"
+  assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "$st\<^sup>> \<sharp> P"
+  shows "\<Sigma> \<sharp> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t'\<guillemotright>] \<dagger> P"
+  using assms
+  by (simp add: bij_lens_unrest_all_eq[OF circus_alpha_bij_lens] unrest_pair_split unrest unrest_subst_upd_diff)
+
+
 (*
 
 lemma unrest_all_circus_vars_st_st':

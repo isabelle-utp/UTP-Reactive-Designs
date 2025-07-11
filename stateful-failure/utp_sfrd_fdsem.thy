@@ -224,6 +224,7 @@ lemma divergences_seq:
   (is "?lhs = ?rhs")
   oops
 
+(*
 lemma traces_seq:
   fixes P :: "('s, 'e) action"
   assumes "P is NCSP" "Q is NCSP"
@@ -236,69 +237,69 @@ proof
   show "?lhs \<subseteq> ?rhs"
   proof (rdes_expand cls: assms, simp add: traces_def divergences_def rdes closure assms rdes_def unrest rpred usubst, auto)
     fix t :: "'e list" and s' :: "'s"
-    let ?\<sigma> = "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>]"
+    let ?\<sigma> = "[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>]"
     assume 
       a1: "`?\<sigma> \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`" and
-      a2: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`" and
-      a3: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
-    from a1 have "`?\<sigma> \<dagger> (\<^bold>\<exists> tr\<^sub>0 \<bullet> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>) \<and> \<guillemotleft>tr\<^sub>0\<guillemotright> \<le>\<^sub>u $tr\<acute>)`"
+      a2: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`" and
+      a3: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
+    from a1 have "`?\<sigma> \<dagger> (\<Sqinter> tr\<^sub>0. ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/tr\<^sup>>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>) \<and> (\<guillemotleft>tr\<^sub>0\<guillemotright> \<le> $tr\<^sup>>)\<^sub>e)`"
       by (simp add: R2_tr_middle assms closure)
-    then obtain tr\<^sub>0 where p1:"`?\<sigma> \<dagger> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>)`" and tr0: "tr\<^sub>0 \<le> t"
+    then obtain tr\<^sub>0 where p1:"`?\<sigma> \<dagger> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/tr\<^sup>>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>)`" and tr0: "tr\<^sub>0 \<le> t"
       apply (simp add: usubst)
       apply (erule taut_shEx_elim)
        apply (simp add: unrest_all_circus_vars_st_st' closure unrest assms)
       apply (pred_auto)
       done
-    from p1 have "`?\<sigma> \<dagger> (\<^bold>\<exists> st\<^sub>0 \<bullet> (post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<acute>\<rbrakk>\<lbrakk>\<guillemotleft>st\<^sub>0\<guillemotright>/$st\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>\<lbrakk>\<guillemotleft>st\<^sub>0\<guillemotright>/$st\<rbrakk>)`"
+    from p1 have "`?\<sigma> \<dagger> (\<^bold>\<exists> st\<^sub>0 \<bullet> (post\<^sub>R P)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/tr\<^sup>>\<rbrakk>\<lbrakk>\<guillemotleft>st\<^sub>0\<guillemotright>/$st\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr\<rbrakk>\<lbrakk>\<guillemotleft>st\<^sub>0\<guillemotright>/$st\<rbrakk>)`"
       by (simp add: seqr_middle[of st, THEN sym])
-    then obtain s\<^sub>0 where "`?\<sigma> \<dagger> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/$st\<acute>,$tr\<acute>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/$st,$tr\<rbrakk>)`"
+    then obtain s\<^sub>0 where "`?\<sigma> \<dagger> ((post\<^sub>R P)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/$st\<acute>,tr\<^sup>>\<rbrakk> ;; (post\<^sub>R Q)\<lbrakk>\<guillemotleft>s\<^sub>0\<guillemotright>,\<guillemotleft>tr\<^sub>0\<guillemotright>/$st,$tr\<rbrakk>)`"
       apply (simp add: usubst)
       apply (erule taut_shEx_elim)
        apply (simp add: unrest_all_circus_vars_st_st' closure unrest assms)
       apply (pred_auto)
       done
-    hence "`(([$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P) ;;
-             ([$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q))`"
+    hence "`(([st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P) ;;
+             ([st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q))`"
       by (pred_auto)
-    hence "`(([$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P) \<and>
-             ([$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q))`"
+    hence "`(([st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P) \<and>
+             ([st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q))`"
       by (simp add: seqr_to_conj unrest_any_circus_var assms closure unrest)
-    hence postP: "`([$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P)`" and
-          postQ': "`([$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q)`"
+    hence postP: "`([st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P)`" and
+          postQ': "`([st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R Q)`"
       by (pred_auto)+
-    from postQ' have "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [$tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright> + (\<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>)] \<dagger> post\<^sub>R Q`"
+    from postQ' have "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright> + (\<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>)] \<dagger> post\<^sub>R Q`"
       using tr0 by (pred_auto)
-    hence "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [$tr \<leadsto> 0, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R Q`"
+    hence "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> 0, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R Q`"
       by (simp add: R2_subst_tr closure assms)
-    hence postQ: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t - tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R Q`"
+    hence postQ: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t - tr\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R Q`"
       by (pred_auto)
-    have preP: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
+    have preP: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
     proof -
-      have "(pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr,$tr\<acute>\<rbrakk> \<sqsubseteq> (pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<guillemotright>/$tr,$tr\<acute>\<rbrakk>"
+      have "(pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>tr\<^sub>0\<guillemotright>/$tr,tr\<^sup>>\<rbrakk> \<sqsubseteq> (pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<guillemotright>/$tr,tr\<^sup>>\<rbrakk>"
         by (simp add: RC_prefix_refine closure assms tr0)
-      hence "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P"
+      hence "[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P"
         by (pred_auto)
       thus ?thesis
         by (simp add: taut_refine_impl a2)
     qed
 
-    have preQ: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t - tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+    have preQ: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t - tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
     proof -
-      from postP a3 have "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+      from postP a3 have "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
         apply (simp add: wp_rea_def)
         apply (pred_auto)
         using tr0 apply blast+
         done
-      hence "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [$tr \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright> + (\<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>)] \<dagger> pre\<^sub>R Q`"
+      hence "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>tr\<^sub>0\<guillemotright> + (\<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>)] \<dagger> pre\<^sub>R Q`"
         by (pred_auto)
 
-      hence "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [$tr \<leadsto> 0, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+      hence "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> 0, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>tr\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
         by (simp add: R2_subst_tr closure assms)
       thus ?thesis
         by (pred_auto)
     qed
 
-    from a2 have ndiv: "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
+    from a2 have ndiv: "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`"
       by (pred_auto)
 
     have t_minus_tr0: "tr\<^sub>0 @ (t - tr\<^sub>0) = t"
@@ -306,20 +307,20 @@ proof
 
     from a3
     have wpr: "\<And>t\<^sub>0 s\<^sub>1.
-           `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P` \<Longrightarrow>
-           `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<Longrightarrow>
-            t\<^sub>0 \<le> t \<Longrightarrow> `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)` \<Longrightarrow> False"
+           `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P` \<Longrightarrow>
+           `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<Longrightarrow>
+            t\<^sub>0 \<le> t \<Longrightarrow> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)` \<Longrightarrow> False"
     proof -
       fix t\<^sub>0 s\<^sub>1
       assume b:
-        "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
-        "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P`"
+        "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
+        "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P`"
         "t\<^sub>0 \<le> t" 
-        "`[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`"
+        "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> [], tr\<^sup>> \<leadsto> \<guillemotleft>t - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`"
 
       from a3 have c: "`\<^bold>\<forall> (s\<^sub>0, t\<^sub>0) \<bullet> \<guillemotleft>t\<^sub>0\<guillemotright> \<le>\<^sub>u \<guillemotleft>t\<guillemotright> 
-                                \<and> [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P 
-                                \<Rightarrow> [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+                                \<and> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P 
+                                \<Rightarrow> [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright> - \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
         by (simp add: wp_rea_circus_form_alt[of "post\<^sub>R P" "pre\<^sub>R Q"] closure assms unrest usubst)
            (pred_simp)
 
@@ -329,14 +330,14 @@ proof
       
     show "\<exists>t\<^sub>1 t\<^sub>2.
             t = t\<^sub>1 @ t\<^sub>2 \<and>
-            (\<exists>s\<^sub>0. `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
-                    [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> post\<^sub>R P` \<and>
-                   `[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q \<and>
-                    [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q` \<and>
-                    \<not> `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)` \<and>
-                    (\<forall>t\<^sub>0 s\<^sub>1. `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
-                             [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<longrightarrow>
-                            t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2 \<longrightarrow> \<not> `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`))"
+            (\<exists>s\<^sub>0. `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
+                    [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> post\<^sub>R P` \<and>
+                   `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q \<and>
+                    [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q` \<and>
+                    \<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)` \<and>
+                    (\<forall>t\<^sub>0 s\<^sub>1. `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
+                             [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<longrightarrow>
+                            t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2 \<longrightarrow> \<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`))"
       apply (rule_tac x="tr\<^sub>0" in exI)
       apply (rule_tac x="(t - tr\<^sub>0)" in exI)
       apply (auto)
@@ -350,71 +351,71 @@ proof
   proof (rdes_expand cls: assms, simp add: traces_def divergences_def rdes closure assms rdes_def unrest rpred usubst, auto)
     fix t\<^sub>1 t\<^sub>2 :: "'e list" and s\<^sub>0 s' :: "'s"
     assume
-      a1: "\<not> `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`" and 
-      a2: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> pre\<^sub>R P`" and
-      a3: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> post\<^sub>R P`" and
-      a4: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q`" and
-      a5: "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q`" and
+      a1: "\<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R P)`" and 
+      a2: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> pre\<^sub>R P`" and
+      a3: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>] \<dagger> post\<^sub>R P`" and
+      a4: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q`" and
+      a5: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q`" and
       a6: "\<forall>t s\<^sub>1. `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
-                  [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<longrightarrow>
-                  t \<le> t\<^sub>1 @ t\<^sub>2 \<longrightarrow> \<not> `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`"
+                  [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<longrightarrow>
+                  t \<le> t\<^sub>1 @ t\<^sub>2 \<longrightarrow> \<not> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> (\<not>\<^sub>r pre\<^sub>R Q)`"
     
-    from a1 have preP: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (pre\<^sub>R P)`"
+    from a1 have preP: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (pre\<^sub>R P)`"
       by (simp add: taut_not unrest_all_circus_vars_st assms closure unrest, pred_auto)
 
-    have "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q`"
+    have "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q`"
     proof -
-      have "[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q =
-            [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [$tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q"
+      have "[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q =
+            [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q"
         by pred_auto
-      also have "... = [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [$tr \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q"
+      also have "... = [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> post\<^sub>R Q"
         by (simp add: R2_subst_tr assms closure, pred_auto)
       finally show ?thesis using a5
         by (pred_auto)
     qed
     with a3
-    have postPQ: " `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`"
+    have postPQ: " `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`"
       by (pred_auto, meson Prefix_Order.prefixI)
 
-    have "`[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+    have "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q`"
     proof -
-      have "[$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, $tr \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q = 
-            [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [$tr \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q"
+      have "[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q = 
+            [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1\<guillemotright>+\<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q"
         by pred_auto
-      also have "... = [$st \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [$tr \<leadsto> 0, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q"
+      also have "... = [st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>0\<guillemotright>] \<dagger> [tr\<^sup>< \<leadsto> 0, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R Q"
         by (simp add: R2_subst_tr assms closure)
       finally show ?thesis using a4
         by (pred_auto)
     qed
 
     from a6 
-    have a6': "\<And> t s\<^sub>1. \<lbrakk> t \<le> t\<^sub>1 @ t\<^sub>2; `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`; `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk> \<Longrightarrow>
-                         `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+    have a6': "\<And> t s\<^sub>1. \<lbrakk> t \<le> t\<^sub>1 @ t\<^sub>2; `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> pre\<^sub>R P`; `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk> \<Longrightarrow>
+                         `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<guillemotright>] \<dagger> pre\<^sub>R Q`"
       apply (subst (asm) taut_not)
       apply (simp add: unrest_all_circus_vars_st assms closure unrest)
       apply (pred_auto)
       done
 
-    have wpR: "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
+    have wpR: "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)`"
     proof -
-      have "\<And> s\<^sub>1 t\<^sub>0. \<lbrakk> t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2; `[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk>
-                     \<Longrightarrow> `[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+      have "\<And> s\<^sub>1 t\<^sub>0. \<lbrakk> t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2; `[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P` \<rbrakk>
+                     \<Longrightarrow> `[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
       proof -
         fix s\<^sub>1 t\<^sub>0
-        assume c:"t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2" "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P`"
+        assume c:"t\<^sub>0 \<le> t\<^sub>1 @ t\<^sub>2" "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> post\<^sub>R P`"
 
-        have preP': "`[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
+        have preP': "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P`"
         proof -
-          have "(pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<^sub>0\<guillemotright>/$tr,$tr\<acute>\<rbrakk> \<sqsubseteq> (pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>/$tr,$tr\<acute>\<rbrakk>"
+          have "(pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<^sub>0\<guillemotright>/$tr,tr\<^sup>>\<rbrakk> \<sqsubseteq> (pre\<^sub>R P)\<lbrakk>0,\<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>/$tr,tr\<^sup>>\<rbrakk>"
             by (simp add: RC_prefix_refine closure assms c)
-          hence "[$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R P"
+          hence "[st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R P \<sqsubseteq> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R P"
             by (pred_auto)
           thus ?thesis
             by (simp add: taut_refine_impl preP)
         qed
 
 
-        with c a3 preP a6'[of t\<^sub>0 s\<^sub>1] show "`[$st \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
+        with c a3 preP a6'[of t\<^sub>0 s\<^sub>1] show "`[st\<^sup>< \<leadsto> \<guillemotleft>s\<^sub>1\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>(t\<^sub>1 @ t\<^sub>2) - t\<^sub>0\<guillemotright>] \<dagger> pre\<^sub>R Q`"
           by (simp)
       qed
 
@@ -427,12 +428,13 @@ proof
         apply (pred_simp)
       done
     qed
-    show "`([$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
-         [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)) \<and>
-        [$st \<leadsto> \<guillemotleft>s\<guillemotright>, $st\<acute> \<leadsto> \<guillemotleft>s'\<guillemotright>, $tr \<leadsto> \<guillemotleft>[]\<guillemotright>, $tr\<acute> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`"
+    show "`([st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> pre\<^sub>R P \<and>
+         [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P wp\<^sub>r pre\<^sub>R Q)) \<and>
+        [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>[]\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t\<^sub>1 @ t\<^sub>2\<guillemotright>] \<dagger> (post\<^sub>R P ;; post\<^sub>R Q)`"
       by (auto simp add: taut_conj preP postPQ wpR)
   qed
 qed
+*)
 
 lemma Cons_minus [simp]: "(a # t) - [a] = t"
   by (metis append_Cons append_Nil append_minus)
@@ -440,9 +442,12 @@ lemma Cons_minus [simp]: "(a # t) - [a] = t"
 lemma traces_prefix: 
   assumes "P is NCSP"
   shows "tr\<lbrakk>\<guillemotleft>a\<guillemotright> \<rightarrow>\<^sub>C P\<rbrakk>s = {(a # t, s') | t s'. (t, s') \<in> tr\<lbrakk>P\<rbrakk>s}"
+  oops
+(*
   apply (auto simp add: PrefixCSP_def traces_seq traces_do divergences_do lit.rep_eq assms closure Healthy_if trace_divergence_disj)
   apply (meson assms trace_divergence_disj)
   done
+*)
 
 subsection \<open> Deadlock Freedom \<close>
 
@@ -450,24 +455,27 @@ text \<open> The following is a specification for deadlock free actions. In any 
   there must be at least one enabled event. \<close>
 
 definition CDF :: "('s, 'e) action" where
-[rdes_def]: "CDF = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> (\<Sqinter> (s, t, E, e) \<bullet> \<E>(\<guillemotleft>s\<guillemotright>, \<guillemotleft>t\<guillemotright>, \<guillemotleft>insert e E\<guillemotright>)) \<diamondop> true\<^sub>r)"
+[rdes_def]: "CDF = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> (\<Sqinter> (s, t, E, e). \<E>(\<guillemotleft>s\<guillemotright>, \<guillemotleft>t\<guillemotright>, \<guillemotleft>insert e E\<guillemotright>)) \<diamondop> true\<^sub>r)"
 
 lemma CDF_NCSP [closure]: "CDF is NCSP"
   apply (simp add: CDF_def) 
   apply (rule NCSP_rdes_intro)
-  apply (simp_all add: closure unrest)
+      apply (simp_all add: closure unrest)
+  apply pred_auto+
   done
 
 lemma CDF_seq_idem: "CDF ;; CDF = CDF"
   by (rdes_eq)
 
 lemma CDF_refine_intro: "CDF \<sqsubseteq> P \<Longrightarrow> CDF \<sqsubseteq> (CDF ;; P)"
-  by (metis CDF_seq_idem urel_dioid.mult_isol)
+  by (metis CDF_seq_idem pred_ba.order_refl seqr_mono)
 
 lemma Skip_deadlock_free: "CDF \<sqsubseteq> Skip"
   by (rdes_refine)
 
+(*
 lemma CDF_ext_st [alpha]: "CDF \<oplus>\<^sub>p abs_st\<^sub>L = CDF"
   by (rdes_eq) 
+*)
 
 end

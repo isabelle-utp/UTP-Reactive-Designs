@@ -701,8 +701,12 @@ subsection \<open> Event prefix \<close>
 definition PrefixCSP ::
   "('\<phi>, '\<sigma>) expr \<Rightarrow>
   ('\<sigma>, '\<phi>) action \<Rightarrow>
-  ('\<sigma>, '\<phi>) action" ("_ \<rightarrow>\<^sub>C _" [81, 80] 80) where
+  ('\<sigma>, '\<phi>) action" where
 [pred]: "PrefixCSP a P = (do\<^sub>C(a) ;; CSP(P))"
+
+syntax "_PrefixCSP" :: "logic \<Rightarrow> logic \<Rightarrow> logic" ("_ \<rightarrow>\<^sub>C _" [81, 80] 80)
+translations "_PrefixCSP a P" == "CONST PrefixCSP (a)\<^sub>e P"
+syntax_consts "_PrefixCSP" == PrefixCSP
 
 abbreviation "OutputCSP c v P \<equiv> PrefixCSP (c\<cdot>v)\<^sub>u P"
 

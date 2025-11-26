@@ -495,6 +495,14 @@ qed
 
 subsection \<open> Algebraic laws \<close>
 
+lemma extChoice_mono:
+  assumes "P\<^sub>1 is NCSP" "P\<^sub>2 is NCSP" "Q\<^sub>1 is NCSP" "Q\<^sub>2 is NCSP" "P\<^sub>1 \<sqsubseteq> P\<^sub>2" "Q\<^sub>1 \<sqsubseteq> Q\<^sub>2"
+  shows "P\<^sub>1 \<box> Q\<^sub>1 \<sqsubseteq> P\<^sub>2 \<box> Q\<^sub>2"
+  apply (insert assms(5-6))
+  apply (rdes_refine_split cls: assms(1-4))
+   apply pred_auto+
+  done
+
 lemma extChoice_comm:
   "P \<box> Q = Q \<box> P"
   by (unfold extChoice_def, simp add: insert_commute)

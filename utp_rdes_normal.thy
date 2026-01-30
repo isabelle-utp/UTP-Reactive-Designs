@@ -151,7 +151,15 @@ lemma NRD_is_RD [closure]: "P is NRD \<Longrightarrow> P is RD"
 
 lemma NRD_elim [RD_elim]: 
   "\<lbrakk> P is NRD; Q(\<^bold>R(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P))) \<rbrakk> \<Longrightarrow> Q(P)"
-  by (simp add: RD_elim closure)
+  using NRD_is_RD RD_elimination by blast
+
+lemma NRD_elim_ind_1 [RD_elim]: 
+  "\<lbrakk> \<And>i. P i is NRD; Q(\<lambda> i. \<^bold>R(pre\<^sub>R(P i) \<turnstile> peri\<^sub>R(P i) \<diamondop> post\<^sub>R(P i))) \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: NRD_is_RD RD_reactive_tri_design)
+
+lemma NRD_elim_ind_2 [RD_elim]: 
+  "\<lbrakk> \<And>i j. P i j is NRD; Q(\<lambda> i j. \<^bold>R(pre\<^sub>R(P i j) \<turnstile> peri\<^sub>R(P i j) \<diamondop> post\<^sub>R(P i j))) \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: NRD_is_RD RD_reactive_tri_design)
 
 lemma NRD_idem: "NRD(NRD(P)) = NRD(P)"
   by (metis (no_types, opaque_lifting) Healthy_Idempotent Healthy_def Idempotent_def NRD_def R1_R3c_commute R1_skip_rea R2_R2c_def R2_idem R2_seqr_closure R2c_R3c_commute R2c_skip_rea R3c_Idempotent R3c_def R3c_seq_closure R3c_via_RD1_R3 RD1_RD3c_commute RD1_RH_commute RD1_idem RD3c_def RD3c_idem RD_healths(3) RH_def comp_assoc comp_eq_dest_lhs rdes_left_unital.Healthy_Unit rea_lift_R1 rea_lift_def)
@@ -261,7 +269,15 @@ lemma NSRD_is_SRD [closure]: "P is NSRD \<Longrightarrow> P is SRD"
 
 lemma NSRD_elim [RD_elim]: 
   "\<lbrakk> P is NSRD; Q(\<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P))) \<rbrakk> \<Longrightarrow> Q(P)"
-  by (simp add: RD_elim closure)
+  using NSRD_is_SRD SRD_elim by blast
+
+lemma NSRD_elim_ind_1 [RD_elim]: 
+  "\<lbrakk> \<And> i. P i is NSRD; Q(\<lambda> i. \<^bold>R\<^sub>s(pre\<^sub>R(P i) \<turnstile> peri\<^sub>R(P i) \<diamondop> post\<^sub>R(P i))) \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: NSRD_is_SRD SRD_reactive_tri_design ext)
+
+lemma NSRD_elim_ind_2 [RD_elim]: 
+  "\<lbrakk> \<And> i j. P i j is NSRD; Q(\<lambda> i j. \<^bold>R\<^sub>s(pre\<^sub>R(P i j) \<turnstile> peri\<^sub>R(P i j) \<diamondop> post\<^sub>R(P i j))) \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: NSRD_is_SRD SRD_reactive_tri_design ext)
 
 lemma NSRD_idem: "NSRD(NSRD(P)) = NSRD(P)"
   by (metis (no_types, opaque_lifting) Healthy_def NSRD_def RD1_RD2_commute RD1_RD3_commute RD1_RHS_commute RD1_idem RD2_RHS_commute RD2_idem RD3_def RD3_idem RD3_left_subsumes_RD2 RHS_idem SRD_def comp_apply fun.map_comp srdes_left_unital.Healthy_Sequence srdes_left_unital.Healthy_Unit)

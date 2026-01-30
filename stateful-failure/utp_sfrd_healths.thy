@@ -331,7 +331,15 @@ lemma NCSP_implies_CSP [closure]: "P is NCSP \<Longrightarrow> P is CSP"
 lemma NCSP_elim [RD_elim]: 
   "\<lbrakk> X is NCSP; P(\<^bold>R\<^sub>s(pre\<^sub>R(X) \<turnstile> peri\<^sub>R(X) \<diamondop> post\<^sub>R(X))) \<rbrakk> \<Longrightarrow> P(X)"
   by (simp add: SRD_reactive_tri_design closure)
-    
+
+lemma NCSP_elim_ind_1 [RD_elim]: 
+  "\<lbrakk> \<And> i. X i is NCSP; P(\<lambda> i. \<^bold>R\<^sub>s(pre\<^sub>R(X i) \<turnstile> peri\<^sub>R(X i) \<diamondop> post\<^sub>R(X i))) \<rbrakk> \<Longrightarrow> P(X)"
+  by (simp add: SRD_reactive_tri_design closure)
+
+lemma NCSP_elim_ind_2 [RD_elim]: 
+  "\<lbrakk> \<And> i j. X i j is NCSP; P(\<lambda> i j. \<^bold>R\<^sub>s(pre\<^sub>R(X i j) \<turnstile> peri\<^sub>R(X i j) \<diamondop> post\<^sub>R(X i j))) \<rbrakk> \<Longrightarrow> P(X)"
+  by (simp add: SRD_reactive_tri_design closure)
+
 lemma NCSP_implies_CSP3 [closure]:
   "P is NCSP \<Longrightarrow> P is CSP3"
   by (metis (no_types, lifting) CSP3_def Healthy_def' NCSP_def Skip_is_CSP Skip_left_unit_ref_unrest Skip_unrest_ref comp_apply seqr_assoc)
@@ -644,6 +652,16 @@ proof -
     then show ?thesis
       using f2 f1 by (metis (no_types) CRR_implies_RR Productive_RHS_R4_design_form X_form assms(2) postR_CRR)
   qed
+qed
+
+lemma PCSP_elim_ind_1 [RD_elim]: 
+  assumes "\<And> i. X i is PCSP" "P (\<lambda> i. \<^bold>R\<^sub>s ((pre\<^sub>R (X i)) \<turnstile> peri\<^sub>R (X i) \<diamondop> (R4(post\<^sub>R (X i)))))"
+  shows "P X"
+proof -
+  have "\<forall>a. \<^bold>R\<^sub>s (pre\<^sub>R (X a) \<turnstile> peri\<^sub>R (X a) \<diamondop> R4 (post\<^sub>R (X a))) = X a"
+    by (simp add: PCSP_elim assms(1))
+  then show ?thesis
+    using assms(2) by presburger
 qed
 
 lemma R5_alt_def: "R5(P) = (P \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e)"

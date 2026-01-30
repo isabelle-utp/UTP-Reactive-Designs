@@ -597,7 +597,13 @@ lemma RD_reactive_tri_design:
     
 lemma RD_elimination [RD_elim]: "\<lbrakk> P is RD; Q(\<^bold>R(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P)))  \<rbrakk> \<Longrightarrow> Q(P)"
   by (simp add: RD_reactive_tri_design)
-    
+
+lemma RD_elimination_ind_1 [RD_elim]: "\<lbrakk> \<And> i. P i is RD; Q(\<lambda> i. \<^bold>R(pre\<^sub>R(P i) \<turnstile> peri\<^sub>R(P i) \<diamondop> post\<^sub>R(P i)))  \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: RD_reactive_tri_design)
+
+lemma RD_elimination_ind_2 [RD_elim]: "\<lbrakk> \<And> i j. P i j is RD; Q(\<lambda> i j. \<^bold>R(pre\<^sub>R(P i j) \<turnstile> peri\<^sub>R(P i j) \<diamondop> post\<^sub>R(P i j)))  \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: RD_reactive_tri_design)
+
 lemma RH_tri_design_is_RD [closure]:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>> \<sharp> R"
   shows "\<^bold>R(P \<turnstile> Q \<diamondop> R) is RD"
@@ -678,7 +684,13 @@ lemma SRD_reactive_tri_design:
     
 lemma SRD_elim [RD_elim]: "\<lbrakk> P is SRD; Q(\<^bold>R\<^sub>s(pre\<^sub>R(P) \<turnstile> peri\<^sub>R(P) \<diamondop> post\<^sub>R(P)))  \<rbrakk> \<Longrightarrow> Q(P)"
   by (simp add: SRD_reactive_tri_design)
-    
+
+lemma SRD_elim_ind_1 [RD_elim]: "\<lbrakk> \<And> i. P i is SRD; Q(\<lambda> i. \<^bold>R\<^sub>s(pre\<^sub>R(P i) \<turnstile> peri\<^sub>R(P i) \<diamondop> post\<^sub>R(P i)))  \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: SRD_reactive_tri_design)
+
+lemma SRD_elim_ind_2 [RD_elim]: "\<lbrakk> \<And> i j. P i j is SRD; Q(\<lambda> i j. \<^bold>R\<^sub>s(pre\<^sub>R(P i j) \<turnstile> peri\<^sub>R(P i j) \<diamondop> post\<^sub>R(P i j)))  \<rbrakk> \<Longrightarrow> Q(P)"
+  by (simp add: SRD_reactive_tri_design)
+
 lemma RHS_tri_design_is_SRD [closure]:
   assumes "$ok\<^sup>> \<sharp> P" "$ok\<^sup>> \<sharp> Q" "$ok\<^sup>> \<sharp> R"
   shows "\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R) is SRD"

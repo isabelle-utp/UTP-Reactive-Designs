@@ -32,6 +32,11 @@ lemma extChoice_alt_def:
   "P \<box> Q = (\<box>i::nat\<in>{0,1}. P \<triangleleft> \<guillemotleft>i = 0\<guillemotright> \<triangleright> Q)"
   by (simp add: extChoice_def ExtChoice_def)
 
+lemma extChoice_alt_def':
+  assumes "a \<noteq> b"
+  shows "P \<box> Q = (\<box>i\<in>{a,b}. P \<triangleleft> \<guillemotleft>i = a\<guillemotright> \<triangleright> Q)"
+  using assms by (simp add: extChoice_def ExtChoice_def)
+
 subsection \<open> Basic laws \<close>
 
 subsection \<open> Algebraic laws \<close>
@@ -124,10 +129,6 @@ proof -
 
   finally show ?thesis .
 qed
-
-thm conj_commute
-
-find_theorems expr_if
 
 lemma ExtChoice_tri_rdes:
   assumes "\<And> i . $ok\<^sup>> \<sharp> P\<^sub>1(i)" "A \<noteq> {}"
@@ -581,30 +582,6 @@ proof -
   finally show ?thesis .
 qed
 
-(*** THE FOLLOWING LAWS SHOULD BE IN UTP PRED LAWS ***)
-
-lemma conj_INF_dist: 
-  fixes P :: "'s pred"
-  assumes "I \<noteq> {}"
-  shows "(P \<and> (\<Squnion> i\<in>I. F i)) = (\<Squnion> i\<in>I. P \<and> F i)"
-  using assms by pred_auto
-
-lemma conj_SUP_dist:
-  fixes P :: "'s pred"
-  shows "(P \<and> (\<Sqinter> i\<in>I. F i)) = (\<Sqinter> i\<in>I. P \<and> F i)"
-  by pred_auto
-
-lemma disj_SUP_dist:
-  fixes P :: "'s pred"
-  assumes "I \<noteq> {}"
-  shows "(P \<or> (\<Sqinter> i\<in>I. F i)) = (\<Sqinter> i\<in>I. P \<or> F i)"
-  using assms by pred_auto
-
-lemma cond_SUP_dist: "(\<Sqinter> i\<in>I. F i) \<triangleleft> b \<triangleright> (\<Sqinter> i\<in>I. G i) = (\<Sqinter> i\<in>I. F i \<triangleleft> b \<triangleright> G i)"
-  by (pred_simp add: image_image)
-
-(****************)
-
 lemma extChoice_Dist:
   assumes "P is CSP" "S \<subseteq> \<lbrakk>CSP\<rbrakk>\<^sub>H" "S \<noteq> {}"
   shows "P \<box> (\<Sqinter> S) = (\<Sqinter> Q\<in>S. P \<box> Q)"
@@ -634,10 +611,68 @@ proof -
   finally show ?thesis .
 qed
 
+
+lemma intern_ExtChoice_distl:
+  assumes "I \<noteq> {}" "\<And> i. P i is NCSP" "Q is NCSP"
+  shows "(\<box> i\<in>I. P i) \<sqinter> Q = 
+          (\<box> i\<in>I. P i \<sqinter> Q)"
+  apply (rdes_eq cls:assms(2-3) simps:assms(1))
+  using assms(1) apply force+
+  done
+
 lemma extChoice_dist:
   assumes "P is CSP" "Q is CSP" "R is CSP"
   shows "P \<box> (Q \<sqinter> R) = (P \<box> Q) \<sqinter> (P \<box> R)"
   using assms extChoice_Dist[of P "{Q, R}"] by simp
+
+lemma ExtChoice_const:
+  assumes "I \<noteq> {}" "P is NCSP"
+  shows "(\<box> i\<in>I. P) = P"
+  by (rdes_eq cls:assms(2) simps:assms(1))
+
+lemma ExtChoice_combine: 
+  assumes "\<And> i j. P i j is NCSP"
+  shows "(\<box> i\<in>I\<^sub>1. EXTCHOICE I\<^sub>2 (P i)) = (\<box> (i, j)\<in>I\<^sub>1 \<times> I\<^sub>2. P i j)"
+proof (cases "I\<^sub>1 = {}")
+  case True
+  thus ?thesis
+    by (simp add: ExtChoice_empty)
+next
+  case False
+  note I\<^sub>1_nempty = this
+  thus ?thesis
+  proof (cases "I\<^sub>2 = {}")
+    case True
+    then show ?thesis by (simp add: False ExtChoice_empty ExtChoice_const closure)
+  next
+    case False
+    show ?thesis 
+      by (rdes_eq cls:assms simps: False I\<^sub>1_nempty)
+  qed
+qed
+
+
+lemma ExtChoice_union_combine:
+  assumes "\<And> i. P i is NCSP"
+  shows "(\<box> i\<in>S\<^sub>1. P(i)) \<box> (\<box> i\<in>S\<^sub>2. P(i)) = (\<box> i\<in>S\<^sub>1 \<union> S\<^sub>2 . P(i))"
+proof (cases "S\<^sub>1 = {}")
+  case True
+  then show ?thesis
+    by (simp add: ExtChoice_empty CSP_ExtChoice extChoice_Stop)
+next
+  case False
+  note S\<^sub>1_nempty = this
+  then show ?thesis 
+  proof (cases "S\<^sub>2 = {}")
+    case True
+    then show ?thesis
+      by (simp add: ExtChoice_empty CSP_ExtChoice extChoice_Stop extChoice_comm)
+  next
+    case False
+    show ?thesis
+      by (rdes_eq cls: assms(1) simps: S\<^sub>1_nempty False)
+  qed
+qed
 
 lemma ExtChoice_seq_distr:
   assumes "\<And> i. i \<in> A \<Longrightarrow> P i is PCSP" "Q is NCSP"

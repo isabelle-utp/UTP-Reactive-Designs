@@ -968,58 +968,6 @@ proof -
 qed
 *)
 
-subsection \<open> Renaming \<close>
-
-definition RenameCSP :: "('s, 'e) action \<Rightarrow> ('e \<Rightarrow> 'f) \<Rightarrow> ('s, 'f) action" ("(_)\<lparr>_\<rparr>\<^sub>C" [999, 0] 999) where
-[pred]: "RenameCSP P f = \<^bold>R\<^sub>s((\<not>\<^sub>r (\<not>\<^sub>r pre\<^sub>R(P))\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> ((peri\<^sub>R(P))\<lparr>f\<rparr>\<^sub>c) \<diamondop> ((post\<^sub>R(P))\<lparr>f\<rparr>\<^sub>c))"
-
-lemma RenameCSP_rdes_def [rdes_def]: 
-  assumes "P is CRC" "Q is CRR" "R is CRR"
-  shows "(\<^bold>R\<^sub>s(P \<turnstile> Q \<diamondop> R))\<lparr>f\<rparr>\<^sub>C = \<^bold>R\<^sub>s((\<not>\<^sub>r (\<not>\<^sub>r P)\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> Q\<lparr>f\<rparr>\<^sub>c \<diamondop> R\<lparr>f\<rparr>\<^sub>c)" (is "?lhs = ?rhs")
-proof -
-  have "?lhs =  \<^bold>R\<^sub>s ((\<not>\<^sub>r (\<not>\<^sub>r P)\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> (P \<longrightarrow>\<^sub>r Q)\<lparr>f\<rparr>\<^sub>c \<diamondop> (P \<longrightarrow>\<^sub>r R)\<lparr>f\<rparr>\<^sub>c)"
-    by (simp add: RenameCSP_def rdes closure assms)
-  also have "... = \<^bold>R\<^sub>s ((\<not>\<^sub>r (\<not>\<^sub>r CRC(P))\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> (CRC(P) \<longrightarrow>\<^sub>r CRR(Q))\<lparr>f\<rparr>\<^sub>c \<diamondop> (CRC(P) \<longrightarrow>\<^sub>r CRR(R))\<lparr>f\<rparr>\<^sub>c)"
-    by (simp add: Healthy_if assms)
-  also have "... = \<^bold>R\<^sub>s ((\<not>\<^sub>r (\<not>\<^sub>r CRC(P))\<lparr>f\<rparr>\<^sub>c ;; true\<^sub>r) \<turnstile> (CRR(Q))\<lparr>f\<rparr>\<^sub>c \<diamondop> (CRR(R))\<lparr>f\<rparr>\<^sub>c)"
-    apply (rule srdes_tri_eq_intro)
-      apply pred_simp
-    apply (pred_simp, meson dual_order.refl)+
-    done
-  also have "... = ?rhs"
-    by (simp add: Healthy_if assms)
-  finally show ?thesis .
-qed
-
-lemma RenameCSP_pre_CRC_closed:
-  assumes "P is CRR"
-  shows "\<not>\<^sub>r (\<not>\<^sub>r P)\<lparr>f\<rparr>\<^sub>c ;; R1 true is CRC"
-  apply (rule CRC_intro'')
-   apply (simp add: unrest closure assms)
-  apply (simp add: Healthy_def, simp add: RC1_def rpred closure CRC_idem assms seqr_assoc) 
-  done
-  
-lemma RenameCSP_NCSP_closed [closure]:
-  assumes "P is NCSP"
-  shows "P\<lparr>f\<rparr>\<^sub>C is NCSP"
-  by (simp add: RenameCSP_def RenameCSP_pre_CRC_closed closure assms unrest)
-
-lemma csp_rename_false [rpred]: 
-  "false\<lparr>f\<rparr>\<^sub>c = false"
-  by (pred_auto)
-
-lemma rename_Skip: "Skip\<lparr>f\<rparr>\<^sub>C = Skip"
-  by (rdes_eq)
-
-lemma rename_Chaos: "Chaos\<lparr>f\<rparr>\<^sub>C = Chaos"
-  by (rdes_eq, metis list.map(1) minus_cancel verit_comp_simplify1(2))
-
-lemma rename_Miracle: "Miracle\<lparr>f\<rparr>\<^sub>C = Miracle"
-  by (rdes_eq)
-
-lemma rename_DoCSP: "(do\<^sub>C(a))\<lparr>f\<rparr>\<^sub>C = do\<^sub>C(\<guillemotleft>f\<guillemotright> a)"
-  by (rdes_eq)
-  
 subsection \<open> Algebraic laws \<close>
 
 lemma AssignCSP_conditional:

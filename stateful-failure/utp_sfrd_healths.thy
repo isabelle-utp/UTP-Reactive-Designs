@@ -17,16 +17,16 @@ where "CSP2(P) \<equiv> RD2(P)"
 abbreviation CSP :: "(('\<sigma>, '\<phi>) sfrd \<times> ('\<sigma>, '\<phi>) sfrd) health"
 where "CSP(P) \<equiv> SRD(P)"
 
-definition STOP :: "'\<phi> process" where
+definition STOP :: "(unit, '\<phi>) sfrd hrel" where
 [pred]: "STOP = CSP1(ok\<^sup>> \<and> R3c(($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
 
-definition SKIP :: "'\<phi> process" where
+definition SKIP :: "(unit, '\<phi>) sfrd hrel" where
 [pred]: "SKIP = \<^bold>R\<^sub>s(\<exists> ref\<^sup>< \<Zspot> CSP1(II))"
 
-definition Stop :: "('\<sigma>, '\<phi>) action" where
+definition Stop :: "('\<sigma>, '\<phi>) sfrd hrel" where
 [pred]: "Stop = \<^bold>R\<^sub>s(true \<turnstile> (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
 
-definition Skip :: "('\<sigma>, '\<phi>) action" where
+definition Skip :: "('\<sigma>, '\<phi>) sfrd hrel" where
 [pred]: "Skip = \<^bold>R\<^sub>s(true \<turnstile> ($tr\<^sup>> = $tr\<^sup>< \<and> \<not> $wait\<^sup>> \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e)"
 
 definition CSP3 :: "(('\<sigma>, '\<phi>) sfrd \<times> ('\<sigma>, '\<phi>) sfrd) health" where
@@ -298,11 +298,11 @@ lemma CSP4_form:
   by (simp add: CSP4_def Skip_right_tri_lemma assms)
 
 lemma Skip_srdes_right_unit:
-  "(Skip :: ('\<sigma>,'\<phi>) action) ;; II\<^sub>R = Skip"
+  "(Skip :: ('\<sigma>,'\<phi>) sfrd hrel) ;; II\<^sub>R = Skip"
   by (rdes_simp)
 
 lemma Skip_srdes_left_unit:
-  "II\<^sub>R ;; (Skip :: ('\<sigma>,'\<phi>) action) = Skip"
+  "II\<^sub>R ;; (Skip :: ('\<sigma>,'\<phi>) sfrd hrel) = Skip"
   by (rdes_eq)
 
 lemma CSP4_right_subsumes_RD3: "RD3(CSP4(P)) = CSP4(P)"
@@ -753,7 +753,7 @@ qed (simp_all)
 abbreviation TestC ("test\<^sub>C") where
 "test\<^sub>C P \<equiv> csp_theory.utp_test P"
 
-definition StarC :: "('\<sigma>, '\<phi>) action \<Rightarrow> ('\<sigma>, '\<phi>) action" ("_\<^sup>\<star>\<^sup>C" [999] 999) where
+definition StarC :: "('\<sigma>, '\<phi>) sfrd hrel \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" ("_\<^sup>\<star>\<^sup>C" [999] 999) where
 "StarC P \<equiv> csp_theory.utp_star P"
 
 lemma StarC_unfold: "P is NCSP \<Longrightarrow> P\<^sup>\<star>\<^sup>C = Skip \<sqinter> (P ;; P\<^sup>\<star>\<^sup>C)"

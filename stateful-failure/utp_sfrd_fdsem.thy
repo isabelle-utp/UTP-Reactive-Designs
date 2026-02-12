@@ -15,13 +15,13 @@ text \<open> The following functions play a similar role to those in Roscoe's CS
   but we construct a direct analogy with the pre-, peri- and postconditions of our reactive 
   designs. \<close>
 
-definition divergences :: "('\<sigma>,'\<phi>) action \<Rightarrow> '\<sigma> \<Rightarrow> '\<phi> list set" ("dv\<lbrakk>_\<rbrakk>_" [0,100] 100) where
+definition divergences :: "('\<sigma>,'\<phi>) sfrd hrel \<Rightarrow> '\<sigma> \<Rightarrow> '\<phi> list set" ("dv\<lbrakk>_\<rbrakk>_" [0,100] 100) where
 [pred]: "divergences P s = {t | t. `(\<not>\<^sub>r pre\<^sub>R(P))\<lbrakk>\<guillemotleft>s\<guillemotright>,[],\<guillemotleft>t\<guillemotright>/st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>`}"
   
-definition traces :: "('\<sigma>,'\<phi>) action \<Rightarrow> '\<sigma> \<Rightarrow> ('\<phi> list \<times> '\<sigma>) set" ("tr\<lbrakk>_\<rbrakk>_" [0,100] 100) where
+definition traces :: "('\<sigma>,'\<phi>) sfrd hrel \<Rightarrow> '\<sigma> \<Rightarrow> ('\<phi> list \<times> '\<sigma>) set" ("tr\<lbrakk>_\<rbrakk>_" [0,100] 100) where
 [pred]: "traces P s = {(t,s') | t s'. `(pre\<^sub>R(P) \<and> post\<^sub>R(P))\<lbrakk>\<guillemotleft>s\<guillemotright>,\<guillemotleft>s'\<guillemotright>,[],\<guillemotleft>t\<guillemotright>/st\<^sup><,st\<^sup>>,tr\<^sup><,tr\<^sup>>\<rbrakk>`}"
 
-definition failures :: "('\<sigma>,'\<phi>) action \<Rightarrow> '\<sigma> \<Rightarrow> ('\<phi> list \<times> '\<phi> set) set" ("fl\<lbrakk>_\<rbrakk>_" [0,100] 100) where
+definition failures :: "('\<sigma>,'\<phi>) sfrd hrel \<Rightarrow> '\<sigma> \<Rightarrow> ('\<phi> list \<times> '\<phi> set) set" ("fl\<lbrakk>_\<rbrakk>_" [0,100] 100) where
 [pred]: "failures P s = {(t,r) | t r. `(pre\<^sub>R(P) \<and> peri\<^sub>R(P))\<lbrakk>\<guillemotleft>r\<guillemotright>,\<guillemotleft>s\<guillemotright>,\<guillemotleft>[]\<guillemotright>,\<guillemotleft>t\<guillemotright>/ref\<^sup>>,st\<^sup><,tr\<^sup><,tr\<^sup>>\<rbrakk>`}"
 
 lemma trace_divergence_disj:
@@ -218,7 +218,7 @@ lemma divergences_do: "dv\<lbrakk>do\<^sub>C(e)\<rbrakk>s = {}"
   by (pred_auto)
 
 lemma divergences_seq:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "P is NCSP" "Q is NCSP"
   shows "dv\<lbrakk>P ;; Q\<rbrakk>s = dv\<lbrakk>P\<rbrakk>s \<union> {t\<^sub>1 @ t\<^sub>2 | t\<^sub>1 t\<^sub>2 s\<^sub>0. (t\<^sub>1, s\<^sub>0) \<in> tr\<lbrakk>P\<rbrakk>s \<and> t\<^sub>2 \<in> dv\<lbrakk>Q\<rbrakk>s\<^sub>0}"
   (is "?lhs = ?rhs")
@@ -226,7 +226,7 @@ lemma divergences_seq:
 
 (*
 lemma traces_seq:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "P is NCSP" "Q is NCSP"
   shows "tr\<lbrakk>P ;; Q\<rbrakk>s = 
           {(t\<^sub>1 @ t\<^sub>2, s') | t\<^sub>1 t\<^sub>2 s\<^sub>0 s'. (t\<^sub>1, s\<^sub>0) \<in> tr\<lbrakk>P\<rbrakk>s \<and> (t\<^sub>2, s') \<in> tr\<lbrakk>Q\<rbrakk>s\<^sub>0 
@@ -454,7 +454,7 @@ subsection \<open> Deadlock Freedom \<close>
 text \<open> The following is a specification for deadlock free actions. In any intermediate observation,
   there must be at least one enabled event. \<close>
 
-definition CDF :: "('s, 'e) action" where
+definition CDF :: "('s, 'e) sfrd hrel" where
 [rdes_def]: "CDF = \<^bold>R\<^sub>s(true\<^sub>r \<turnstile> (\<Sqinter> (s, t, E, e). \<E>(\<guillemotleft>s\<guillemotright>, \<guillemotleft>t\<guillemotright>, \<guillemotleft>insert e E\<guillemotright>)) \<diamondop> true\<^sub>r)"
 
 lemma CDF_NCSP [closure]: "CDF is NCSP"

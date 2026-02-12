@@ -8,10 +8,10 @@ begin
 
 subsection \<open> Definitions and syntax \<close>
 
-definition EXTCHOICE :: "'a set \<Rightarrow> ('a \<Rightarrow> ('\<sigma>, '\<phi>) action) \<Rightarrow> ('\<sigma>, '\<phi>) action" where
+definition EXTCHOICE :: "'a set \<Rightarrow> ('a \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel) \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" where
 ExtChoice_def [pred]: "EXTCHOICE A F = \<^bold>R\<^sub>s((\<Squnion> P\<in>A. pre\<^sub>R(F P)) \<turnstile> ((\<Squnion> P\<in>A. cmt\<^sub>R(F P)) \<triangleleft> $tr\<^sup>> = $tr\<^sup>< \<and> $wait\<^sup>> \<triangleright> (\<Sqinter> P\<in>A. cmt\<^sub>R(F P))))"
 
-abbreviation ExtChoice :: "('\<sigma>, '\<phi>) action set \<Rightarrow> ('\<sigma>, '\<phi>) action" where 
+abbreviation ExtChoice :: "('\<sigma>, '\<phi>) sfrd hrel set \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" where 
 "ExtChoice A \<equiv> EXTCHOICE A id"
 
 syntax
@@ -23,7 +23,7 @@ translations
   "\<box>P. B"     \<rightleftharpoons> "CONST EXTCHOICE (CONST UNIV) (\<lambda>P. B)"
 
 definition extChoice ::
-  "('\<sigma>, '\<phi>) action \<Rightarrow> ('\<sigma>, '\<phi>) action \<Rightarrow> ('\<sigma>, '\<phi>) action" (infixl "\<box>" 59) where
+  "('\<sigma>, '\<phi>) sfrd hrel \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" (infixl "\<box>" 59) where
 [pred]: "P \<box> Q \<equiv> ExtChoice {P, Q}"
 
 text \<open> Small external choice as an indexed big external choice. \<close>

@@ -38,9 +38,7 @@ done
 *)
 
 type_synonym ('\<sigma>,'\<phi>) sfrd = "('\<sigma>, '\<phi>) sfrd_vars"
-type_synonym ('\<sigma>,'\<phi>) action  = "('\<sigma>, '\<phi>) sfrd hrel"
 type_synonym '\<phi> csp = "(unit,'\<phi>) sfrd"
-type_synonym '\<phi> process  = "'\<phi> csp hrel"
   
 text \<open> There is some slight imprecision with the translations, in that we don't bother to check
   if the trace event type and refusal set event types are the same. Essentially this is because
@@ -49,8 +47,6 @@ text \<open> There is some slight imprecision with the translations, in that we 
   
 translations
   (type) "('\<sigma>,'\<phi>) sfrd" <= (type) "('\<sigma>, '\<phi>) sfrd_vars"
-  (type) "('\<sigma>,'\<phi>) action" <= (type) "('\<sigma>, '\<phi>) sfrd hrel"
-  (type) "'\<phi> process" <= (type) "(unit,'\<phi>) action"
 
 notation sfrd_vars.more\<^sub>L ("\<Sigma>\<^sub>C")
 
@@ -110,7 +106,7 @@ lemma R2s_notin_ref': "R2s(\<lceil>e\<rceil>\<^sub>S\<^sub>< \<notin> $ref\<^sup
   by pred_auto
 
 lemma unrest_circus_alpha:
-  fixes P :: "('e, 't) action"
+  fixes P :: "('e, 't) sfrd hrel"
   assumes 
     "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$tr\<^sup>< \<sharp> P" 
     "$tr\<^sup>> \<sharp> P" "$st\<^sup>< \<sharp> P" "$st\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P"
@@ -124,14 +120,14 @@ lemma unrest_subst_upd_diff: "\<lbrakk> vwb_lens x; vwb_lens y; x \<bowtie> y; $
   by (expr_simp, metis lens_indep.lens_put_comm)
 
 lemma unrest_all_circus_vars:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P"
   shows "\<Sigma> \<sharp> [ref\<^sup>> \<leadsto> \<guillemotleft>r'\<guillemotright>, st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, st\<^sup>> \<leadsto> \<guillemotleft>s'\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t'\<guillemotright>] \<dagger> P"
   using assms
   by (simp add: bij_lens_unrest_all_eq[OF circus_alpha_bij_lens] unrest_pair_split unrest unrest_subst_upd_diff)
 
 lemma unrest_pre_circus_vars:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "$st\<^sup>> \<sharp> P"
   shows "\<Sigma> \<sharp> [st\<^sup>< \<leadsto> \<guillemotleft>s\<guillemotright>, tr\<^sup>< \<leadsto> \<guillemotleft>t\<guillemotright>, tr\<^sup>> \<leadsto> \<guillemotleft>t'\<guillemotright>] \<dagger> P"
   using assms
@@ -141,7 +137,7 @@ lemma unrest_pre_circus_vars:
 (*
 
 lemma unrest_all_circus_vars_st_st':
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "\<Sigma> \<sharp> s" "\<Sigma> \<sharp> s'" "\<Sigma> \<sharp> t" "\<Sigma> \<sharp> t'"
   shows "\<Sigma> \<sharp> [$st \<leadsto> s, $st\<^sup>> \<leadsto> s', $tr \<leadsto> t, $tr\<^sup>> \<leadsto> t'] \<dagger> P"
   using assms
@@ -149,7 +145,7 @@ lemma unrest_all_circus_vars_st_st':
      (simp add: unrest usubst closure)
 
 lemma unrest_all_circus_vars_st:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "$st\<^sup>> \<sharp> P" "\<Sigma> \<sharp> s" "\<Sigma> \<sharp> t" "\<Sigma> \<sharp> t'"
   shows "\<Sigma> \<sharp> [$st \<leadsto> s, $tr \<leadsto> t, $tr\<^sup>> \<leadsto> t'] \<dagger> P"
   using assms
@@ -157,13 +153,13 @@ lemma unrest_all_circus_vars_st:
       (simp add: unrest usubst closure)
 
 lemma unrest_any_circus_var:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "\<Sigma> \<sharp> s" "\<Sigma> \<sharp> s'" "\<Sigma> \<sharp> t" "\<Sigma> \<sharp> t'"
   shows "x \<sharp> [$st \<leadsto> s, $st\<^sup>> \<leadsto> s', $tr \<leadsto> t, $tr\<^sup>> \<leadsto> t'] \<dagger> P" 
   by (simp add: unrest_all_var unrest_all_circus_vars_st_st' assms)
 
 lemma unrest_any_circus_var_st:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$ok\<^sup>> \<sharp> P" "$wait\<^sup>< \<sharp> P" "$wait\<^sup>> \<sharp> P" "$ref\<^sup>< \<sharp> P" "$ref\<^sup>> \<sharp> P" "$st\<^sup>> \<sharp> P" "\<Sigma> \<sharp> s" "\<Sigma> \<sharp> t" "\<Sigma> \<sharp> t'"
   shows "x \<sharp> [$st \<leadsto> s, $tr \<leadsto> t, $tr\<^sup>> \<leadsto> t'] \<dagger> P"
   by (simp add: unrest_all_var unrest_all_circus_vars_st assms)

@@ -47,7 +47,7 @@ lemma AlternateR_list_NCSP_closed [closure]:
 
 subsection \<open> Specification Statement \<close>
 
-definition SpecC :: "('a \<Longrightarrow> 's) \<Rightarrow> 's pred \<Rightarrow> 's pred \<Rightarrow> ('s, 'e) action" ("_:[_,_]\<^sub>C" [999,0,0] 999) where
+definition SpecC :: "('a \<Longrightarrow> 's) \<Rightarrow> 's pred \<Rightarrow> 's pred \<Rightarrow> ('s, 'e) sfrd hrel" ("_:[_,_]\<^sub>C" [999,0,0] 999) where
 [rdes_def]: "SpecC frm P Q = \<^bold>R\<^sub>s([P]\<^sub>S\<^sub>< \<turnstile> false \<diamondop> [$frm:[Q\<^sup>>]]\<^sub>S)"
 
 lemma SpecC_is_NCSP [closure]: "frm:[P,Q]\<^sub>C is NCSP"
@@ -104,7 +104,7 @@ lemma NSRD_coerce_NCSP:
   "P is NSRD \<Longrightarrow> Skip ;; P ;; Skip is NCSP"
   by (metis (no_types, opaque_lifting) CSP3_Skip CSP3_def CSP4_def Healthy_def NCSP_Skip NCSP_implies_CSP NCSP_intro NSRD_is_SRD upred_semiring.mult_assoc SRD_seqr_closure)
 
-definition WhileC :: "'s pred \<Rightarrow> ('s, 'e) action \<Rightarrow> ('s, 'e) action" ("while\<^sub>C _ do _ od") where
+definition WhileC :: "'s pred \<Rightarrow> ('s, 'e) sfrd hrel \<Rightarrow> ('s, 'e) sfrd hrel" ("while\<^sub>C _ do _ od") where
 "while\<^sub>C b do P od = Skip ;; while\<^sub>R b do P od ;; Skip"
 
 lemma WhileC_NCSP_closed [closure]:
@@ -155,13 +155,13 @@ qed
 subsection \<open> Iteration Construction \<close>
 
 (*
-definition IterateC :: "'a set \<Rightarrow> ('a \<Rightarrow> 's pred) \<Rightarrow> ('a \<Rightarrow> ('s, 'e) action) \<Rightarrow> ('s, 'e) action"
+definition IterateC :: "'a set \<Rightarrow> ('a \<Rightarrow> 's pred) \<Rightarrow> ('a \<Rightarrow> ('s, 'e) sfrd hrel) \<Rightarrow> ('s, 'e) sfrd hrel"
 where [pred, ndes_simp]: "IterateC A g P = while\<^sub>C (\<Or> i\<in>A \<bullet> g(i)) do (if\<^sub>R i\<in>A \<bullet> g(i) \<rightarrow> P(i) fi) od"
 
 lemma IterateC_IterateR_def: "IterateC A g P = Skip ;; IterateR A g P ;; Skip"
   by (simp add: IterateC_def IterateR_def WhileC_def)
 
-definition IterateC_list :: "('s pred \<times> ('s, 'e) action) list \<Rightarrow> ('s, 'e) action" where 
+definition IterateC_list :: "('s pred \<times> ('s, 'e) sfrd hrel) list \<Rightarrow> ('s, 'e) sfrd hrel" where 
 [pred, ndes_simp]:
   "IterateC_list xs = IterateC {0..<length xs} (\<lambda> i. map fst xs ! i) (\<lambda> i. map snd xs ! i)"
 
@@ -289,7 +289,7 @@ qed
 
 subsection \<open> Assignment \<close>
 
-definition AssignsCSP :: "'\<sigma> subst \<Rightarrow> ('\<sigma>, '\<phi>) action" ("\<langle>_\<rangle>\<^sub>C") where
+definition AssignsCSP :: "'\<sigma> subst \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" ("\<langle>_\<rangle>\<^sub>C") where
 [pred]: "AssignsCSP \<sigma> = \<^bold>R\<^sub>s(true \<turnstile> false \<diamondop> (($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S))" 
 
 abbreviation "AssignCSP x v \<equiv> \<^bold>R\<^sub>s([$\<^bold>v \<in> \<guillemotleft>\<S>\<^bsub>x\<^esub>\<guillemotright>]\<^sub>S\<^sub>< \<turnstile> false \<diamondop> \<Phi>(True,[x \<leadsto> v], \<guillemotleft>[]\<guillemotright>))"
@@ -375,8 +375,8 @@ subsection \<open> Guards \<close>
 
 definition GuardCSP ::
   "'\<sigma> pred \<Rightarrow>
-   ('\<sigma>, '\<phi>) action \<Rightarrow>
-   ('\<sigma>, '\<phi>) action"  where
+   ('\<sigma>, '\<phi>) sfrd hrel \<Rightarrow>
+   ('\<sigma>, '\<phi>) sfrd hrel"  where
 [pred]: "GuardCSP g A = \<^bold>R\<^sub>s((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r pre\<^sub>R(A)) \<turnstile> ((\<lceil>g\<rceil>\<^sub>S\<^sub>< \<and> cmt\<^sub>R(A)) \<or> (\<lceil>\<not> g\<rceil>\<^sub>S\<^sub><) \<and> ($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> wait\<^sup>>))"
 
 syntax
@@ -588,10 +588,10 @@ qed
 subsection \<open> Basic events\<close>
 
 definition do\<^sub>u ::
-  "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
+  "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" where
 [pred]: "do\<^sub>u e = (($tr\<^sup>> = $tr\<^sup>< \<and> \<lceil>e\<rceil>\<^sub>S\<^sub>< \<notin> $ref\<^sup>>)\<^sub>e \<triangleleft> wait\<^sup>> \<triangleright> ($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>e\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e)"
 
-definition DoCSP :: "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) action" where
+definition DoCSP :: "('\<phi>, '\<sigma>) expr \<Rightarrow> ('\<sigma>, '\<phi>) sfrd hrel" where
 [pred]: "DoCSP a = \<^bold>R\<^sub>s(true \<turnstile> do\<^sub>u a)"
 
 syntax "_DoCSP" :: "logic \<Rightarrow> logic" ("do\<^sub>C")
@@ -646,9 +646,9 @@ lemma NCSP_DoCSP [closure]: "do\<^sub>C(a) is NCSP"
   by (metis CSP3_DoCSP CSP4_DoCSP CSP_DoCSP Healthy_def NCSP_def comp_apply)
 
 lemma Productive_DoCSP [closure]:
-  "(do\<^sub>C a :: ('\<sigma>, '\<psi>) action) is Productive"
+  "(do\<^sub>C a :: ('\<sigma>, '\<psi>) sfrd hrel) is Productive"
 proof -
-  have "((\<Phi>(True,[\<leadsto>],[a]) \<and> ($tr\<^sup>> > $tr\<^sup><)\<^sub>e) :: ('\<sigma>, '\<psi>) action)
+  have "((\<Phi>(True,[\<leadsto>],[a]) \<and> ($tr\<^sup>> > $tr\<^sup><)\<^sub>e) :: ('\<sigma>, '\<psi>) sfrd hrel)
         = (\<Phi>(True,[\<leadsto>],[a]))"
     by (pred_auto, simp add: Prefix_Order.strict_prefixI')
   hence "Productive(do\<^sub>C a) = do\<^sub>C a"
@@ -658,11 +658,11 @@ proof -
 qed
 
 lemma PCSP_DoCSP [closure]:
-  "(do\<^sub>C a :: ('\<sigma>, '\<psi>) action) is PCSP"
+  "(do\<^sub>C a :: ('\<sigma>, '\<psi>) sfrd hrel) is PCSP"
   by (simp add: Healthy_comp NCSP_DoCSP Productive_DoCSP)
 
 lemma wp_rea_DoCSP_lemma:
-  fixes P :: "('\<sigma>, '\<phi>) action"
+  fixes P :: "('\<sigma>, '\<phi>) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P"
   shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P = (\<exists> ref\<^sup>< \<Zspot> P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"
   using assms
@@ -700,8 +700,8 @@ subsection \<open> Event prefix \<close>
 
 definition PrefixCSP ::
   "('\<phi>, '\<sigma>) expr \<Rightarrow>
-  ('\<sigma>, '\<phi>) action \<Rightarrow>
-  ('\<sigma>, '\<phi>) action" where
+  ('\<sigma>, '\<phi>) sfrd hrel \<Rightarrow>
+  ('\<sigma>, '\<phi>) sfrd hrel" where
 [pred]: "PrefixCSP a P = (do\<^sub>C(a) ;; CSP(P))"
 
 syntax "_PrefixCSP" :: "logic \<Rightarrow> logic \<Rightarrow> logic" ("_ \<rightarrow>\<^sub>C _" [81, 80] 80)
@@ -753,14 +753,14 @@ lemma PrefixCSP_RHS_tri_lemma1:
   by (pred_auto)
 
 lemma PrefixCSP_RHS_tri_lemma2:
-  fixes P :: "('\<sigma>, '\<phi>) action"
+  fixes P :: "('\<sigma>, '\<phi>) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P"
   shows "(($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e \<and> \<not> wait\<^sup>>) ;; P = (\<exists> ref\<^sup>< \<Zspot> P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>)"
   using assms
   by (pred_auto, meson, fastforce)
 
 lemma tr_extend_seqr:
-  fixes P :: "('\<sigma>, '\<phi>) action"
+  fixes P :: "('\<sigma>, '\<phi>) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
   shows "($tr\<^sup>> = $tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P = P\<lbrakk>$tr\<^sup>< @ [\<lceil>a\<rceil>\<^sub>S\<^sub><]/tr\<^sup><\<rbrakk>"
   using assms 
@@ -840,7 +840,7 @@ lemma PrefixCSP_rdes_def_2:
 
 subsection \<open> Guarded external choice \<close>
 
-abbreviation GuardedChoiceCSP :: "'\<theta> set \<Rightarrow> ('\<theta> \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
+abbreviation GuardedChoiceCSP :: "'\<theta> set \<Rightarrow> ('\<theta> \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel) \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel" where
 "GuardedChoiceCSP A P \<equiv> (\<box> x\<in>A. PrefixCSP (\<guillemotleft>x\<guillemotright>)\<^sub>e (P(x)))"
 
 syntax
@@ -863,10 +863,10 @@ lemma GuardedChoiceCSP [rdes_def]:
 subsection \<open> Input prefix \<close>
 
 definition InputCSP ::
-  "('a, '\<theta>) chan \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('a \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
+  "('a, '\<theta>) chan \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('a \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel) \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel" where
 [pred]: "InputCSP c A P = (\<box> x\<in>UNIV. @(A x) &\<^sub>C PrefixCSP (c\<cdot>\<guillemotleft>x\<guillemotright>)\<^sub>u (P x))"
 
-definition InputVarCSP :: "('a, '\<theta>) chan \<Rightarrow> ('a \<Longrightarrow> '\<sigma>) \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('\<sigma>, '\<theta>) action" where
+definition InputVarCSP :: "('a, '\<theta>) chan \<Rightarrow> ('a \<Longrightarrow> '\<sigma>) \<Rightarrow> ('a \<Rightarrow> '\<sigma> pred) \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel" where
 [pred, rdes_def]: "InputVarCSP c x A = InputCSP c A (\<lambda> v. \<langle>[x \<leadsto> \<guillemotleft>v\<guillemotright>]\<rangle>\<^sub>C)"
 
 expr_constructor chan_apply
@@ -874,8 +874,8 @@ expr_constructor chan_apply
 definition do\<^sub>I :: "
   ('a, '\<theta>) chan \<Rightarrow>
   ('a \<Longrightarrow> ('\<sigma>, '\<theta>) sfrd) \<Rightarrow>
-  ('a \<Rightarrow> ('\<sigma>, '\<theta>) action) \<Rightarrow>
-  ('\<sigma>, '\<theta>) action" where
+  ('a \<Rightarrow> ('\<sigma>, '\<theta>) sfrd hrel) \<Rightarrow>
+  ('\<sigma>, '\<theta>) sfrd hrel" where
 "do\<^sub>I c x P = (
   (($tr\<^sup>> = $tr\<^sup>< \<and> {(c\<cdot>\<guillemotleft>v\<guillemotright>)\<^sub>u | v. @(P v)} \<inter> $ref\<^sup>> = {})\<^sub>e
     \<triangleleft> wait\<^sup>> \<triangleright>

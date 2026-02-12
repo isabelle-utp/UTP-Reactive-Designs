@@ -8,7 +8,7 @@ subsection \<open> Healthiness Conditions \<close>
   
 text \<open> CSP Reactive Relations \<close>
     
-definition CRR :: "('s,'e) action \<Rightarrow> ('s,'e) action" where
+definition CRR :: "('s,'e) sfrd hrel \<Rightarrow> ('s,'e) sfrd hrel" where
 [pred]: "CRR(P) = (\<exists> ref\<^sup>< \<Zspot> RR(P))"
 
 expr_constructor CRR
@@ -38,7 +38,7 @@ lemma CRR_seqr_form:
 
 text \<open> CSP Reactive Finalisers \<close>
     
-definition CRF :: "('s,'e) action \<Rightarrow> ('s,'e) action" where
+definition CRF :: "('s,'e) sfrd hrel \<Rightarrow> ('s,'e) sfrd hrel" where
 [pred]: "CRF(P) = (\<exists> ref\<^sup>> \<Zspot> CRR(P))"
 
 lemma CRF_idem: "CRF(CRF(P)) = CRF(P)"
@@ -64,7 +64,7 @@ proof -
     by (metis Healthy_def assms)
 qed
 
-definition crel_skip :: "('s, 'e) action" ("II\<^sub>c") where
+definition crel_skip :: "('s, 'e) sfrd hrel" ("II\<^sub>c") where
 [pred]: "crel_skip = ($tr\<^sup>> = $tr\<^sup>< \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e"
 
 declare zero_list_def [pred del]
@@ -95,7 +95,7 @@ qed
 
 text \<open> CSP Reactive Conditions \<close>
 
-definition CRC :: "('s,'e) action \<Rightarrow> ('s,'e) action" where
+definition CRC :: "('s,'e) sfrd hrel \<Rightarrow> ('s,'e) sfrd hrel" where
 [pred]: "CRC(P) = (\<exists> ref\<^sup>< \<Zspot> RC(P))"
 
 expr_constructor CRC
@@ -370,13 +370,13 @@ lemma USUP_ind_CRC_closed [closure]:
   by (metis CRC_implies_CRR CRC_implies_RC USUP_ind_CRR_closed USUP_ind_RC_closed false_CRC rea_not_CRR_closed wp_rea_CRC wp_rea_RC_false)
 
 lemma tr_extend_seqr_lit [rdes]:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
   shows "($tr\<^sup>> = $tr\<^sup>< @ [\<guillemotleft>a\<guillemotright>] \<and> $st\<^sup>> = $st\<^sup><)\<^sub>e ;; P = P\<lbrakk>$tr\<^sup>< @ [\<guillemotleft>a\<guillemotright>]/tr\<^sup><\<rbrakk>"
   using assms by (pred_auto, meson)
 
 lemma tr_assign_comp [rdes]:
-  fixes P :: "('s, 'e) action"
+  fixes P :: "('s, 'e) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
   shows "(($tr\<^sup>> = $tr\<^sup><)\<^sub>e \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S) ;; P = \<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P"
   using assms by (pred_auto, meson)    
@@ -583,7 +583,7 @@ proof -
 qed
 
 text \<open> The meaning of reactive weakest precondition for Circus. @{term "P wp\<^sub>r Q"} means that,
-  whenever $P$ terminates in a state @{term s\<^sub>0} having done the interaction trace @{term t\<^sub>0}, which 
+  whenever $P$ terminates in a state @{term s\<^sub>0} having done the intersfrd hrel trace @{term t\<^sub>0}, which 
   is a prefix of the overall trace, then $Q$ must be satisfied. This in particular means that
   the remainder of the trace after @{term t\<^sub>0} must not be a divergent behaviour of $Q$. \<close>
 
@@ -708,7 +708,7 @@ lemma rea_subst_R1_closed [closure]: "P\<lbrakk>v\<rbrakk>\<^sub>t is R1"
 lemma tsubst_UINF_ind [usubst]: "(\<Sqinter> i. P(i))\<lbrakk>v\<rbrakk>\<^sub>t = (\<Sqinter> i. (P(i))\<lbrakk>v\<rbrakk>\<^sub>t)"
   by (pred_auto)
 
-subsection \<open> Initial Interaction \<close>
+subsection \<open> Initial Intersfrd hrel \<close>
 
 definition rea_init :: "'s pred \<Rightarrow> ('t::trace, 's) expr \<Rightarrow> ('s, 't, '\<alpha>, '\<beta>) rsp_rel" where
 [pred]: "rea_init s t = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<longrightarrow>\<^sub>r \<not>\<^sub>r ($tr\<^sup>< + \<lceil>t\<rceil>\<^sub>S\<^sub>< \<le> $tr\<^sup>>)\<^sub>e)" 
@@ -783,7 +783,7 @@ lemma R5_trace_subst [rpred]:
 
 subsection \<open> Enabled Events \<close>
 
-definition csp_enable :: "'s pred \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('e set, 's) expr \<Rightarrow> ('s, 'e) action" where
+definition csp_enable :: "'s pred \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('e set, 's) expr \<Rightarrow> ('s, 'e) sfrd hrel" where
 [pred]: "csp_enable s t E = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e \<and> (\<forall> e\<in>\<lceil>E\<rceil>\<^sub>S\<^sub><. \<guillemotleft>e\<guillemotright> \<notin> $ref\<^sup>>)\<^sub>e)"
 
 syntax "_csp_enable" :: "logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("\<E>'(_,_, _')")
@@ -792,7 +792,7 @@ syntax_consts "_csp_enable" == csp_enable
 
 text \<open> Predicate @{term "\<E>(s, t, E)"} states that, if the initial state satisfies predicate @{term s},
   then @{term t} is a possible (failure) trace, such that the events in the set @{term E} are enabled
-  after the given interaction. \<close>
+  after the given intersfrd hrel. \<close>
 
 lemma csp_enable_R1_closed [closure]: "\<E>(s,t,E) is R1"
   by (pred_auto)
@@ -885,9 +885,9 @@ lemma rel_aext_csp_enable [alpha]:
   "vwb_lens a \<Longrightarrow> \<E>(s, t, E) \<up>\<^sub>2 map_st\<^sub>L[a] = \<E>(s \<up> a, t \<up> a, E \<up> a)"
   by (pred_auto)
 
-subsection \<open> Completed Trace Interaction \<close>
+subsection \<open> Completed Trace Intersfrd hrel \<close>
 
-definition csp_do :: "'s pred \<Rightarrow> 's subst \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('s, 'e) action" where
+definition csp_do :: "'s pred \<Rightarrow> 's subst \<Rightarrow> ('e list, 's) expr \<Rightarrow> ('s, 'e) sfrd hrel" where
 [pred]: "csp_do s \<sigma> t = (\<lceil>s\<rceil>\<^sub>S\<^sub>< \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e \<and> \<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S)"
 
 syntax "_csp_do" :: "logic \<Rightarrow> logic \<Rightarrow> logic \<Rightarrow> logic" ("\<Phi>'(_,_,_')")
@@ -970,7 +970,7 @@ qed
 term "($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e"
 
 lemma wp_rea_csp_do_lemma:
-  fixes P :: "('\<sigma>, '\<phi>) action"
+  fixes P :: "('\<sigma>, '\<phi>) sfrd hrel"
   assumes "$ok\<^sup>< \<sharp> P" "$wait\<^sup>< \<sharp> P" "$ref\<^sup>< \<sharp> P"
   shows "(\<lceil>\<langle>\<sigma>\<rangle>\<^sub>a\<rceil>\<^sub>S \<and> ($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e) ;; P = (\<lceil>\<sigma>\<rceil>\<^sub>S\<^sub>\<sigma> \<dagger> P)\<lbrakk>$tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub></tr\<^sup><\<rbrakk>"
   using assms by (pred_auto, meson)
@@ -1049,7 +1049,7 @@ lemma wp_rea_csp_do_st_pre [wp]: "\<Phi>(s\<^sub>1,\<sigma>,t\<^sub>1) wp\<^sub>
   by (pred_auto)
 
 lemma wp_rea_csp_do_skip [wp]:
-  fixes Q :: "('\<sigma>, '\<phi>) action"
+  fixes Q :: "('\<sigma>, '\<phi>) sfrd hrel"
   assumes "P is CRR"
   shows "\<Phi>(s,\<sigma>,t) wp\<^sub>r P = (\<I>(s,t) \<and> (\<sigma> \<dagger>\<^sub>S P)\<lbrakk>t\<rbrakk>\<^sub>t)"
   apply (simp add: wp_rea_def)
@@ -1182,7 +1182,7 @@ subsection \<open> Downward closure of refusals \<close>
 
 text \<open> We define downward closure of the pericondition by the following healthiness condition \<close>
 
-definition CDC :: "('s, 'e) action \<Rightarrow> ('s, 'e) action" where
+definition CDC :: "('s, 'e) sfrd hrel \<Rightarrow> ('s, 'e) sfrd hrel" where
 [pred]: "CDC(P) = (\<Sqinter> ref\<^sub>0. P\<lbrakk>\<guillemotleft>ref\<^sub>0\<guillemotright>/ref\<^sup>>\<rbrakk> \<and> ($ref\<^sup>> \<subseteq> \<guillemotleft>ref\<^sub>0\<guillemotright>)\<^sub>e)"
 
 lemma CDC_idem: "CDC(CDC(P)) = CDC(P)"

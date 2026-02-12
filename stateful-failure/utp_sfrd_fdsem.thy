@@ -474,6 +474,48 @@ lemma Skip_deadlock_free: "CDF \<sqsubseteq> Skip"
   by (rdes_refine)
 
 (*
+declare sup_apply [simp del]
+
+lemma 
+  assumes "P is NCSP" "P is Productive"
+  shows "(\<mu> X \<bullet> (P ;; SRD X) \<sqinter> Skip) = undefined"
+proof -
+  have 1:"Continuous (\<lambda>X. (P ;; SRD X) \<sqinter> Skip)"
+    using SRD_Continuous
+    by (clarsimp simp add: Continuous_def seq_SUP_distl[THEN sym] ref_lattice.INF_inf_const1 ref_lattice.inf_commute, drule_tac x="A" in spec, simp)
+  have 2: "(\<lambda>X. (P ;; SRD X) \<sqinter> Skip) \<in> \<lbrakk>id\<rbrakk>\<^sub>H \<rightarrow> \<lbrakk>SRD\<rbrakk>\<^sub>H"  
+    by (rule funcsetI, simp add: closure assms)
+  have 3: "Guarded (\<lambda> X.((\<Sqinter> a. do\<^sub>C(a)) ;; SRD X) \<sqinter> Skip)"
+    by (simp add: closure)
+  with 1 2 3 have "(\<mu> X \<bullet> (P ;; SRD X) \<sqinter> Skip) = (\<nu> X \<bullet> (P ;; SRD X) \<sqinter> Skip)"
+    by (simp add: guarded_fp_uniq funcsetI closure assms)
+  also have "... = (\<Sqinter>i. ((\<lambda>X. (P ;; CSP X) \<sqinter> Skip) ^^ i) false)"
+    by (simp add: "1" sup_continuous_Continuous sup_continuous_lfp top_false)
+  also have "... = ((\<lambda>X. (P ;; CSP X) \<sqinter> Skip) ^^ 0) false \<sqinter> (\<Sqinter>i. ((\<lambda>X. (P ;; CSP X) \<sqinter> Skip) ^^ (i+1)) false)"
+    by (subst Sup_power_expand, simp)
+  also have "... = (\<Sqinter>i. ((\<lambda>X. (P ;; CSP X) \<sqinter> Skip) ^^ (i+1)) false)"
+    by (simp)
+  also have "... = (\<Sqinter>i. (P \<^bold>^ (i+1) ;; Miracle) \<sqinter> (P \<^bold>^ i ;; Skip) \<sqinter> Skip)"
+  proof (rule SUP_cong, simp_all)
+    fix i
+    show "(P ;; CSP (((\<lambda>X. (P ;; CSP X) \<sqinter> Skip) ^^ i) false\<^sub>h)) \<sqinter> Skip = (P \<^bold>^ Suc i ;; Miracle) \<sqinter> (P \<^bold>^ i ;; Skip) \<sqinter> Skip"
+    proof (induct i)
+      case 0
+      then show ?case 
+        by (simp add: srdes_theory.healthy_top)
+    next
+      case (Suc i)
+      then show ?case
+        apply (simp add: Continuous_choice_dist SRD_Continuous closure upred_semiring.distrib_left)
+
+
+
+lemma "CDF = (\<mu> X \<bullet> ((\<Sqinter> a. do\<^sub>C(a)) ;; SRD X) \<sqinter> Skip)"
+  oops  
+*)
+
+
+(*
 lemma CDF_ext_st [alpha]: "CDF \<oplus>\<^sub>p abs_st\<^sub>L = CDF"
   by (rdes_eq) 
 *)

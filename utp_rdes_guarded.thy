@@ -312,4 +312,83 @@ qed
 
 declare upred_semiring.power_Suc [simp del]
 
+subsection \<open> Tail-recursive with non-deterministic termination \<close>
+
+text \<open> A more general recursive pattern with an exit branch \<close>
+
+lemma SUP_atLeastLessThan_Zero:
+  fixes P :: "nat \<Rightarrow> 'b::complete_lattice"
+  shows "(\<Sqinter>i\<in>{0..<Suc n}. P(i)) = P(0) \<sqinter> (\<Sqinter>i\<in>{1..<Suc n}. P(i))"
+  by (simp add: atLeast0_lessThan_Suc_eq_insert_0)
+
+lemma SUP_atLeastLessThan_Suc:
+  fixes P :: "nat \<Rightarrow> 'b::complete_lattice"
+  shows "(\<Sqinter>i\<in>{0..<Suc n}. P(i)) = (\<Sqinter>i\<in>{0..<n}. P(i)) \<sqinter> P(n)"
+  by (simp add: atLeast0_lessThan_Suc sup_commute)
+
+declare sup_apply [simp del]
+declare Sup_apply [simp del]
+declare SUP_apply [simp del]
+
+lemma funpow_ndet_iter_expand: 
+  assumes "P is SRD" "Q is SRD"
+  shows "((\<lambda>X. (P ;; SRD X) \<sqinter> Q) ^^ (Suc i)) false = (P\<^bold>^(Suc i) ;; Miracle) \<sqinter> (\<Sqinter>j\<in>{0..<Suc i}. P\<^bold>^j ;; Q)"
+proof (induct i)
+  case 0
+  then show ?case
+    by (simp add: srdes_theory.healthy_top)
+next
+  case (Suc i)                         
+  have 1: "(P ;; P \<^bold>^ i ;; Miracle) is SRD"
+    by (simp add: SRD_power_comp SRD_seqr_closure assms rel_RA1 srdes_theory.top_closed)
+  have 2: "(\<Sqinter>x\<in>{0..<Suc i}. P \<^bold>^ x ;; Q) is SRD"
+  proof -
+    have "\<And>x. x \<in> {0..<Suc i} \<Longrightarrow> P \<^bold>^ x ;; Q is SRD"
+      by (metis SRD_power_Suc SRD_seqr_closure assms old.nat.exhaust power.power.power_0 upred_semiring.mult.left_neutral)
+    thus ?thesis
+      by (metis (lifting) SRD_Continuous Sup_Continuous_closed atLeast0LessThan empty_iff lessThan_iff zero_less_Suc)
+  qed
+  have 3: "(P ;; (\<Sqinter>x\<in>{0..<Suc i}. P \<^bold>^ x ;; Q)) \<sqinter> Q = (\<Sqinter>x\<in>{0..<Suc (Suc i)}. P \<^bold>^ x ;; Q)"
+  proof -
+    have "P ;; (\<Sqinter>x\<in>{0..<Suc i}. P \<^bold>^ x ;; Q) = (\<Sqinter>x\<in>{0..<Suc i}. P ;; (P \<^bold>^ x ;; Q))"
+      by (simp add: seq_SUP_distl)
+    also have "... = (\<Sqinter>x\<in>{0..<Suc i}. P \<^bold>^ Suc x ;; Q)"
+      by (simp add: rel_RA1 upred_semiring.power_Suc)
+    also have "... = ((\<Sqinter>x\<in>{1..<Suc (Suc i)}. P \<^bold>^ x ;; Q))"
+      by (metis One_nat_def atLeastLessThanSuc_atLeastAtMost image_Suc_atLeastAtMost image_image seq_SUP_distr)
+    finally show ?thesis
+      by (simp add: SUP_atLeastLessThan_Zero sup_commute)
+  qed
+  from Suc 1 2 3 show ?case
+    by (simp add: upred_semiring.distrib_left Continuous_choice_dist seqr_assoc closure assms upred_semiring.power_Suc srdes_theory.healthy_top[THEN sym]
+       ,simp add: Healthy_if sup_assoc)
+qed
+
+lemma mu_csp_form_2 [rdes]:
+  fixes P Q :: "('s,'t::size_trace,'\<alpha>) rsp_hrel"
+  assumes "P is NSRD" "P is Productive" "Q is NSRD"
+  shows "(\<mu> X \<bullet> (P ;; SRD X) \<sqinter> Q) = (\<Sqinter>i. (P\<^bold>^(Suc i) ;; Miracle) \<sqinter> (\<Sqinter>j\<in>{0..<Suc i}. P\<^bold>^j ;; Q))"
+proof -
+  have 1:"Continuous (\<lambda>X. (P ;; SRD X) \<sqinter> Q)"
+    using SRD_Continuous
+    by (clarsimp simp add: Continuous_def seq_SUP_distl[THEN sym] ref_lattice.INF_inf_const1 ref_lattice.inf_commute, drule_tac x="A" in spec, simp)
+  have 2: "(\<lambda>X. (P ;; SRD X) \<sqinter> Q) \<in> \<lbrakk>id\<rbrakk>\<^sub>H \<rightarrow> \<lbrakk>SRD\<rbrakk>\<^sub>H"
+    by (rule funcsetI, simp add: closure assms)
+  with 1 2 have "(\<mu> X \<bullet> (P ;; SRD X) \<sqinter> Q) = (\<nu> X \<bullet> (P ;; SRD X) \<sqinter> Q)"
+    by (simp add: guarded_fp_uniq funcsetI closure assms)
+  also have "... = (\<Sqinter>i. ((\<lambda>X. (P ;; SRD X) \<sqinter> Q) ^^ i) false)"
+    by (simp add: "1" sup_continuous_Continuous sup_continuous_lfp top_false)
+  also have "... = ((\<lambda>X. (P ;; SRD X) \<sqinter> Q) ^^ 0) false \<sqinter> (\<Sqinter>i. ((\<lambda>X. (P ;; SRD X) \<sqinter> Q) ^^ (i+1)) false)"
+    by (subst Sup_power_expand, simp)
+  also have "... = (\<Sqinter>i. ((\<lambda>X. (P ;; SRD X) \<sqinter> Q) ^^ (Suc i)) false)"
+    by (simp)
+  also have "... = (\<Sqinter>i. (P \<^bold>^ Suc i ;; Miracle) \<sqinter> (\<Sqinter>j\<in>{0..<Suc i}. P\<^bold>^j ;; Q))"
+    by (metis (lifting) NSRD_iff assms(1,3) funpow_ndet_iter_expand)
+  finally show ?thesis .
+qed
+
+declare sup_apply [simp]
+declare Sup_apply [simp]
+declare SUP_apply [simp]
+
 end

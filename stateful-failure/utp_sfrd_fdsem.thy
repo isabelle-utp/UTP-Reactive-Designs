@@ -473,6 +473,17 @@ lemma CDF_refine_intro: "CDF \<sqsubseteq> P \<Longrightarrow> CDF \<sqsubseteq>
 lemma Skip_deadlock_free: "CDF \<sqsubseteq> Skip"
   by (rdes_refine)
 
+abbreviation "DoAny \<equiv> (\<Sqinter> range DoCSP)"
+
+lemma "(\<mu> X \<bullet> ((\<Sqinter> a. do\<^sub>C(a)) ;; SRD X) \<sqinter> Skip) = (\<Sqinter>i. (\<Sqinter> range DoCSP \<^bold>^ Suc i ;; Miracle) \<sqinter> (\<Sqinter>j\<in>{0..<Suc i}. \<Sqinter> range DoCSP \<^bold>^ j ;; Skip))"
+  by (simp add: mu_csp_form_2 closure)
+
+lemma "(\<Sqinter> range DoCSP \<^bold>^ Suc i ;; Miracle) = \<^bold>R\<^sub>s (true\<^sub>r \<turnstile> (\<Sqinter>x. \<Sqinter>j\<in>{0..i}. (\<Sqinter>x. \<Phi>(True,[\<leadsto>],[x]))\<^bold>^j ;; \<E>(True,[], {x})) \<diamondop> false\<^sub>h)"
+  oops
+
+lemma "(\<Sqinter>j\<in>{0..<Suc i}. \<Sqinter> range DoCSP \<^bold>^ Suc j ;; Skip) = undefined"
+  oops
+
 (*
 lemma "CDF = (\<mu> X \<bullet> ((\<Sqinter> a. do\<^sub>C(a)) ;; SRD X) \<sqinter> Skip)"
   oops  

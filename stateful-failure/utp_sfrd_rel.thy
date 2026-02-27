@@ -967,7 +967,21 @@ proof -
     by (simp add: Healthy_if assms)
 qed
 
-term "($tr\<^sup>> = $tr\<^sup>< @ \<lceil>t\<rceil>\<^sub>S\<^sub><)\<^sub>e"
+lemma csp_do_iter [rpred]: "(;; x \<leftarrow> xs. \<Phi>(True,[\<leadsto>],[\<guillemotleft>x\<guillemotright>])) = (if xs = [] then II else \<Phi>(True,[\<leadsto>],\<guillemotleft>xs\<guillemotright>))"
+proof (induct xs)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a xs)
+  then show ?case
+  proof (cases "xs = []")
+    case True
+    then show ?thesis by (simp del: SEXP_apply)
+  next
+    case False
+    then show ?thesis by (simp del: SEXP_apply add: Cons rpred usubst, pred_simp)
+  qed
+qed
 
 lemma wp_rea_csp_do_lemma:
   fixes P :: "('\<sigma>, '\<phi>) sfrd hrel"
